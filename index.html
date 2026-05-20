@@ -401,17 +401,34 @@ async function scanTemple(file) {
       headers: {"Content-Type": "application/json"},
       body: JSON.stringify({
         contents: [{parts: [
-          {inline_data: {mime_type: file.type||"image/jpeg", data: base64}},
-          {text: "Look at this eyewear frame temple image. Extract all visible text. Return ONLY valid JSON, no markdown, no explanation:\n{\"brand\":\"\",\"sku\":\"\",\"size\":\"\",\"material\":\"\",\"color\":\"\",\"collection\":\"\",\"notes\":\"\",\"confidence\":\"high/medium/low\"}"}
+          {inline_data: {mime_type: "image/jpeg", data: base64}},
+          {text: "You are reading an eyewear frame temple arm. Read ALL text printed on it carefully. The text typically includes a model/style number and lens-bridge-temple measurements like 53[]18-145. Return ONLY valid JSON:\n{\"brand\":\"\",\"sku\":\"\",\"size\":\"\",\"material\":\"\",\"color\":\"\",\"collection\":\"\",\"notes\":\"\",\"confidence\":\"high/medium/low\"}\nFill every field you can read. Put the full text in notes."}
         ]}]
       })
     }
   );
   const d = await resp.json();
-  if (d.error) throw new Error(d.error.message);
+  if (d.error) {
+    // Show the actual error to user
+    throw new Error("API Error: " + d.error.message + " (code:" + d.error.code + ")");
+  }
   const txt = d.candidates?.[0]?.content?.parts?.[0]?.text || "";
-  const clean = txt.replace(/```json|```/g,"").trim();
-  return JSON.parse(clean);
+  if (!txt) {
+    // No response - show raw response for debugging
+    return {brand:"",sku:"",size:"",material:"",color:"",collection:"",notes:"No response from AI. Raw: "+JSON.stringify(d).slice(0,100),confidence:"low"};
+  }
+  // Try to extract JSON
+  try {
+    const jsonMatch = txt.match(/\{[\s\S]*\}/);
+    if (jsonMatch) return JSON.parse(jsonMatch[0]);
+  } catch(e) {}
+  // Fallback: parse text directly for patterns
+  const result = {brand:"",sku:"",size:"",material:"",color:"",collection:"",notes:txt,confidence:"medium"};
+  const sizeM = txt.match(/\d{2}[\-□x]\d{2}[\-]\d{3}/);
+  if(sizeM) result.size = sizeM[0].replace(/□/g,"-");
+  const modelM = txt.match(/[0-9]{6,}/);
+  if(modelM) result.sku = modelM[0];
+  return result;
 }
 
 // ═══════════════════════════════

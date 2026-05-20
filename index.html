@@ -1625,9 +1625,15 @@ async function handleScanPhoto(e) {
   state.scanPreview = URL.createObjectURL(file);
   state.scanStep = "scanning";
   render();
-  // Show the photo and let user read + fill manually
-  state.scanResult = {brand:"",sku:"",size:"",material:"",color:"",collection:"",notes:"",confidence:"manual"};
-  state.scanStep = "result";
+  try {
+    const result = await scanTemple(file);
+    state.scanResult = result;
+    state.scanStep = "result";
+  } catch(err) {
+    // Show exact error in notes for debugging
+    state.scanResult = {brand:"",sku:"",size:"",material:"",color:"",collection:"",notes:"ERROR: "+err.message,confidence:"low"};
+    state.scanStep = "result";
+  }
   render();
 }
 

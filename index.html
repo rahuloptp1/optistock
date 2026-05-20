@@ -1,0 +1,1654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="theme-color" content="#030712"/>
+<title>OptiStock</title>
+<script src="https://unpkg.com/tesseract.js@4/dist/tesseract.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{background:#030712;color:#fff;font-family:system-ui,-apple-system,sans-serif;overscroll-behavior:none;min-height:100vh;}
+input,select,textarea,button{font-family:inherit;font-size:14px;}
+button{cursor:pointer;border:none;background:none;}
+::-webkit-scrollbar{display:none;}
+.app{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;position:relative;}
+
+/* Header */
+.header{background:#111827;border-bottom:1px solid #1f2937;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:30;}
+.header-left{display:flex;align-items:center;gap:8px;}
+.header-title{font-size:16px;font-weight:700;line-height:1;}
+.header-sub{font-size:11px;color:#6b7280;margin-top:2px;}
+.header-badges{display:flex;gap:6px;align-items:center;}
+
+/* Bottom Nav */
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:#111827;border-top:1px solid #1f2937;display:flex;z-index:50;}
+.nav-btn{flex:1;padding:10px 4px;display:flex;flex-direction:column;align-items:center;gap:2px;color:#4b5563;border:none;background:none;}
+.nav-btn.active{color:#3b82f6;}
+.nav-btn span:first-child{font-size:18px;}
+.nav-btn span:last-child{font-size:9px;font-weight:500;}
+
+/* Main */
+.main{flex:1;overflow-y:auto;padding:16px;padding-bottom:96px;}
+
+/* Cards */
+.card{background:rgba(31,41,55,0.6);border:1px solid rgba(55,65,81,0.5);border-radius:16px;}
+.card-p{padding:16px;}
+.sect-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:12px;}
+.blue{color:#60a5fa;}.green{color:#34d399;}.amber{color:#fbbf24;}.purple{color:#c084fc;}.cyan{color:#22d3ee;}.red{color:#f87171;}
+
+/* Form fields */
+.field{margin-bottom:12px;}
+.field label{display:block;font-size:11px;color:#9ca3af;margin-bottom:4px;}
+.field input,.field select,.field textarea{width:100%;background:rgba(55,65,81,0.6);border:1px solid #4b5563;border-radius:12px;padding:10px 12px;color:#fff;outline:none;font-size:14px;}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:#3b82f6;}
+.field input.err,.field select.err{border-color:#ef4444;}
+.err-msg{font-size:11px;color:#f87171;margin-top:2px;}
+.field textarea{resize:none;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+/* Badges */
+.badge{font-size:11px;padding:2px 8px;border-radius:20px;border:1px solid;display:inline-block;}
+.badge-blue{background:rgba(30,58,138,0.5);color:#93c5fd;border-color:#1d4ed8;}
+.badge-green{background:rgba(6,78,59,0.5);color:#6ee7b7;border-color:#065f46;}
+.badge-yellow{background:rgba(120,53,15,0.5);color:#fde68a;border-color:#92400e;}
+.badge-red{background:rgba(127,29,29,0.5);color:#fca5a5;border-color:#991b1b;}
+.badge-purple{background:rgba(88,28,135,0.5);color:#e9d5ff;border-color:#6b21a8;}
+.badge-orange{background:rgba(124,45,18,0.5);color:#fed7aa;border-color:#9a3412;}
+.badge-cyan{background:rgba(8,51,68,0.5);color:#a5f3fc;border-color:#0e7490;}
+
+/* Buttons */
+.btn{padding:14px;border-radius:16px;font-weight:600;font-size:15px;width:100%;display:block;text-align:center;border:none;cursor:pointer;}
+.btn-blue{background:#2563eb;color:#fff;}
+.btn-blue:disabled{opacity:0.5;}
+.btn-gray{background:rgba(55,65,81,1);color:#d1d5db;border:1px solid #4b5563;}
+.btn-green{background:#059669;color:#fff;}
+.btn-purple{background:#7c3aed;color:#fff;}
+.btn-red{background:#dc2626;color:#fff;}
+.btn-sm{padding:6px 12px;font-size:12px;border-radius:10px;}
+.flex-btns{display:flex;gap:12px;}
+.flex-btns .btn{flex:1;}
+
+/* Stat cards */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.stat-card{border-radius:16px;padding:16px;border:1px solid;}
+.stat-blue{background:rgba(30,58,138,0.2);border-color:rgba(59,130,246,0.3);}
+.stat-green{background:rgba(6,78,59,0.2);border-color:rgba(52,211,153,0.3);}
+.stat-yellow{background:rgba(120,53,15,0.2);border-color:rgba(251,191,36,0.3);}
+.stat-label{font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.05em;}
+.stat-value{font-size:24px;font-weight:700;margin-top:4px;}
+.stat-blue .stat-value{color:#60a5fa;}
+.stat-green .stat-value{color:#34d399;}
+.stat-yellow .stat-value{color:#fbbf24;}
+.stat-sub{font-size:11px;color:#9ca3af;margin-top:2px;}
+
+/* Alerts */
+.alert{border-radius:16px;padding:12px;border:1px solid;margin-bottom:8px;}
+.alert-red{background:rgba(127,29,29,0.3);border-color:rgba(153,27,27,0.5);}
+.alert-amber{background:rgba(120,53,15,0.2);border-color:rgba(146,64,14,0.5);}
+.alert-orange{background:rgba(124,45,18,0.2);border-color:rgba(154,52,18,0.5);}
+.alert-msg{font-size:14px;font-weight:600;}
+.alert-red .alert-msg{color:#f87171;}
+.alert-amber .alert-msg{color:#fbbf24;}
+.alert-orange .alert-msg{color:#fb923c;}
+
+/* Photo upload */
+.photo-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;}
+.photo-thumb{position:relative;width:80px;height:80px;border-radius:12px;overflow:hidden;}
+.photo-thumb img{width:100%;height:100%;object-fit:cover;}
+.photo-del{position:absolute;top:2px;right:2px;background:#ef4444;color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.photo-add{position:relative;width:80px;height:80px;border:2px dashed #4b5563;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#9ca3af;overflow:hidden;}
+.photo-add span{font-size:24px;line-height:1;}
+.photo-add small{font-size:11px;}
+.photo-add input[type=file]{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer;}
+.photo-hint{font-size:11px;color:#4b5563;margin-top:4px;}
+
+/* Scan button */
+.scan-btn{background:linear-gradient(135deg,#1d4ed8,#2563eb);border:1px solid rgba(59,130,246,0.4);border-radius:16px;padding:16px;display:flex;align-items:center;gap:16px;width:100%;text-align:left;cursor:pointer;margin-bottom:16px;}
+.scan-icon{width:48px;height:48px;background:rgba(59,130,246,0.3);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+.scan-title{font-size:16px;font-weight:700;color:#fff;}
+.scan-sub{font-size:11px;color:#93c5fd;margin-top:2px;}
+.scan-arrow{color:#93c5fd;font-size:20px;margin-left:auto;}
+
+/* Product grid */
+.prod-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.prod-card{background:rgba(31,41,55,0.6);border:1px solid rgba(55,65,81,0.5);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;}
+.prod-img{aspect-ratio:1;background:rgba(55,65,81,0.5);position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:48px;opacity:0.2;}
+.prod-img img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;opacity:1;}
+.prod-stock-badge{position:absolute;top:8px;right:8px;border-radius:20px;padding:2px 6px;font-size:11px;font-weight:700;color:#fff;}
+.stock-ok{background:rgba(5,150,105,0.8);}
+.stock-low{background:rgba(180,83,9,0.8);}
+.stock-out{background:rgba(185,28,28,0.8);}
+.prod-type-badge{position:absolute;bottom:8px;left:8px;}
+.prod-info{padding:12px;flex:1;display:flex;flex-direction:column;gap:4px;}
+.prod-brand{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.prod-sub{font-size:12px;color:#9ca3af;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.prod-price{font-size:14px;font-weight:700;color:#34d399;margin-top:4px;}
+.prod-variants{display:flex;flex-wrap:wrap;gap:4px;margin-top:2px;}
+.prod-var-tag{font-size:10px;background:rgba(55,65,81,0.5);color:#9ca3af;padding:2px 6px;border-radius:6px;}
+.prod-actions{display:flex;gap:6px;margin-top:8px;}
+.prod-actions button{flex:1;padding:6px;border-radius:10px;font-size:11px;font-weight:600;}
+.btn-sell-sm{background:rgba(5,150,105,0.5);border:1px solid rgba(4,120,87,0.5);color:#fff;}
+.btn-edit-sm{background:rgba(55,65,81,0.5);border:1px solid rgba(75,85,99,0.5);color:#d1d5db;}
+.btn-del-sm{background:rgba(127,29,29,0.4);border:1px solid rgba(153,27,27,0.4);color:#f87171;padding:6px 8px;border-radius:10px;}
+
+/* List view */
+.prod-row{background:rgba(31,41,55,0.6);border:1px solid rgba(55,65,81,0.5);border-radius:16px;padding:12px;display:flex;gap:12px;align-items:center;}
+.prod-row-img{width:56px;height:56px;border-radius:12px;background:rgba(55,65,81,0.5);flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:22px;opacity:0.2;position:relative;}
+.prod-row-img img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;opacity:1;}
+.prod-row-info{flex:1;min-width:0;}
+.prod-row-actions{display:flex;flex-direction:column;gap:6px;}
+.prod-row-actions button{padding:6px 10px;border-radius:10px;font-size:11px;}
+
+/* Bar chart */
+.bar-item{margin-bottom:10px;}
+.bar-labels{display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;}
+.bar-label{color:#d1d5db;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:55%;}
+.bar-val{color:#9ca3af;}
+.bar-track{height:6px;background:#374151;border-radius:4px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:4px;transition:width 0.5s;}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:50;display:flex;align-items:center;justify-content:center;padding:24px;}
+.modal{background:#1f2937;border:1px solid #374151;border-radius:20px;padding:24px;width:100%;max-width:360px;}
+.modal h3{font-size:18px;font-weight:700;margin-bottom:4px;}
+.modal p{font-size:14px;color:#9ca3af;margin-bottom:20px;}
+
+/* Fullscreen */
+.fullscreen{position:fixed;inset:0;background:#030712;z-index:50;display:flex;flex-direction:column;}
+.fs-header{background:#111827;border-bottom:1px solid #1f2937;padding:12px 16px;display:flex;align-items:center;gap:12px;}
+.fs-back{font-size:24px;color:#9ca3af;line-height:1;background:none;border:none;cursor:pointer;}
+.fs-body{flex:1;overflow-y:auto;padding:16px;}
+
+/* Power grid */
+.power-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.power-cell{border-radius:12px;padding:8px;border:1px solid;}
+.power-cell-empty{border-color:rgba(55,65,81,0.5);background:rgba(55,65,81,0.2);}
+.power-cell-filled{border-color:rgba(37,99,235,0.5);background:rgba(30,58,138,0.3);}
+.power-cell label{font-size:11px;color:#9ca3af;display:block;margin-bottom:4px;}
+.power-cell input{width:100%;background:transparent;border:none;color:#fff;font-size:14px;font-weight:700;outline:none;}
+
+/* Colour variants */
+.variant-row{display:flex;align-items:center;gap:8px;background:rgba(55,65,81,0.4);border-radius:12px;padding:10px;margin-bottom:8px;}
+.variant-color{flex:1;font-size:14px;}
+.variant-qty{width:60px;background:rgba(75,85,99,1);border:1px solid #6b7280;border-radius:8px;padding:6px 8px;color:#fff;text-align:center;font-size:14px;}
+.variant-del{color:#f87171;font-size:14px;background:none;border:none;cursor:pointer;padding:0 4px;}
+
+/* Type selector */
+.type-btn{background:rgba(31,41,55,0.6);border:1px solid rgba(55,65,81,0.5);border-radius:16px;padding:16px;display:flex;align-items:center;gap:16px;width:100%;text-align:left;cursor:pointer;margin-bottom:8px;}
+.type-btn:hover{border-color:rgba(59,130,246,0.5);}
+.type-icon{font-size:32px;}
+.type-label{font-size:16px;font-weight:600;}
+.type-desc{font-size:12px;color:#9ca3af;margin-top:2px;}
+
+/* Filter bar */
+.filter-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.filter-grid select{background:#374151;border:1px solid #4b5563;border-radius:12px;padding:8px 12px;color:#fff;font-size:12px;width:100%;outline:none;}
+.price-row{display:flex;gap:8px;align-items:center;margin-bottom:12px;}
+.price-row input{flex:1;background:#374151;border:1px solid #4b5563;border-radius:12px;padding:8px 12px;color:#fff;font-size:12px;outline:none;}
+.price-dash{color:#6b7280;}
+
+/* Type pills */
+.type-pills{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:8px;}
+.type-pill{flex-shrink:0;padding:6px 12px;border-radius:20px;font-size:11px;font-weight:500;border:1px solid;cursor:pointer;}
+.type-pill.active{background:#2563eb;border-color:#1d4ed8;color:#fff;}
+.type-pill.inactive{background:#1f2937;border-color:#374151;color:#9ca3af;}
+
+/* Colour picker for sale */
+.colour-pills{display:flex;flex-wrap:wrap;gap:8px;}
+.colour-pill{padding:8px 12px;border-radius:12px;font-size:13px;border:1px solid;cursor:pointer;}
+.colour-pill.active{border-color:#3b82f6;background:rgba(30,58,138,0.5);color:#fff;}
+.colour-pill.inactive{border-color:#374151;color:#d1d5db;}
+.colour-pill.disabled{opacity:0.3;cursor:not-allowed;}
+
+/* Search */
+.search-row{display:flex;gap:8px;margin-bottom:12px;}
+.search-input{flex:1;background:#1f2937;border:1px solid #374151;border-radius:12px;padding:10px 16px;color:#fff;font-size:14px;outline:none;}
+.search-input::placeholder{color:#6b7280;}
+.icon-btn{background:#1f2937;border:1px solid #374151;border-radius:12px;padding:10px 12px;color:#9ca3af;position:relative;}
+
+/* Sale summary box */
+.sale-summary{background:rgba(6,78,59,0.2);border:1px solid rgba(4,120,87,0.5);border-radius:16px;padding:12px;}
+.sale-row{display:flex;justify-content:space-between;font-size:14px;margin-bottom:4px;}
+.sale-row:last-child{margin-bottom:0;}
+
+/* List items */
+.list-tag{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:12px;border:1px solid;font-size:13px;background:rgba(30,58,138,0.3);border-color:#1d4ed8;color:#93c5fd;display:inline-flex;margin:4px;}
+.list-tag-x{color:#6b7280;cursor:pointer;font-size:11px;}
+
+/* Margin box */
+.margin-box{border-radius:12px;padding:10px 12px;font-size:13px;margin-top:4px;}
+.margin-pos{background:rgba(6,78,59,0.2);border:1px solid rgba(4,120,87,0.5);color:#34d399;}
+.margin-neg{background:rgba(127,29,29,0.2);border:1px solid rgba(153,27,27,0.5);color:#f87171;}
+
+/* Empty state */
+.empty{text-align:center;padding:80px 16px;}
+.empty-icon{font-size:64px;margin-bottom:16px;}
+.empty-title{font-size:18px;font-weight:600;margin-bottom:8px;}
+.empty-sub{font-size:14px;color:#9ca3af;}
+
+/* Plano badge */
+.plano-badge{background:rgba(88,28,135,0.3);border:1px solid rgba(107,33,168,0.5);border-radius:12px;padding:8px 12px;font-size:12px;color:#c084fc;}
+
+/* Gradient card */
+.grad-card{background:linear-gradient(135deg,rgba(30,58,138,0.4),rgba(88,28,135,0.4));border:1px solid rgba(59,130,246,0.3);border-radius:16px;padding:16px;margin-bottom:16px;}
+
+/* Scanning screen */
+.scanning-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:24px;padding:32px;}
+.scanning-icon{font-size:64px;animation:pulse 1s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.5};}
+
+/* Notice */
+.notice{font-size:11px;color:#4b5563;margin-top:8px;}
+.notice-amber{color:#f59e0b;font-size:12px;background:rgba(120,53,15,0.2);border:1px solid rgba(146,64,14,0.4);border-radius:12px;padding:10px 12px;margin-top:8px;}
+
+/* Section spacing */
+.section{margin-bottom:16px;}
+.back-btn{font-size:24px;color:#9ca3af;line-height:1;margin-bottom:16px;background:none;border:none;cursor:pointer;display:block;}
+.page-title{font-size:20px;font-weight:700;margin-bottom:4px;}
+.page-sub{font-size:12px;color:#9ca3af;margin-bottom:16px;}
+
+/* Deleted record */
+.del-record{background:rgba(31,41,55,0.6);border:1px solid rgba(153,27,27,0.3);border-radius:16px;padding:16px;margin-bottom:12px;}
+.warn-tag{font-size:11px;color:#f87171;font-weight:600;margin-top:6px;}
+
+/* More menu */
+.more-btn{background:rgba(31,41,55,0.6);border:1px solid rgba(55,65,81,0.5);border-radius:16px;padding:16px;display:flex;align-items:center;gap:16px;width:100%;text-align:left;cursor:pointer;margin-bottom:8px;}
+.more-icon{font-size:28px;}
+.more-label{font-size:16px;font-weight:600;}
+.more-sub{font-size:12px;color:#9ca3af;margin-top:2px;}
+
+/* Flash */
+.flash{background:rgba(6,78,59,0.3);border:1px solid rgba(4,120,87,0.5);border-radius:16px;padding:12px;display:flex;align-items:center;gap:10px;margin-bottom:16px;}
+.flash-text{font-size:14px;font-weight:600;color:#34d399;}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+
+<script>
+// ═══════════════════════════════
+// CONFIG
+// ═══════════════════════════════
+const CLOUD = "d1lg3bid3";
+const PRESET = "opticalinventory";
+const PIN = "1986";
+
+// ═══════════════════════════════
+// DB
+// ═══════════════════════════════
+const db = {
+  get: k => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : null; } catch { return null; } },
+  set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) {} }
+};
+
+// ═══════════════════════════════
+// UTILS
+// ═══════════════════════════════
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2);
+const fmt = n => "₹" + (n||0).toLocaleString("en-IN");
+const today = () => new Date().toISOString().slice(0,10);
+const daysSince = d => Math.floor((Date.now() - new Date(d||today()).getTime()) / 86400000);
+
+const RX_POWERS = Array.from({length:21}, (_,i) => (-(1+i*0.25)).toFixed(2));
+const RG_POWERS = ["+1.00","+1.25","+1.50","+1.75","+2.00","+2.25","+2.50","+2.75","+3.00"];
+const SHAPES = ["Aviator","Round","Square","Rectangle","Cat Eye","Oval","Wayfarer","Clubmaster","Geometric","Rimless","Semi-Rimless"];
+const MATERIALS = ["Acetate","Metal","Titanium","TR90","Fiber","Wood","Carbon Fiber","Mixed"];
+const GENDERS = ["Men","Women","Kids","Unisex"];
+const FRAME_CATS = ["Eyeglasses","Sunglasses","Sports","Reading Glasses","Kids","Safety"];
+const COLORS = ["Black","Brown","Gold","Silver","Blue","Red","Green","Pink","Purple","Transparent","Tortoise","Multi"];
+const LENS_COLORS = ["Brown","Grey","Blue","Green","Violet","Hazel","Turquoise","Honey","Aqua","Gemstone Green"];
+const WEAR_SCHED = ["Daily","Monthly","Quarterly","Yearly","2-Weekly"];
+const SUN_BRANDS = ["Fastrack","Generic"];
+const LENS_BRANDS = ["Freshlook","Acuvue","Air Optix","SofLens","Bausch & Lomb","Cooper Vision","Generic"];
+const ACC_TYPES = ["Specs Case","Selvet / Cleaning Cloth","Carry Bag","Lens Solution","Packaging Box","Other"];
+const PROD_TYPES = [
+  {id:"frame",label:"Eyeglasses / Frame",icon:"👓",desc:"Frames + Smart Temple Scan"},
+  {id:"sunglasses",label:"Sunglasses",icon:"🕶️",desc:"Fastrack, Generic + Temple Scan"},
+  {id:"rx_lens",label:"Rx Contact Lens",icon:"🔵",desc:"Power -1.00 to -6.00, stock per power"},
+  {id:"colour_lens",label:"Colour Contact Lens",icon:"🌈",desc:"Plano colour lenses"},
+  {id:"rg_lens",label:"Reading Glasses",icon:"👁️",desc:"Power +1.00 to +3.00"},
+  {id:"accessory",label:"Accessory / Packaging",icon:"📦",desc:"Cases, selvets, bags, solution"},
+];
+
+function getStock(p) {
+  if (p.type==="frame"||p.type==="sunglasses") {
+    const t = (p.variants||[]).reduce((a,v)=>a+v.qty,0);
+    return {total:t, label:`${t} pcs`, isLow:t>0&&t<=(p.reorderLevel||5), isOut:t===0};
+  }
+  if (p.type==="rx_lens"||p.type==="rg_lens") {
+    const t = Object.values(p.stock||{}).reduce((a,v)=>a+v,0);
+    const pw = Object.values(p.stock||{}).filter(v=>v>0).length;
+    return {total:t, label:`${t} ${p.type==="rx_lens"?"boxes":"pcs"} · ${pw} powers`, isLow:t<=5, isOut:t===0};
+  }
+  const t = p.currentStock||0;
+  return {total:t, label:`${t} ${p.type==="colour_lens"?"boxes":"units"}`, isLow:t>0&&t<=(p.reorderLevel||5), isOut:t===0};
+}
+const tIcon = t => ({frame:"👓",sunglasses:"🕶️",rx_lens:"🔵",colour_lens:"🌈",rg_lens:"👁️",accessory:"📦"}[t]||"📦");
+const tBadge = t => ({frame:"badge-green",sunglasses:"badge-yellow",rx_lens:"badge-blue",colour_lens:"badge-purple",rg_lens:"badge-orange",accessory:"badge-cyan"}[t]||"badge-blue");
+const stockBg = si => si.isOut?"stock-out":si.isLow?"stock-low":"stock-ok";
+
+// ═══════════════════════════════
+// STATE
+// ═══════════════════════════════
+let state = {
+  tab: "dashboard",
+  addType: null,
+  editing: null,
+  sellProduct: null,
+  scanStep: null,
+  scanResult: null,
+  scanPreview: null,
+  products: db.get("opti_v3")||[],
+  sales: db.get("sales_v3")||[],
+  customs: db.get("customs_v2")||{sunglass_brands:["Fastrack","Generic"],frame_brands:[],lens_brands:[],collections:[],suppliers:[],frame_categories:[],lens_colors:[],wear_schedules:[],shapes:[],materials:[],colors:[]},
+  deleted: db.get("deleted_v1")||[],
+  inv_search: "",
+  inv_typeFilter: "all",
+  inv_showFilter: false,
+  inv_view: "grid",
+  inv_pMin: "",
+  inv_pMax: "",
+  inv_filters: {brand:"",shape:"",material:"",gender:"",status:""},
+  pinTarget: null,
+  pinVal: "",
+  pinErr: false,
+  delTarget: null,
+  delReason: "",
+  showDelModal: false,
+  flashMsg: "",
+  listActive: "sunglass_brands",
+  listInput: "",
+};
+
+function saveProducts() { db.set("opti_v3", state.products); }
+function saveSales() { db.set("sales_v3", state.sales); }
+function saveCustoms() { db.set("customs_v2", state.customs); }
+function saveDeleted() { db.set("deleted_v1", state.deleted); }
+
+// ═══════════════════════════════
+// CLOUDINARY
+// ═══════════════════════════════
+async function uploadPhoto(file) {
+  // Save photo locally as base64 - no internet needed
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => resolve(e.target.result);
+    reader.onerror = () => reject(new Error("Could not read photo"));
+    reader.readAsDataURL(file);
+  });
+}
+
+// ═══════════════════════════════
+// CLAUDE VISION
+// ═══════════════════════════════
+async function scanTemple(file) {
+  try {
+    const { data: { text } } = await Tesseract.recognize(file, "eng", {
+      logger: m => console.log(m)
+    });
+    const raw = text.trim();
+    console.log("Temple text:", raw);
+    // Parse the text to extract fields
+    const result = {brand:"",sku:"",size:"",material:"",color:"",collection:"",notes:raw,confidence:"medium"};
+    // Size pattern: 52-18-145 or 52[]18-145 or 52x18-145
+    const sizeMatch = raw.match(/\d{2}[\-\[\]□x\u25a1]\d{2}[\-\s]\d{3}/);
+    if (sizeMatch) result.size = sizeMatch[0].replace(/[\[\]□\u25a1]/g,"-");
+    // Model number - alphanumeric code like RB3025, F149, LP6002
+    const modelMatch = raw.match(/[A-Z]{1,3}\s*[\-]?\s*\d{3,5}/);
+    if (modelMatch) result.sku = modelMatch[0].replace(/\s/g,"");
+    // Known brands
+    const brands = ["RAY-BAN","RAYBAN","FASTRACK","TITAN","LENSKART","OAKLEY","POLICE","VOGUE","PRADA","GUCCI","TOMMY","NIKE","ADIDAS","SCOTT"];
+    const upperText = raw.toUpperCase();
+    for (const b of brands) {
+      if (upperText.includes(b)) { result.brand = b.replace("-"," "); break; }
+    }
+    // Materials
+    const mats = ["ACETATE","METAL","TITANIUM","TR90","NYLON","PLASTIC"];
+    for (const m of mats) {
+      if (upperText.includes(m)) { result.material = m.charAt(0)+m.slice(1).toLowerCase(); break; }
+    }
+    if (result.sku || result.size || result.brand) result.confidence = "high";
+    return result;
+  } catch(e) {
+    console.error("Tesseract error:", e);
+    return {brand:"",sku:"",size:"",material:"",color:"",collection:"",notes:"",confidence:"low"};
+  }
+}
+
+// ═══════════════════════════════
+// FORM STATE
+// ═══════════════════════════════
+let formData = {};
+let formVariants = [];
+let formStock = {};
+let uploadingPhotos = false;
+
+function initForm(initial, type) {
+  if (initial) {
+    formData = {...initial,
+      purchasePrice: String(initial.purchasePrice||""),
+      sellingPrice: String(initial.sellingPrice||""),
+      mrp: String(initial.mrp||""),
+      reorderLevel: String(initial.reorderLevel||5),
+      currentStock: String(initial.currentStock||""),
+      leadTimeDays: String(initial.leadTimeDays||21),
+      tags: (initial.tags||[]).join(", ")
+    };
+    formVariants = initial.variants ? [...initial.variants.map(v=>({...v}))] : [];
+    formStock = initial.stock ? {...initial.stock} : {};
+  } else {
+    formData = {
+      id:"", type:type, brand:"", collection:"", sku:"", shape:"", material:"", size:"",
+      gender:"", category:(type==="sunglasses"?"Sunglasses":""), subcategory:"", supplier:"",
+      purchasePrice:"", sellingPrice:"", mrp:"", reorderLevel:"5", currentStock:"",
+      leadTimeDays:"21", purchaseDate:today(), location:"", notes:"", tags:"",
+      name:"", baseCurve:"", diameter:"", wearSchedule:"", packSize:(type==="rx_lens"?"3":"1"),
+      lensColor:"", accessoryType:"Specs Case", images:[]
+    };
+    formVariants = (type==="frame"||type==="sunglasses") ? [{color:"Black",qty:0}] : [];
+    const powers = type==="rx_lens"?RX_POWERS:type==="rg_lens"?RG_POWERS:[];
+    formStock = {};
+    powers.forEach(p => formStock[p]=0);
+  }
+}
+
+// ═══════════════════════════════
+// RENDER ENGINE
+// ═══════════════════════════════
+function render() {
+  const app = document.getElementById("app");
+  app.innerHTML = buildApp();
+  attachEvents();
+}
+
+function buildApp() {
+  const si_out = state.products.filter(p=>getStock(p).isOut).length;
+  const si_low = state.products.filter(p=>getStock(p).isLow).length;
+
+  return `
+  ${buildPinModal()}
+  ${buildDelModal()}
+  <div class="header">
+    <div class="header-left">
+      <span style="font-size:22px">👓</span>
+      <div>
+        <div class="header-title">OptiStock</div>
+        <div class="header-sub">Optical Inventory</div>
+      </div>
+    </div>
+    <div class="header-badges">
+      ${si_out>0?`<span class="badge badge-red">🚫 ${si_out}</span>`:""}
+      ${si_low>0?`<span class="badge badge-yellow">⚠ ${si_low}</span>`:""}
+    </div>
+  </div>
+  <div class="main" id="main-content">
+    ${buildPage()}
+  </div>
+  <nav class="nav">
+    ${[{id:"dashboard",i:"🏠",l:"Home"},{id:"inventory",i:"📦",l:"Stock"},{id:"add",i:"➕",l:"Add"},{id:"sell",i:"💰",l:"Sell"},{id:"analytics",i:"📊",l:"Report"},{id:"more",i:"⚙️",l:"More"}].map(n=>`
+    <button class="nav-btn ${state.tab===n.id||(["lists","deleted"].includes(state.tab)&&n.id==="more")?"active":""}" onclick="goTab('${n.id}')">
+      <span>${n.i}</span><span>${n.l}</span>
+    </button>`).join("")}
+  </nav>
+  ${buildScanScreen()}
+  `;
+}
+
+function buildPage() {
+  switch(state.tab) {
+    case "dashboard": return buildDashboard();
+    case "inventory": return buildInventory();
+    case "add": return buildAdd();
+    case "sell": return buildSell();
+    case "analytics": return buildAnalytics();
+    case "more": return buildMore();
+    case "lists": return `<button class="back-btn" onclick="goTab('more')">←</button>${buildLists()}`;
+    case "deleted": return `<button class="back-btn" onclick="goTab('more')">←</button>${buildDeleted()}`;
+    default: return buildDashboard();
+  }
+}
+
+// ═══════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════
+function buildDashboard() {
+  const P = state.products, S = state.sales;
+  const totalRev = S.reduce((a,s)=>a+s.amount,0);
+  const totalProfit = S.reduce((a,s)=>{const p=P.find(x=>x.id===s.productId);return a+(s.amount-(p?.purchasePrice||0)*s.qty);},0);
+  const frames = P.filter(p=>p.type==="frame"||p.type==="sunglasses");
+  const rxL = P.filter(p=>p.type==="rx_lens");
+  const rgL = P.filter(p=>p.type==="rg_lens");
+  const totalFS = frames.reduce((a,p)=>a+(p.variants||[]).reduce((b,v)=>b+v.qty,0),0);
+  const totalRx = rxL.reduce((a,p)=>a+Object.values(p.stock||{}).reduce((b,v)=>b+v,0),0);
+
+  const alerts = [];
+  P.forEach(p => {
+    const si = getStock(p);
+    const nm = `${p.brand} ${p.name||p.collection||p.lensColor||p.accessoryType||""}`.trim();
+    if (si.isOut) alerts.push({c:"red",msg:`🚫 Out of stock: ${nm}`});
+    else if (si.isLow) alerts.push({c:"amber",msg:`⚠ Low stock: ${nm} (${si.total} left)`});
+    if ((p.type==="frame"||p.type==="sunglasses") && si.total>0) {
+      const ls = S.filter(s=>s.productId===p.id).sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
+      const age = daysSince(p.purchaseDate||p.createdAt);
+      if (age>180 && (!ls||daysSince(ls.date)>180)) alerts.push({c:"orange",msg:`💤 Dead stock 6+ months: ${nm}`});
+    }
+  });
+
+  const colMap = {};
+  S.forEach(s=>{if(s.colour)colMap[s.colour]=(colMap[s.colour]||0)+s.qty;});
+  const topCol = Object.entries(colMap).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const recent = [...S].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,5);
+
+  if (P.length===0) return `
+    <div class="empty">
+      <div class="empty-icon">👓</div>
+      <div class="empty-title">Welcome to OptiStock</div>
+      <div class="empty-sub">Tap <span style="color:#60a5fa">+ Add</span> to enter your first product</div>
+    </div>`;
+
+  return `
+  <div class="page-title">Dashboard</div>
+  <div class="page-sub">OptiStock Overview</div>
+  <div class="stat-grid section">
+    <div class="stat-card stat-blue"><div class="stat-label">Revenue</div><div class="stat-value">${fmt(totalRev)}</div><div class="stat-sub">${S.length} sales</div></div>
+    <div class="stat-card stat-green"><div class="stat-label">Profit</div><div class="stat-value">${fmt(totalProfit)}</div><div class="stat-sub">${totalRev>0?((totalProfit/totalRev)*100).toFixed(1)+"% margin":""}</div></div>
+    <div class="stat-card stat-blue"><div class="stat-label">Frames</div><div class="stat-value">${totalFS}</div><div class="stat-sub">${frames.length} models</div></div>
+    <div class="stat-card stat-yellow"><div class="stat-label">Rx Lens</div><div class="stat-value">${totalRx}</div><div class="stat-sub">${rxL.length} products</div></div>
+  </div>
+
+  ${alerts.length>0?`
+  <div class="section">
+    <div style="font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.05em;font-weight:600;margin-bottom:8px">⚠ Alerts (${alerts.length})</div>
+    ${alerts.slice(0,5).map(a=>`<div class="alert alert-${a.c}"><div class="alert-msg">${a.msg}</div></div>`).join("")}
+  </div>`:""}
+
+  ${rxL.length>0?`
+  <div class="card card-p section">
+    <div class="sect-title blue">🔵 Rx Lens Power Stock</div>
+    ${rxL.map(p=>{
+      const sp = Object.entries(p.stock||{}).filter(([,v])=>v>0);
+      return `<div style="margin-bottom:8px"><div style="font-size:12px;font-weight:600;margin-bottom:6px">${p.brand} ${p.name}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        ${sp.length?sp.map(([pw,qty])=>`<div style="border-radius:8px;padding:4px 8px;font-size:11px;border:1px solid;${qty<=2?"border-color:rgba(180,83,9,0.5);background:rgba(120,53,15,0.3);color:#fcd34d":"border-color:rgba(37,99,235,0.4);background:rgba(30,58,138,0.3);color:#93c5fd"}">${pw}: ${qty}📦</div>`).join(""):`<span style="font-size:11px;color:#f87171">All out of stock</span>`}
+      </div></div>`;
+    }).join("")}
+  </div>`:""}
+
+  ${rgL.length>0?`
+  <div class="card card-p section">
+    <div class="sect-title" style="color:#fb923c">👁️ Reading Glasses Stock</div>
+    ${rgL.map(p=>{
+      const sp = Object.entries(p.stock||{}).filter(([,v])=>v>0);
+      return `<div style="margin-bottom:8px"><div style="font-size:12px;font-weight:600;margin-bottom:6px">${p.brand} ${p.name}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        ${sp.map(([pw,qty])=>`<div style="border-radius:8px;padding:4px 8px;font-size:11px;border:1px solid;${qty<=2?"border-color:rgba(180,83,9,0.5);background:rgba(120,53,15,0.3);color:#fcd34d":"border-color:rgba(154,52,18,0.4);background:rgba(124,45,18,0.3);color:#fdba74"}">${pw}: ${qty}pcs</div>`).join("")}
+      </div></div>`;
+    }).join("")}
+  </div>`:""}
+
+  ${topCol.length>0?`
+  <div class="card card-p section">
+    <div class="sect-title purple">🎨 Top Selling Colours</div>
+    ${buildBar(topCol.map(([l,v])=>({l,v,d:`${v} sold`})), "#a855f7")}
+  </div>`:""}
+
+  ${recent.length>0?`
+  <div class="card card-p section">
+    <div class="sect-title green">🧾 Recent Sales</div>
+    ${recent.map(s=>{
+      const p = P.find(x=>x.id===s.productId);
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(55,65,81,0.5)">
+        <div><div style="font-size:14px;font-weight:500">${p?`${p.brand} ${p.collection||p.name||p.lensColor||""}`:"Unknown"}${s.colour?` · ${s.colour}`:""}${s.power?` · ${s.power}`:""}</div>
+        <div style="font-size:11px;color:#9ca3af">Slip #${s.billNumber} · ${s.date}</div></div>
+        <div style="font-size:14px;font-weight:700;color:#34d399">${fmt(s.amount)}</div>
+      </div>`;
+    }).join("")}
+  </div>`:""}`;
+}
+
+// ═══════════════════════════════
+// INVENTORY
+// ═══════════════════════════════
+function buildInventory() {
+  const P = state.products, S = state.sales;
+  let filtered = P.filter(p => {
+    const q = state.inv_search.toLowerCase();
+    const ms = !q || [p.brand,p.collection,p.name,p.lensColor,p.sku,p.accessoryType,...(p.tags||[])].some(v=>v?.toLowerCase().includes(q));
+    const mt = state.inv_typeFilter==="all"||p.type===state.inv_typeFilter;
+    const f = state.inv_filters;
+    const mb = !f.brand||p.brand===f.brand;
+    const msh = !f.shape||(p.shape||"")===f.shape;
+    const mm = !f.material||(p.material||"")===f.material;
+    const mg = !f.gender||(p.gender||"")===f.gender;
+    const pr = p.sellingPrice||0;
+    const mpn = !state.inv_pMin||pr>=parseFloat(state.inv_pMin);
+    const mpx = !state.inv_pMax||pr<=parseFloat(state.inv_pMax);
+    const si = getStock(p);
+    let mst = true;
+    if(f.status==="low") mst=si.isLow;
+    if(f.status==="out") mst=si.isOut;
+    if(f.status==="dead") {
+      const ls=S.filter(s=>s.productId===p.id).sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
+      mst=si.total>0&&((!ls&&daysSince(p.purchaseDate||p.createdAt)>180)||(ls&&daysSince(ls.date)>180));
+    }
+    return ms&&mt&&mb&&msh&&mm&&mg&&mpn&&mpx&&mst;
+  });
+
+  const allBrands = [...new Set(P.map(p=>p.brand).filter(Boolean))];
+  const typePills = [{id:"all",l:"All"},{id:"frame",l:"👓 Frames"},{id:"sunglasses",l:"🕶️ Sun"},{id:"rx_lens",l:"🔵 Rx"},{id:"colour_lens",l:"🌈 Colour"},{id:"rg_lens",l:"👁️ Reading"},{id:"accessory",l:"📦 Acc"}];
+  const activeF = Object.values(state.inv_filters).filter(Boolean).length + (state.inv_pMin?1:0) + (state.inv_pMax?1:0);
+
+  return `
+  <div class="page-title">Inventory</div>
+  <div class="search-row">
+    <input class="search-input" placeholder="Search brand, model, SKU..." value="${state.inv_search}" oninput="invSearch(this.value)"/>
+    <button class="icon-btn" onclick="toggleFilter()" style="position:relative">
+      ⚙️${activeF>0?`<span style="position:absolute;top:-4px;right:-4px;background:#2563eb;border-radius:50%;width:16px;height:16px;font-size:10px;display:flex;align-items:center;justify-content:center">${activeF}</span>`:""}
+    </button>
+    <button class="icon-btn" onclick="toggleView()">${state.inv_view==="grid"?"☰":"⊞"}</button>
+  </div>
+
+  <div class="type-pills">
+    ${typePills.map(t=>`<button class="type-pill ${state.inv_typeFilter===t.id?"active":"inactive"}" onclick="setTypeFilter('${t.id}')">${t.l} (${t.id==="all"?P.length:P.filter(p=>p.type===t.id).length})</button>`).join("")}
+  </div>
+
+  ${state.inv_showFilter?`
+  <div class="card card-p section">
+    <div class="sect-title blue">Advanced Filters</div>
+    <div style="font-size:12px;color:#9ca3af;margin-bottom:8px">Price Range ₹</div>
+    <div class="price-row">
+      <input type="number" placeholder="Min ₹" value="${state.inv_pMin}" oninput="setPMin(this.value)" style="background:#374151;border:1px solid #4b5563;border-radius:12px;padding:8px 12px;color:#fff;font-size:12px;outline:none;flex:1"/>
+      <span class="price-dash">—</span>
+      <input type="number" placeholder="Max ₹" value="${state.inv_pMax}" oninput="setPMax(this.value)" style="background:#374151;border:1px solid #4b5563;border-radius:12px;padding:8px 12px;color:#fff;font-size:12px;outline:none;flex:1"/>
+    </div>
+    <div class="filter-grid">
+      <select onchange="setFilter('brand',this.value)"><option value="">All Brands</option>${allBrands.map(b=>`<option value="${b}" ${state.inv_filters.brand===b?"selected":""}>${b}</option>`).join("")}</select>
+      <select onchange="setFilter('shape',this.value)"><option value="">All Shapes</option>${SHAPES.map(s=>`<option value="${s}" ${state.inv_filters.shape===s?"selected":""}>${s}</option>`).join("")}</select>
+      <select onchange="setFilter('material',this.value)"><option value="">All Materials</option>${MATERIALS.map(m=>`<option value="${m}" ${state.inv_filters.material===m?"selected":""}>${m}</option>`).join("")}</select>
+      <select onchange="setFilter('gender',this.value)"><option value="">All Genders</option>${GENDERS.map(g=>`<option value="${g}" ${state.inv_filters.gender===g?"selected":""}>${g}</option>`).join("")}</select>
+      <select onchange="setFilter('status',this.value)">
+        <option value="">All Status</option>
+        <option value="low" ${state.inv_filters.status==="low"?"selected":""}>Low Stock</option>
+        <option value="out" ${state.inv_filters.status==="out"?"selected":""}>Out of Stock</option>
+        <option value="dead" ${state.inv_filters.status==="dead"?"selected":""}>Dead (6mo)</option>
+      </select>
+    </div>
+    <button onclick="clearFilters()" style="font-size:12px;color:#9ca3af;padding:8px;width:100%">Clear All Filters</button>
+  </div>`:""}
+
+  <div style="font-size:12px;color:#9ca3af;margin-bottom:12px">${filtered.length} of ${P.length} products</div>
+
+  ${filtered.length===0?`<div class="empty"><div class="empty-icon">🔍</div><div class="empty-sub">${P.length===0?"No products yet — tap + Add":"No results"}</div></div>`:""}
+
+  ${state.inv_view==="grid"?`
+  <div class="prod-grid">
+    ${filtered.map(p=>buildProductCard(p)).join("")}
+  </div>`:`
+  <div>
+    ${filtered.map(p=>buildProductRow(p)).join("")}
+  </div>`}`;
+}
+
+function buildProductCard(p) {
+  const si = getStock(p);
+  const img = p.images?.[0];
+  const name = p.type==="rx_lens"?p.name:p.type==="colour_lens"?`${p.lensColor} Colour`:p.type==="rg_lens"?p.name||"Reading Glasses":p.type==="accessory"?p.accessoryType:p.collection||p.name||"";
+  return `
+  <div class="prod-card">
+    <div class="prod-img">
+      ${img?`<img src="${img}" alt=""/>`:`<span style="opacity:0.2">${tIcon(p.type)}</span>`}
+      <div class="prod-stock-badge ${stockBg(si)}">${si.total}</div>
+      <div class="prod-type-badge"><span class="badge ${tBadge(p.type)}">${tIcon(p.type)}</span></div>
+    </div>
+    <div class="prod-info">
+      <div class="prod-brand">${p.brand||"—"}</div>
+      <div class="prod-sub">${name}</div>
+      ${p.variants?.length?`<div class="prod-variants">${p.variants.slice(0,3).map(v=>`<span class="prod-var-tag">${v.color}:${v.qty}</span>`).join("")}${p.variants.length>3?`<span class="prod-var-tag">+${p.variants.length-3}</span>`:""}</div>`:""}
+      <div class="prod-price">${fmt(p.sellingPrice)}</div>
+      <div class="prod-actions">
+        <button class="btn-sell-sm" onclick="startSell('${p.id}')">Sell</button>
+        <button class="btn-edit-sm" onclick="editProduct('${p.id}')">Edit</button>
+        <button class="btn-del-sm" onclick="requestDelete('${p.id}')">🗑</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function buildProductRow(p) {
+  const si = getStock(p);
+  const img = p.images?.[0];
+  const name = p.type==="colour_lens"?p.lensColor:p.type==="accessory"?p.accessoryType:p.collection||p.name||"";
+  const sCol = si.isOut?"color:#f87171":si.isLow?"color:#fbbf24":"color:#34d399";
+  return `
+  <div class="prod-row" style="margin-bottom:8px">
+    <div class="prod-row-img">
+      ${img?`<img src="${img}" alt=""/>`:`<span style="opacity:0.2">${tIcon(p.type)}</span>`}
+    </div>
+    <div class="prod-row-info">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
+        <span style="font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.brand}</span>
+        <span class="badge ${tBadge(p.type)}">${tIcon(p.type)}</span>
+      </div>
+      <div style="font-size:12px;color:#9ca3af;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${name}</div>
+      <div style="display:flex;gap:12px;margin-top:4px">
+        <span style="font-size:14px;font-weight:700;color:#34d399">${fmt(p.sellingPrice)}</span>
+        <span style="font-size:12px;font-weight:600;${sCol}">${si.label}</span>
+      </div>
+    </div>
+    <div class="prod-row-actions">
+      <button class="btn-sell-sm" style="background:rgba(5,150,105,0.5);border:1px solid rgba(4,120,87,0.5);color:#fff" onclick="startSell('${p.id}')">💰</button>
+      <button class="btn-sm" style="background:rgba(55,65,81,0.8);border:1px solid #4b5563;color:#d1d5db" onclick="editProduct('${p.id}')">✏️</button>
+      <button class="btn-sm" style="background:rgba(127,29,29,0.4);border:1px solid rgba(153,27,27,0.4);color:#f87171" onclick="requestDelete('${p.id}')">🗑</button>
+    </div>
+  </div>`;
+}
+
+// ═══════════════════════════════
+// ADD PRODUCT
+// ═══════════════════════════════
+function buildAdd() {
+  if (!state.addType) return buildTypeSel();
+  const t = state.addType;
+  if (t==="frame"||t==="sunglasses") return buildFrameForm();
+  if (t==="rx_lens"||t==="rg_lens") return buildPowerForm();
+  if (t==="colour_lens") return buildColourForm();
+  if (t==="accessory") return buildAccForm();
+  return buildTypeSel();
+}
+
+function buildTypeSel() {
+  return `
+  <button class="back-btn" onclick="goTab('inventory')">←</button>
+  <div class="page-title">Add Product</div>
+  <div class="page-sub">What are you adding?</div>
+  ${PROD_TYPES.map(t=>`
+  <button class="type-btn" onclick="selectType('${t.id}')">
+    <span class="type-icon">${t.icon}</span>
+    <div><div class="type-label">${t.label}</div><div class="type-desc">${t.desc}</div></div>
+  </button>`).join("")}`;
+}
+
+function photoRow(fieldName) {
+  const imgs = formData.images||[];
+  return `
+  <div class="photo-row" id="photo-row">
+    ${imgs.map((url,i)=>`<div class="photo-thumb"><img src="${url}"/><button class="photo-del" onclick="removePhoto(${i})">✕</button></div>`).join("")}
+    <label class="photo-add" style="cursor:pointer">
+      <span style="font-size:24px">+</span>
+      <small>${uploadingPhotos?"...":"Photo"}</small>
+      <input type="file" accept="image/*" multiple onchange="handlePhotos(event)" style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer"/>
+    </label>
+  </div>
+  <div class="photo-hint">Tap + to take photo or choose from gallery</div>`;
+}
+
+function buildFrameForm() {
+  const isSun = state.addType==="sunglasses";
+  const C = state.customs;
+  const allBrands = isSun ? [...new Set([...SUN_BRANDS,...(C.sunglass_brands||[])])] : [...new Set([...(C.frame_brands||[])])];
+  const allShapes = [...new Set([...SHAPES,...(C.shapes||[])])];
+  const allMats = [...new Set([...MATERIALS,...(C.materials||[])])];
+  const allCats = [...new Set([...FRAME_CATS,...(C.frame_categories||[])])];
+  const allColls = C.collections||[];
+  const margin = formData.purchasePrice&&formData.sellingPrice ? ((parseFloat(formData.sellingPrice)-parseFloat(formData.purchasePrice))/parseFloat(formData.purchasePrice)*100).toFixed(1) : null;
+  const total = formVariants.reduce((a,v)=>a+v.qty,0);
+
+  return `
+  <button class="back-btn" onclick="backFromAdd()">←</button>
+  <div class="page-title">${state.editing?"Edit":"Add"} ${isSun?"Sunglasses":"Frame"}</div>
+  ${state.flashMsg?`<div class="flash"><span style="font-size:20px">✅</span><div class="flash-text">${state.flashMsg}</div></div>`:""}
+
+  ${!state.editing?`
+  <button class="scan-btn" onclick="startScan()">
+    <div class="scan-icon">📷</div>
+    <div><div class="scan-title">Smart Scan Temple</div><div class="scan-sub">Point camera at frame arm → AI fills form</div></div>
+    <span class="scan-arrow">→</span>
+  </button>`:""}
+
+  <div class="card card-p section">
+    <div class="sect-title blue">📷 Frame Photos</div>
+    ${photoRow()}
+  </div>
+
+  <div class="card card-p section">
+    <div class="sect-title blue">Basic Info</div>
+    ${fieldCmb("Brand","brand",allBrands,true)}
+    ${fieldCmb("Collection","collection",allColls)}
+    ${fieldInp("SKU / Model Number","sku")}
+    <div class="grid2">
+      ${fieldCmb("Shape","shape",allShapes)}
+      ${fieldCmb("Material","material",allMats)}
+      ${fieldSel("Gender","gender",GENDERS)}
+      ${fieldCmb("Category","category",allCats)}
+    </div>
+    ${fieldInp("Size (e.g. 52-18-145)","size")}
+  </div>
+
+  <div class="card card-p section">
+    <div class="sect-title green">Pricing</div>
+    <div class="grid2">
+      ${fieldInp("Purchase Price ₹","purchasePrice","number")}
+      ${fieldInp("MRP ₹","mrp","number")}
+    </div>
+    ${fieldInp("Selling Price ₹","sellingPrice","number",true)}
+    ${margin!==null?`<div class="margin-box ${parseFloat(margin)>0?"margin-pos":"margin-neg"}">Margin: ${fmt(parseFloat(formData.sellingPrice)-parseFloat(formData.purchasePrice))} (${margin}%)</div>`:""}
+  </div>
+
+  <div class="card card-p section">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <span class="sect-title amber" style="margin-bottom:0">Colours & Stock</span>
+      <span style="font-size:12px;color:#fbbf24;font-weight:700">Total: ${total} pcs</span>
+    </div>
+    <div style="font-size:12px;color:#9ca3af;margin-bottom:12px">Add each colour with its quantity</div>
+    <div id="variants-list">
+      ${formVariants.map((v,i)=>`
+      <div class="variant-row">
+        <span class="variant-color">${v.color}</span>
+        <input type="number" min="0" value="${v.qty}" class="variant-qty" onchange="updateVariantQty(${i},this.value)"/>
+        <span style="font-size:12px;color:#9ca3af">pcs</span>
+        <button class="variant-del" onclick="removeVariant(${i})">✕</button>
+      </div>`).join("")}
+    </div>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <input type="text" id="new-colour-input" list="col-list" placeholder="Add colour..." style="flex:1;background:#374151;border:1px solid #4b5563;border-radius:12px;padding:8px 12px;color:#fff;font-size:14px;outline:none"/>
+      <datalist id="col-list">${COLORS.map(c=>`<option value="${c}"/>`).join("")}</datalist>
+      <button onclick="addVariant()" style="background:#2563eb;color:#fff;padding:8px 16px;border-radius:12px;font-weight:600;font-size:14px">Add</button>
+    </div>
+    <div style="margin-top:16px"></div>
+    ${fieldInp("Reorder Level (total pieces)","reorderLevel","number")}
+    ${fieldInp("Purchase Date","purchaseDate","date")}
+    ${fieldInp("Rack / Location","location")}
+  </div>
+
+  <div class="card card-p section">
+    <div class="sect-title purple">Supplier & Tags</div>
+    ${fieldCmb("Supplier","supplier",C.suppliers||[])}
+    ${fieldInp("Tags (comma separated)","tags")}
+    <div class="field"><label>Notes</label><textarea rows="2" onchange="setFormField('notes',this.value)">${formData.notes||""}</textarea></div>
+  </div>
+
+  <div class="flex-btns">
+    <button class="btn btn-gray" onclick="backFromAdd()">Cancel</button>
+    <button class="btn btn-blue" onclick="saveFrame()" id="save-btn">${state.editing?"Update":"Save Frame"}</button>
+  </div>`;
+}
+
+function buildPowerForm() {
+  const isRx = state.addType==="rx_lens";
+  const powers = isRx ? RX_POWERS : RG_POWERS;
+  const C = state.customs;
+  const allBrands = [...new Set([...LENS_BRANDS,...(C.lens_brands||[]),...(C.frame_brands||[])])];
+  const allWear = [...new Set([...WEAR_SCHED,...(C.wear_schedules||[])])];
+  const total = Object.values(formStock).reduce((a,v)=>a+v,0);
+  const label = isRx?"Rx Contact Lens":"Reading Glasses";
+
+  return `
+  <button class="back-btn" onclick="backFromAdd()">←</button>
+  <div class="page-title">${state.editing?"Edit":"Add"} ${label}</div>
+
+  <div class="card card-p section">
+    <div class="sect-title blue">📷 Photos</div>
+    ${photoRow()}
+  </div>
+
+  <div class="card card-p section">
+    <div class="sect-title blue">Product Info</div>
+    ${fieldCmbCustom("Brand","brand",allBrands,true)}
+    ${fieldInp("Product Name","name")}
+    ${isRx?`<div class="grid2">
+      ${fieldInp("Base Curve","baseCurve")}
+      ${fieldInp("Diameter","diameter")}
+      ${fieldCmbCustom("Wear Schedule","wearSchedule",allWear)}
+      ${fieldInp("Pack Size (lenses)","packSize","number")}
+    </div>`:""}
+  </div>
+
+  <div class="card card-p section">
+    <div class="sect-title green">Pricing (per ${isRx?"box":"piece"})</div>
+    <div class="grid2">
+      ${fieldInp("Purchase Price ₹","purchasePrice","number")}
+      ${fieldInp("MRP ₹","mrp","number")}
+    </div>
+    ${fieldInp("Selling Price ₹","sellingPrice","number",true)}
+  </div>
+
+  <div class="card card-p section">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <span class="sect-title amber" style="margin-bottom:0">Stock Per Power</span>
+      <span style="font-size:12px;color:#fbbf24;font-weight:700">Total: ${total}</span>
+    </div>
+    <div class="power-grid">
+      ${powers.map(pw=>`
+      <div class="power-cell ${(formStock[pw]||0)>0?"power-cell-filled":"power-cell-empty"}">
+        <label>${pw}</label>
+        <input type="number" min="0" value="${formStock[pw]||0}" onchange="setStockPower('${pw}',this.value)"/>
+      </div>`).join("")}
+    </div>
+  </div>
+
+  <div class="card card-p section">
+    <div class="sect-title purple">Supplier</div>
+    ${fieldCmbCustom("Supplier","supplier",C.suppliers||[])}
+    ${fieldInp("Purchase Date","purchaseDate","date")}
+    ${fieldInp("Tags","tags")}
+    <div class="field"><label>Notes</label><textarea rows="2" onchange="setFormField('notes',this.value)">${formData.notes||""}</textarea></div>
+  </div>
+
+  <div class="flex-btns">
+    <button class="btn btn-gray" onclick="backFromAdd()">Cancel</button>
+    <button class="btn btn-blue" onclick="savePower()">${state.editing?"Update":"Save"}</button>
+  </div>`;
+}
+
+function buildColourForm() {
+  const C = state.customs;
+  const allBrands = [...new Set([...LENS_BRANDS,...(C.lens_brands||[])])];
+  const allLColors = [...new Set([...LENS_COLORS,...(C.lens_colors||[])])];
+  const allWear = [...new Set([...WEAR_SCHED,...(C.wear_schedules||[])])];
+  const margin = formData.purchasePrice&&formData.sellingPrice ? ((parseFloat(formData.sellingPrice)-parseFloat(formData.purchasePrice))/parseFloat(formData.purchasePrice)*100).toFixed(1) : null;
+
+  return `
+  <button class="back-btn" onclick="backFromAdd()">←</button>
+  <div class="page-title">${state.editing?"Edit":"Add"} Colour Lens</div>
+
+  <div class="card card-p section">
+    <div class="sect-title blue">📷 Photos</div>
+    ${photoRow()}
+  </div>
+
+  <div class="card card-p section">
+    <div class="sect-title purple">Lens Info</div>
+    ${fieldCmbCustom("Brand","brand",allBrands,true)}
+    ${fieldCmbCustom("Lens Colour","lensColor",allLColors,true)}
+    <div class="grid2">
+      ${fieldInp("Base Curve","baseCurve")}
+      ${fieldInp("Diameter","diameter")}
+      ${fieldCmbCustom("Wear Schedule","wearSchedule",allWear)}
+    </div>
+    <div class="plano-badge">Power: Plano (0.00) — No prescription</div>
+  </div>
+
+  <div class="card card-p section">
+    <div class="sect-title green">Pricing (per box)</div>
+    <div class="grid2">
+      ${fieldInp("Purchase Price ₹","purchasePrice","number")}
+      ${fieldInp("MRP ₹","mrp","number")}
+    </div>
+    ${fieldInp("Selling Price ₹","sellingPrice","number",true)}
+    ${margin!==null?`<div class="margin-box ${parseFloat(margin)>0?"margin-pos":"margin-neg"}">Margin: ${fmt(parseFloat(formData.sellingPrice)-parseFloat(formData.purchasePrice))} (${margin}%)</div>`:""}
+  </div>
+
+  <div class="card card-p section">
+    <div class="sect-title amber">Stock (boxes)</div>
+    <div class="grid2">
+      ${fieldInp("Current Stock","currentStock","number",true)}
+      ${fieldInp("Reorder Level","reorderLevel","number")}
+    </div>
+    ${fieldInp("Purchase Date","purchaseDate","date")}
+  </div>
+
+  <div class="card card-p section">
+    <div class="sect-title purple">Supplier</div>
+    ${fieldCmbCustom("Supplier","supplier",C.suppliers||[])}
+    ${fieldInp("Tags","tags")}
+    <div class="field"><label>Notes</label><textarea rows="2" onchange="setFormField('notes',this.value)">${formData.notes||""}</textarea></div>
+  </div>
+
+  <div class="flex-btns">
+    <button class="btn btn-gray" onclick="backFromAdd()">Cancel</button>
+    <button class="btn btn-purple" onclick="saveColour()">${state.editing?"Update":"Save"}</button>
+  </div>`;
+}
+
+function buildAccForm() {
+  const C = state.customs;
+  return `
+  <button class="back-btn" onclick="backFromAdd()">←</button>
+  <div class="page-title">${state.editing?"Edit":"Add"} Accessory</div>
+
+  <div class="card card-p section">
+    <div class="sect-title blue">📷 Photos</div>
+    ${photoRow()}
+  </div>
+
+  <div class="card card-p section">
+    <div class="sect-title cyan">Item Info</div>
+    ${fieldSel("Type","accessoryType",ACC_TYPES)}
+    ${fieldInp("Name / Description","name",undefined,true)}
+    ${fieldCmbCustom("Brand","brand",["Generic",...(C.frame_brands||[]),...(C.sunglass_brands||[])])}
+    ${fieldCmbCustom("Supplier","supplier",C.suppliers||[])}
+  </div>
+
+  <div class="card card-p section">
+    <div class="sect-title amber">Stock & Reorder</div>
+    <div class="grid2">
+      ${fieldInp("Current Stock","currentStock","number",true)}
+      ${fieldInp("Reorder Level","reorderLevel","number")}
+      ${fieldInp("Lead Time (days)","leadTimeDays","number")}
+      ${fieldInp("Purchase Price ₹","purchasePrice","number")}
+    </div>
+    ${fieldInp("Purchase Date","purchaseDate","date")}
+    <div class="field"><label>Notes</label><textarea rows="2" onchange="setFormField('notes',this.value)">${formData.notes||""}</textarea></div>
+  </div>
+
+  <div class="flex-btns">
+    <button class="btn btn-gray" onclick="backFromAdd()">Cancel</button>
+    <button class="btn" style="background:#0891b2;color:#fff;flex:1" onclick="saveAcc()">${state.editing?"Update":"Save"}</button>
+  </div>`;
+}
+
+// Helper field builders
+function fieldInp(label, key, type="text", req=false) {
+  return `<div class="field"><label>${label}${req?'<span style="color:#f87171;margin-left:2px">*</span>':""}</label><input type="${type}" value="${(formData[key]||"").toString().replace(/"/g,"&quot;")}" onchange="setFormField('${key}',this.value)" oninput="setFormField('${key}',this.value)"/></div>`;
+}
+function fieldSel(label, key, opts) {
+  return `<div class="field"><label>${label}</label><select onchange="setFormField('${key}',this.value)"><option value="">Select...</option>${opts.map(o=>`<option value="${o}" ${formData[key]===o?"selected":""}>${o}</option>`).join("")}</select></div>`;
+}
+function fieldCmb(label, key, opts, req=false) {
+  const did = "dl_"+key+"_"+Math.random().toString(36).slice(2);
+  return `<div class="field"><label>${label}${req?'<span style="color:#f87171;margin-left:2px">*</span>':""}</label><input list="${did}" value="${(formData[key]||"").toString().replace(/"/g,"&quot;")}" placeholder="Select or type..." onchange="setFormField('${key}',this.value)" oninput="setFormField('${key}',this.value)"/><datalist id="${did}">${opts.map(o=>`<option value="${o}"/>`).join("")}</datalist></div>`;
+}
+function fieldCmbCustom(label, key, opts, req=false) { return fieldCmb(label,key,opts,req); }
+
+// ═══════════════════════════════
+// SELL
+// ═══════════════════════════════
+let sellState = { search:"", selectedId:null, power:"", colour:"", bill:"", qty:"1", price:"", date:today(), notes:"" };
+
+function buildSell() {
+  const P = state.products;
+  const sel = sellState.selectedId ? P.find(p=>p.id===sellState.selectedId) : null;
+
+  if (!sel) {
+    const avail = P.filter(p=>{
+      const q = sellState.search.toLowerCase();
+      return !q||[p.brand,p.collection,p.name,p.lensColor,p.sku,p.accessoryType].some(v=>v?.toLowerCase().includes(q));
+    });
+    return `
+    <div class="page-title">Record Sale</div>
+    <div class="page-sub">Enter 5-digit slip from billing software</div>
+    <input class="search-input" style="width:100%;margin-bottom:12px" placeholder="Search product..." value="${sellState.search}" oninput="setSellSearch(this.value)"/>
+    <div style="max-height:70vh;overflow-y:auto">
+      ${avail.map(p=>{const si=getStock(p);const img=p.images?.[0];
+        return `<button onclick="selectSellProduct('${p.id}')" style="width:100%;background:rgba(31,41,55,0.6);border:1px solid rgba(55,65,81,0.5);border-radius:16px;padding:12px;display:flex;gap:12px;align-items:center;text-align:left;margin-bottom:8px">
+          <div style="width:56px;height:56px;border-radius:12px;background:rgba(55,65,81,0.5);flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:22px;opacity:0.2;position:relative">${img?`<img src="${img}" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;opacity:1"/>`:`${tIcon(p.type)}`}</div>
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;gap:6px;align-items:center"><span style="font-size:14px;font-weight:600">${p.brand}</span><span class="badge ${tBadge(p.type)}">${tIcon(p.type)}</span></div>
+            <div style="font-size:12px;color:#9ca3af">${p.type==="colour_lens"?p.lensColor:p.type==="accessory"?p.accessoryType:p.collection||p.name||""}</div>
+            <div style="display:flex;gap:12px;margin-top:4px"><span style="font-size:14px;font-weight:700;color:#34d399">${fmt(p.sellingPrice)}</span><span style="font-size:12px;${si.isOut?"color:#f87171":si.isLow?"color:#fbbf24":"color:#34d399"}">${si.label}</span></div>
+          </div>
+        </button>`;
+      }).join("")}
+      ${avail.length===0?`<div class="empty"><div class="empty-icon" style="font-size:32px">🔍</div><div style="color:#9ca3af">No products found</div></div>`:""}
+    </div>`;
+  }
+
+  const si = getStock(sel);
+  const powers = sel.type==="rx_lens"?RX_POWERS:sel.type==="rg_lens"?RG_POWERS:[];
+  const total = (parseFloat(sellState.price)||0) * (parseInt(sellState.qty)||0);
+  const profit = sel ? (parseFloat(sellState.price||sel.sellingPrice)-sel.purchasePrice)*(parseInt(sellState.qty)||1) : 0;
+
+  return `
+  <div class="page-title">Record Sale</div>
+  <div style="background:rgba(30,58,138,0.2);border:1px solid rgba(37,99,235,0.3);border-radius:16px;padding:12px;display:flex;gap:12px;align-items:center;margin-bottom:16px">
+    <div style="width:64px;height:64px;border-radius:12px;background:rgba(55,65,81,0.5);flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:28px;opacity:0.2;position:relative">${sel.images?.[0]?`<img src="${sel.images[0]}" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;opacity:1"/>`:`${tIcon(sel.type)}`}</div>
+    <div style="flex:1"><div style="font-weight:600">${sel.brand}</div><div style="font-size:13px;color:#9ca3af">${sel.type==="colour_lens"?sel.lensColor:sel.collection||sel.name}</div><div style="font-weight:700;color:#34d399">${fmt(sel.sellingPrice)}</div></div>
+    <button onclick="clearSellSel()" style="font-size:12px;color:#60a5fa;border:1px solid #1d4ed8;padding:4px 8px;border-radius:8px">Change</button>
+  </div>
+
+  ${(sel.type==="frame"||sel.type==="sunglasses")&&sel.variants?.length?`
+  <div class="card card-p" style="margin-bottom:16px">
+    <div style="font-size:14px;font-weight:600;margin-bottom:12px">Select Colour</div>
+    <div class="colour-pills">
+      ${sel.variants.map(v=>`<button onclick="setSellColour('${v.color}')" class="colour-pill ${sellState.colour===v.color?"active":v.qty===0?"disabled":"inactive"}" ${v.qty===0?"disabled":""}>
+        ${v.color} <span style="font-size:11px;color:${v.qty<=2?"#fbbf24":"#34d399"}">(${v.qty})</span>
+      </button>`).join("")}
+    </div>
+    ${sellState.colour?`<div style="font-size:12px;color:#60a5fa;margin-top:8px">${sellState.colour} — ${sel.variants.find(v=>v.color===sellState.colour)?.qty||0} pcs available</div>`:""}
+  </div>`:""}
+
+  ${powers.length?`
+  <div class="card card-p" style="margin-bottom:16px">
+    <div style="font-size:14px;font-weight:600;margin-bottom:12px">Select Power</div>
+    <div class="power-grid">
+      ${powers.map(pw=>{const s=sel.stock?.[pw]||0;return`<button onclick="setSellPower('${pw}')" ${s===0?"disabled":""} style="border-radius:12px;padding:8px;border:1px solid;text-align:center;background:${sellState.power===pw?"rgba(30,58,138,0.5)":"rgba(55,65,81,0.3)"};border-color:${sellState.power===pw?"#2563eb":s===0?"rgba(55,65,81,0.3)":"#374151"};opacity:${s===0?0.4:1}">
+        <div style="font-size:12px;font-weight:700">${pw}</div>
+        <div style="font-size:11px;color:${s===0?"#ef4444":s<=2?"#fbbf24":"#34d399"}">${s}</div>
+      </button>`;}).join("")}
+    </div>
+  </div>`:""}
+
+  <div class="card card-p" style="margin-bottom:16px">
+    <div class="field"><label>Bill / Slip Number <span style="color:#f87171">*</span></label><input value="${sellState.bill}" placeholder="5-digit slip e.g. 45231" oninput="setSellField('bill',this.value)"/><div style="font-size:11px;color:#4b5563;margin-top:4px">From your billing software</div></div>
+    <div class="grid2">
+      <div class="field"><label>Quantity</label><input type="number" min="1" value="${sellState.qty}" oninput="setSellField('qty',this.value)"/></div>
+      <div class="field"><label>Sale Price ₹</label><input type="number" value="${sellState.price}" oninput="setSellField('price',this.value)"/></div>
+    </div>
+    <div class="field"><label>Date</label><input type="date" value="${sellState.date}" oninput="setSellField('date',this.value)"/></div>
+    <div class="field"><label>Notes</label><input value="${sellState.notes}" oninput="setSellField('notes',this.value)"/></div>
+  </div>
+
+  ${sellState.price&&sellState.qty?`
+  <div class="sale-summary" style="margin-bottom:16px">
+    <div class="sale-row"><span style="color:#9ca3af">Total:</span><span style="font-weight:700;color:#34d399">${fmt(total)}</span></div>
+    <div class="sale-row"><span style="color:#9ca3af">Profit:</span><span style="font-weight:700;color:${profit>=0?"#34d399":"#f87171"}">${fmt(profit)}</span></div>
+  </div>`:""}
+
+  <div class="flex-btns">
+    <button class="btn btn-gray" onclick="clearSellSel()">Cancel</button>
+    <button class="btn btn-green" onclick="recordSale()">✓ Record Sale</button>
+  </div>`;
+}
+
+// ═══════════════════════════════
+// ANALYTICS
+// ═══════════════════════════════
+function buildAnalytics() {
+  const P = state.products, S = state.sales;
+  const totalRev = S.reduce((a,s)=>a+s.amount,0);
+  const totalCost = S.reduce((a,s)=>{const p=P.find(x=>x.id===s.productId);return a+(p?.purchasePrice||0)*s.qty;},0);
+  const totalSold = S.reduce((a,s)=>a+s.qty,0);
+  const bm={},tm={},pm={},cm={},gm={},mm={};
+  S.forEach(s=>{
+    const p=P.find(x=>x.id===s.productId);if(!p)return;
+    if(p.brand){bm[p.brand]=bm[p.brand]||{sold:0,rev:0};bm[p.brand].sold+=s.qty;bm[p.brand].rev+=s.amount;}
+    const tl={frame:"Frames",sunglasses:"Sunglasses",rx_lens:"Rx Lens",colour_lens:"Colour Lens",rg_lens:"Reading Glasses",accessory:"Accessories"}[p.type]||p.type;
+    tm[tl]=(tm[tl]||0)+s.qty;
+    if((p.type==="rx_lens"||p.type==="rg_lens")&&s.power)pm[s.power]=(pm[s.power]||0)+s.qty;
+    if(s.colour)cm[s.colour]=(cm[s.colour]||0)+s.qty;
+    if(p.type==="colour_lens"&&p.lensColor)cm[p.lensColor]=(cm[p.lensColor]||0)+s.qty;
+    if(p.gender)gm[p.gender]=(gm[p.gender]||0)+s.qty;
+    if(p.material)mm[p.material]=(mm[p.material]||0)+s.qty;
+  });
+  const topBrands=Object.entries(bm).sort((a,b)=>b[1].rev-a[1].rev).slice(0,6);
+  const topPowers=Object.entries(pm).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const topColours=Object.entries(cm).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const dead=P.filter(p=>{if(p.type==="accessory")return false;const si=getStock(p);if(si.total<=0)return false;const ls=S.filter(s=>s.productId===p.id).sort((a,b)=>new Date(b.date)-new Date(a.date))[0];return(!ls&&daysSince(p.purchaseDate||p.createdAt)>180)||(ls&&daysSince(ls.date)>180);});
+
+  return `
+  <div class="page-title">Analytics</div>
+  <div class="page-sub">Business intelligence</div>
+  <div class="stat-grid section">
+    <div class="stat-card stat-blue"><div class="stat-label">Revenue</div><div class="stat-value">${fmt(totalRev)}</div><div class="stat-sub">${totalSold} sold</div></div>
+    <div class="stat-card stat-green"><div class="stat-label">Profit</div><div class="stat-value">${fmt(totalRev-totalCost)}</div><div class="stat-sub">${totalRev>0?((totalRev-totalCost)/totalRev*100).toFixed(1)+"% margin":""}</div></div>
+  </div>
+  ${S.length===0?`<div class="empty"><div class="empty-icon">📊</div><div class="empty-sub">Record sales to see analytics</div></div>`:""}
+  ${Object.keys(tm).length?`<div class="card card-p section"><div class="sect-title cyan">📂 Sales by Category</div>${buildBar(Object.entries(tm).sort((a,b)=>b[1]-a[1]).map(([l,v])=>({l,v,d:`${v} sold`})),"#06b6d4")}</div>`:""}
+  ${topBrands.length?`<div class="card card-p section"><div class="sect-title green">🏆 Top Brands</div>${topBrands.map(([br,d],i)=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(55,65,81,0.5)"><div style="display:flex;gap:8px;align-items:center"><span style="color:#4b5563;font-size:13px;width:16px">${i+1}</span><span style="font-size:14px">${br}</span></div><div style="text-align:right"><div style="font-size:14px;font-weight:700;color:#34d399">${fmt(d.rev)}</div><div style="font-size:11px;color:#9ca3af">${d.sold} sold</div></div></div>`).join("")}</div>`:""}
+  ${Object.keys(gm).length?`<div class="card card-p section"><div class="sect-title" style="color:#f472b6">👥 Sales by Gender</div>${buildBar(Object.entries(gm).sort((a,b)=>b[1]-a[1]).map(([l,v])=>({l,v,d:`${v} sold`})),"#ec4899")}</div>`:""}
+  ${Object.keys(mm).length?`<div class="card card-p section"><div class="sect-title amber">🔩 Material Trends</div>${buildBar(Object.entries(mm).sort((a,b)=>b[1]-a[1]).map(([l,v])=>({l,v,d:`${v} sold`})),"#f59e0b")}</div>`:""}
+  ${topColours.length?`<div class="card card-p section"><div class="sect-title purple">🎨 Top Colours</div>${buildBar(topColours.map(([l,v])=>({l,v,d:`${v} sold`})),"#a855f7")}</div>`:""}
+  ${topPowers.length?`<div class="card card-p section"><div class="sect-title blue">🔢 Top Powers</div>${buildBar(topPowers.map(([l,v])=>({l:`${l} SPH`,v,d:`${v} sold`})),"#3b82f6")}</div>`:""}
+  ${dead.length?`<div style="background:rgba(124,45,18,0.15);border:1px solid rgba(154,52,18,0.4);border-radius:16px;padding:16px" class="section">
+    <div style="font-size:14px;font-weight:600;color:#fb923c;margin-bottom:4px">💤 Dead Stock (6+ months) — ${dead.length} items</div>
+    <div style="font-size:12px;color:#9ca3af;margin-bottom:12px">Locked capital: <span style="color:#fb923c">${fmt(dead.reduce((a,p)=>a+(p.purchasePrice||0)*getStock(p).total,0))}</span></div>
+    ${dead.slice(0,6).map(p=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(124,45,18,0.3)"><div><div style="font-size:14px">${p.brand} ${p.collection||p.name}</div><div style="font-size:11px;color:#9ca3af">${getStock(p).label}</div></div><span style="font-size:12px;color:#fb923c">${fmt((p.purchasePrice||0)*getStock(p).total)}</span></div>`).join("")}
+  </div>`:""}
+  <div style="font-size:12px;color:#4b5563;text-align:center;margin-top:16px">${S.length} sales · ${P.length} products</div>`;
+}
+
+// ═══════════════════════════════
+// MORE / LISTS / DELETED
+// ═══════════════════════════════
+function buildMore() {
+  return `
+  <div class="page-title">More</div>
+  <button class="more-btn" onclick="goTab('lists')"><span class="more-icon">⚙️</span><div><div class="more-label">Manage Lists & Brands</div><div class="more-sub">Add brands, collections, suppliers</div></div></button>
+  <button class="more-btn" style="border-color:rgba(153,27,27,0.3)" onclick="goTab('deleted')"><span class="more-icon">🗑️</span><div><div class="more-label">Deleted Records</div><div class="more-sub">${state.deleted.length} records — audit trail</div></div></button>
+  <div class="card card-p" style="margin-top:8px"><div style="font-size:12px;color:#4b5563;font-weight:600;margin-bottom:4px">Data Storage</div><div style="font-size:12px;color:#4b5563">${state.products.length} products · ${state.sales.length} sales · Stored in browser</div></div>`;
+}
+
+function buildLists() {
+  const groups=[{k:"sunglass_brands",l:"Sunglass Brands",i:"🕶️"},{k:"frame_brands",l:"Frame Brands",i:"👓"},{k:"lens_brands",l:"Lens Brands",i:"🔵"},{k:"collections",l:"Collections",i:"🗂️"},{k:"suppliers",l:"Suppliers",i:"🚚"},{k:"frame_categories",l:"Categories",i:"📂"},{k:"lens_colors",l:"Lens Colours",i:"🌈"},{k:"wear_schedules",l:"Wear Schedules",i:"📅"},{k:"shapes",l:"Shapes",i:"🔷"},{k:"materials",l:"Materials",i:"🔩"},{k:"colors",l:"Frame Colors",i:"🎨"}];
+  const cur = state.customs[state.listActive]||[];
+  const g = groups.find(x=>x.k===state.listActive);
+  return `
+  <div class="page-title">Lists & Brands</div>
+  <div class="grad-card"><div style="font-size:14px;font-weight:600;color:#93c5fd;margin-bottom:4px">🏷️ White Label Brand</div><div style="font-size:12px;color:#9ca3af">Add your brand to Frame Brands or Sunglass Brands — tracked from day one.</div></div>
+  <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px">
+    ${groups.map(gr=>`<button onclick="setListActive('${gr.k}')" style="padding:6px 12px;border-radius:20px;font-size:12px;font-weight:500;border:1px solid;cursor:pointer;background:${state.listActive===gr.k?"#2563eb":"#1f2937"};border-color:${state.listActive===gr.k?"#1d4ed8":"#374151"};color:${state.listActive===gr.k?"#fff":"#9ca3af"}">${gr.i} ${gr.l}${(state.customs[gr.k]||[]).length>0?` (${(state.customs[gr.k]||[]).length})`:""}</button>`).join("")}
+  </div>
+  <div class="card card-p section">
+    <div style="font-size:14px;font-weight:600;margin-bottom:12px">${g?.i} ${g?.l}</div>
+    <div style="display:flex;gap:8px">
+      <input value="${state.listInput}" oninput="setListInput(this.value)" onkeydown="if(event.key==='Enter')addListItem()" placeholder="Type name and press Enter..." style="flex:1;background:#374151;border:1px solid #4b5563;border-radius:12px;padding:10px 12px;color:#fff;font-size:14px;outline:none"/>
+      <button onclick="addListItem()" style="background:#2563eb;color:#fff;padding:10px 20px;border-radius:12px;font-weight:600;font-size:14px">Add</button>
+    </div>
+  </div>
+  <div class="card card-p">
+    <div style="font-size:14px;font-weight:600;margin-bottom:12px">${g?.l} <span style="color:#9ca3af;font-weight:400">(${cur.length})</span></div>
+    ${cur.length===0?`<div style="color:#4b5563;font-size:14px;text-align:center;padding:12px">Nothing added yet</div>`:`<div style="display:flex;flex-wrap:wrap;gap:4px">${cur.map(item=>`<span class="list-tag">${item}<span class="list-tag-x" onclick="removeListItem('${item}')">✕</span></span>`).join("")}</div>`}
+  </div>`;
+}
+
+function buildDeleted() {
+  const D = state.deleted;
+  return `
+  <div class="page-title">🗑️ Deleted Records</div>
+  <div class="page-sub">Audit trail — owner view only</div>
+  ${D.length===0?`<div class="empty"><div class="empty-icon">✅</div><div class="empty-sub">No deleted records</div></div>`
+  :D.map(r=>`<div class="del-record"><div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px"><span style="font-weight:600">${r.brand} ${r.collection||r.name||r.lensColor||""}</span><span class="badge badge-red">${r.type}</span></div><div style="font-size:12px;color:#9ca3af">🕐 ${new Date(r.deletedAt).toLocaleString("en-IN")}</div><div style="font-size:12px;color:#9ca3af;margin-top:2px">📝 ${r.reason||"No reason"}</div><div style="font-size:12px;color:#9ca3af;margin-top:2px">📦 Stock: ${r.stockAtDeletion}</div>${r.saleExists===false?`<div class="warn-tag">⚠ No matching sale entry — investigate</div>`:""}</div>`).join("")}`;
+}
+
+// ═══════════════════════════════
+// MODALS
+// ═══════════════════════════════
+function buildPinModal() {
+  if (!state.pinTarget) return "";
+  return `<div class="modal-overlay"><div class="modal">
+    <h3>🔐 Delete Product</h3>
+    <p>${state.pinTarget.brand} ${state.pinTarget.collection||state.pinTarget.name||""}<br/>Enter owner PIN to continue</p>
+    <div class="field"><input type="password" maxlength="4" value="${state.pinVal}" placeholder="PIN" oninput="setPinVal(this.value)" onkeydown="if(event.key==='Enter')checkPin()" style="text-align:center;font-size:22px;letter-spacing:8px" id="pin-input"/></div>
+    ${state.pinErr?`<div style="color:#f87171;font-size:12px;text-align:center;margin-bottom:8px">Wrong PIN. Try again.</div>`:""}
+    <div class="flex-btns">
+      <button class="btn btn-gray" onclick="cancelPin()">Cancel</button>
+      <button class="btn btn-red" onclick="checkPin()">Confirm</button>
+    </div>
+  </div></div>`;
+}
+
+function buildDelModal() {
+  if (!state.showDelModal) return "";
+  return `<div class="modal-overlay"><div class="modal">
+    <h3>🗑️ Delete Product</h3>
+    <p style="margin-bottom:12px">${state.delTarget?.brand} ${state.delTarget?.collection||state.delTarget?.name||""}</p>
+    <div class="field"><label>Reason for deletion *</label>
+      <select onchange="state.delReason=this.value">
+        <option value="">Select reason...</option>
+        <option value="Item sold — no stock remaining">Item sold — no stock remaining</option>
+        <option value="Damaged / returned to supplier">Damaged / returned</option>
+        <option value="Data entry mistake">Data entry mistake</option>
+        <option value="Discontinued product">Discontinued</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+    <div style="font-size:12px;color:#f59e0b;background:rgba(120,53,15,0.2);border:1px solid rgba(146,64,14,0.4);border-radius:12px;padding:10px;margin-bottom:16px">Saved to Deleted Records with timestamp. Nothing truly erased.</div>
+    <div class="flex-btns">
+      <button class="btn btn-gray" onclick="cancelDel()">Cancel</button>
+      <button class="btn btn-red" onclick="execDel()" ${!state.delReason?"disabled style='opacity:0.4'":""}>Delete</button>
+    </div>
+  </div></div>`;
+}
+
+// ═══════════════════════════════
+// SCAN SCREEN
+// ═══════════════════════════════
+function buildScanScreen() {
+  if (!state.scanStep) return "";
+  if (state.scanStep==="intro") return `
+  <div class="fullscreen">
+    <div class="fs-header"><button class="fs-back" onclick="closeScan()">←</button><div><div style="font-weight:700">📷 Smart Temple Scan</div><div style="font-size:12px;color:#9ca3af">AI reads frame details automatically</div></div></div>
+    <div class="fs-body">
+      <div class="card card-p section">
+        ${[["1","Hold frame — temple (side arm) facing up"],["2","Point camera at inside of arm where text is printed"],["3","Take a clear close-up in good light"],["✓","AI fills brand, model, size automatically"]].map(([n,t])=>`
+        <div style="display:flex;gap:12px;align-items:start;margin-bottom:12px">
+          <div style="min-width:28px;height:28px;border-radius:50%;background:${n==="✓"?"#059669":"#2563eb"};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">${n}</div>
+          <p style="font-size:14px;color:#d1d5db;padding-top:4px">${t}</p>
+        </div>`).join("")}
+      </div>
+      ${state.scanResult&&state.scanResult.error?`<div style="background:rgba(127,29,29,0.3);border:1px solid rgba(153,27,27,0.5);border-radius:16px;padding:12px;margin-bottom:16px"><p style="color:#f87171;font-size:14px">${state.scanResult.error}</p></div>`:""}
+      <label style="display:flex;align-items:center;justify-content:center;gap:12px;background:#2563eb;border-radius:16px;padding:20px;font-size:18px;font-weight:700;cursor:pointer;position:relative;overflow:hidden;width:100%;margin-bottom:8px">
+        📷 Take Photo of Temple
+        <input type="file" accept="image/*" onchange="handleScanPhoto(event)" style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer"/>
+      </label>
+      <p style="text-align:center;font-size:12px;color:#4b5563">Tap above — camera will open</p>
+    </div>
+  </div>`;
+
+  if (state.scanStep==="scanning") return `
+  <div class="fullscreen">
+    <div class="scanning-screen">
+      ${state.scanPreview?`<img src="${state.scanPreview}" style="width:100%;max-height:200px;object-fit:cover;border-radius:16px"/>`:""}
+      <div class="scanning-icon">🔍</div>
+      <div style="text-align:center"><div style="font-size:20px;font-weight:700;margin-bottom:8px">Reading temple...</div><div style="color:#9ca3af">AI extracting brand, model, size</div></div>
+    </div>
+  </div>`;
+
+  if (state.scanStep==="result"&&state.scanResult) {
+    return `
+    <div class="fullscreen">
+      <div class="fs-header"><button class="fs-back" onclick="closeScan()">←</button><div style="font-weight:700">📷 Temple Photo</div></div>
+      <div class="fs-body">
+        ${state.scanPreview?`<img src="${state.scanPreview}" style="width:100%;max-height:320px;object-fit:contain;border-radius:16px;margin-bottom:16px;background:#111"/>`:""}
+        <div style="background:rgba(30,58,138,0.2);border:1px solid rgba(37,99,235,0.4);border-radius:16px;padding:16px;margin-bottom:16px">
+          <p style="font-weight:700;color:#60a5fa;margin-bottom:8px">📖 Read temple text and type into form</p>
+          <div style="font-size:13px;color:#d1d5db;line-height:2">
+            🏷️ Brand name (e.g. Ray-Ban, Fastrack)<br/>
+            🔢 Model number (e.g. RB3025, LP6002)<br/>
+            📐 Size numbers (e.g. 52-18-145)<br/>
+            🔩 Material if printed
+          </div>
+        </div>
+        <p style="font-size:13px;color:#9ca3af;text-align:center;margin-bottom:16px">Zoom into the photo to read the text clearly, then close and fill the form</p>
+        <button class="btn btn-blue" onclick="closeScan()">← Back to Form</button>
+      </div>
+    </div>`;
+  }
+  return "";
+}
+
+// ═══════════════════════════════
+// BAR CHART
+// ═══════════════════════════════
+function buildBar(data, color) {
+  const mx = Math.max(...data.map(d=>d.v), 1);
+  return data.map(d=>`
+  <div class="bar-item">
+    <div class="bar-labels"><span class="bar-label">${d.l}</span><span class="bar-val">${d.d||d.v}</span></div>
+    <div class="bar-track"><div class="bar-fill" style="width:${(d.v/mx)*100}%;background:${color}"></div></div>
+  </div>`).join("");
+}
+
+// ═══════════════════════════════
+// EVENT HANDLERS
+// ═══════════════════════════════
+function attachEvents() {
+  // Nothing needed - all via onclick attributes
+}
+
+// Navigation
+function goTab(tab) {
+  if (tab==="add") { state.editing=null; state.addType=null; initForm({...{}}, null); }
+  state.tab = tab;
+  if (tab==="sell") { sellState = {search:"",selectedId:null,power:"",colour:"",bill:"",qty:"1",price:"",date:today(),notes:""}; }
+  render();
+  document.getElementById("main-content")?.scrollTo(0,0);
+}
+
+// Inventory
+function invSearch(v) { state.inv_search=v; render(); }
+function toggleFilter() { state.inv_showFilter=!state.inv_showFilter; render(); }
+function toggleView() { state.inv_view=state.inv_view==="grid"?"list":"grid"; render(); }
+function setTypeFilter(t) { state.inv_typeFilter=t; render(); }
+function setFilter(k,v) { state.inv_filters={...state.inv_filters,[k]:v}; render(); }
+function setPMin(v) { state.inv_pMin=v; render(); }
+function setPMax(v) { state.inv_pMax=v; render(); }
+function clearFilters() { state.inv_filters={brand:"",shape:"",material:"",gender:"",status:""}; state.inv_pMin=""; state.inv_pMax=""; render(); }
+
+// Add product
+function selectType(t) { state.addType=t; initForm(null,t); render(); }
+function backFromAdd() { state.editing=null; state.addType=null; state.flashMsg=""; goTab("inventory"); }
+function setFormField(k,v) { formData[k]=v; }
+
+// Photo upload
+async function handlePhotos(e) {
+  const files = Array.from(e.target.files);
+  if (!files.length) return;
+  uploadingPhotos = true;
+  // Show uploading state immediately
+  const photoRow = document.getElementById("photo-row");
+  if (photoRow) {
+    const hint = photoRow.parentElement.querySelector(".photo-hint");
+    if (hint) hint.textContent = "Uploading... please wait";
+  }
+  try {
+    const urls = [];
+    for (let i=0; i<files.length; i++) {
+      const url = await uploadPhoto(files[i]);
+      urls.push(url);
+    }
+    formData.images = [...(formData.images||[]), ...urls];
+    uploadingPhotos = false;
+    render();
+    // Scroll to show the uploaded photo
+    setTimeout(() => {
+      const row = document.getElementById("photo-row");
+      if (row) row.scrollIntoView({behavior:"smooth", block:"center"});
+    }, 200);
+  } catch(err) {
+    uploadingPhotos = false;
+    alert("Upload failed: " + err.message);
+    render();
+  }
+}
+function removePhoto(i) { formData.images = formData.images.filter((_,j)=>j!==i); render(); }
+
+// Variants
+function addVariant() {
+  const inp = document.getElementById("new-colour-input");
+  const v = inp?.value?.trim();
+  if (!v || formVariants.find(x=>x.color===v)) { if(inp) inp.value=""; return; }
+  formVariants.push({color:v,qty:0});
+  if(inp) inp.value="";
+  render();
+}
+function removeVariant(i) { formVariants.splice(i,1); render(); }
+function updateVariantQty(i,v) { formVariants[i].qty=parseInt(v)||0; }
+function setStockPower(pw,v) { formStock[pw]=parseInt(v)||0; }
+
+// Save functions
+async function saveFrame() {
+  const btn = document.getElementById("save-btn");
+  if (btn) { btn.disabled=true; btn.textContent="Saving..."; }
+  if (!formData.brand?.trim()) { alert("Brand is required"); if(btn){btn.disabled=false;btn.textContent=state.editing?"Update":"Save Frame";} return; }
+  if (!formData.sellingPrice) { alert("Selling price is required"); if(btn){btn.disabled=false;btn.textContent=state.editing?"Update":"Save Frame";} return; }
+  const total = formVariants.reduce((a,v)=>a+v.qty,0);
+  const prod = {...formData, id:formData.id||uid(), type:state.addType,
+    purchasePrice:parseFloat(formData.purchasePrice)||0, sellingPrice:parseFloat(formData.sellingPrice)||0,
+    mrp:parseFloat(formData.mrp)||0, currentStock:total, reorderLevel:parseInt(formData.reorderLevel)||5,
+    tags:formData.tags?formData.tags.split(",").map(t=>t.trim()).filter(Boolean):[],
+    variants:[...formVariants], updatedAt:new Date().toISOString(), createdAt:formData.createdAt||new Date().toISOString()
+  };
+  updateCustomsFromProduct(prod);
+  if (state.editing) state.products = state.products.map(p=>p.id===prod.id?prod:p);
+  else state.products.push(prod);
+  saveProducts();
+  state.editing=null; state.addType=null; state.flashMsg="";
+  goTab("inventory");
+}
+
+async function savePower() {
+  if (!formData.brand?.trim()) { alert("Brand is required"); return; }
+  if (!formData.sellingPrice) { alert("Selling price is required"); return; }
+  const prod = {...formData, id:formData.id||uid(), type:state.addType,
+    purchasePrice:parseFloat(formData.purchasePrice)||0, sellingPrice:parseFloat(formData.sellingPrice)||0,
+    mrp:parseFloat(formData.mrp)||0, packSize:parseInt(formData.packSize)||1,
+    tags:formData.tags?formData.tags.split(",").map(t=>t.trim()).filter(Boolean):[],
+    stock:{...formStock}, updatedAt:new Date().toISOString(), createdAt:formData.createdAt||new Date().toISOString()
+  };
+  updateCustomsFromProduct(prod);
+  if (state.editing) state.products = state.products.map(p=>p.id===prod.id?prod:p);
+  else state.products.push(prod);
+  saveProducts();
+  state.editing=null; state.addType=null;
+  goTab("inventory");
+}
+
+async function saveColour() {
+  if (!formData.brand?.trim()) { alert("Brand is required"); return; }
+  if (!formData.lensColor?.trim()) { alert("Lens colour is required"); return; }
+  if (!formData.sellingPrice) { alert("Selling price is required"); return; }
+  if (formData.currentStock===""||formData.currentStock===null) { alert("Current stock is required"); return; }
+  const prod = {...formData, id:formData.id||uid(), type:"colour_lens",
+    name:formData.name||`${formData.brand} ${formData.lensColor}`,
+    purchasePrice:parseFloat(formData.purchasePrice)||0, sellingPrice:parseFloat(formData.sellingPrice)||0,
+    mrp:parseFloat(formData.mrp)||0, currentStock:parseInt(formData.currentStock)||0,
+    reorderLevel:parseInt(formData.reorderLevel)||5,
+    tags:formData.tags?formData.tags.split(",").map(t=>t.trim()).filter(Boolean):[],
+    updatedAt:new Date().toISOString(), createdAt:formData.createdAt||new Date().toISOString()
+  };
+  updateCustomsFromProduct(prod);
+  if (state.editing) state.products = state.products.map(p=>p.id===prod.id?prod:p);
+  else state.products.push(prod);
+  saveProducts();
+  state.editing=null; state.addType=null;
+  goTab("inventory");
+}
+
+async function saveAcc() {
+  if (!formData.name?.trim()) { alert("Name is required"); return; }
+  if (formData.currentStock===""||formData.currentStock===null) { alert("Current stock is required"); return; }
+  const prod = {...formData, id:formData.id||uid(), type:"accessory",
+    purchasePrice:parseFloat(formData.purchasePrice)||0, currentStock:parseInt(formData.currentStock)||0,
+    reorderLevel:parseInt(formData.reorderLevel)||0, leadTimeDays:parseInt(formData.leadTimeDays)||21,
+    updatedAt:new Date().toISOString(), createdAt:formData.createdAt||new Date().toISOString()
+  };
+  if (state.editing) state.products = state.products.map(p=>p.id===prod.id?prod:p);
+  else state.products.push(prod);
+  saveProducts();
+  state.editing=null; state.addType=null;
+  goTab("inventory");
+}
+
+function updateCustomsFromProduct(prod) {
+  const nc = {...state.customs};
+  if (prod.brand) {
+    const key=prod.type==="sunglasses"?"sunglass_brands":prod.type==="rx_lens"||prod.type==="colour_lens"||prod.type==="rg_lens"?"lens_brands":"frame_brands";
+    if (!nc[key]?.includes(prod.brand)) nc[key]=[...(nc[key]||[]),prod.brand];
+  }
+  if (prod.supplier&&!nc.suppliers?.includes(prod.supplier)) nc.suppliers=[...(nc.suppliers||[]),prod.supplier];
+  if (prod.collection&&!nc.collections?.includes(prod.collection)) nc.collections=[...(nc.collections||[]),prod.collection];
+  state.customs = nc;
+  saveCustoms();
+}
+
+// Edit / Delete
+function editProduct(id) {
+  const p = state.products.find(x=>x.id===id);
+  if (!p) return;
+  state.editing = p;
+  state.addType = p.type;
+  initForm(p, p.type);
+  state.tab = "add";
+  render();
+}
+
+function requestDelete(id) {
+  const p = state.products.find(x=>x.id===id);
+  if (!p) return;
+  state.pinTarget = p;
+  state.pinVal = "";
+  state.pinErr = false;
+  render();
+}
+function setPinVal(v) { state.pinVal=v; }
+function cancelPin() { state.pinTarget=null; state.pinVal=""; state.pinErr=false; render(); }
+function checkPin() {
+  if (state.pinVal===PIN) {
+    state.pinTarget && (state.delTarget=state.pinTarget);
+    state.pinTarget=null; state.pinVal=""; state.pinErr=false;
+    state.delReason=""; state.showDelModal=true;
+    render();
+  } else {
+    state.pinErr=true; state.pinVal="";
+    render();
+    setTimeout(()=>{state.pinErr=false;render();},1500);
+  }
+}
+function cancelDel() { state.showDelModal=false; state.delTarget=null; state.delReason=""; render(); }
+function execDel() {
+  if (!state.delReason) return;
+  const p = state.delTarget;
+  if (!p) return;
+  const si = getStock(p);
+  const hasSale = state.sales.some(s=>s.productId===p.id);
+  const rec = {...p, deletedAt:new Date().toISOString(), reason:state.delReason, stockAtDeletion:si.total, saleExists:hasSale};
+  state.deleted.push(rec);
+  saveDeleted();
+  state.products = state.products.filter(x=>x.id!==p.id);
+  saveProducts();
+  state.showDelModal=false; state.delTarget=null; state.delReason="";
+  render();
+}
+
+// Sell
+function startSell(id) { sellState.selectedId=id; const p=state.products.find(x=>x.id===id); if(p) sellState.price=String(p.sellingPrice); state.tab="sell"; render(); }
+function setSellSearch(v) { sellState.search=v; render(); }
+function selectSellProduct(id) { const p=state.products.find(x=>x.id===id); sellState.selectedId=id; sellState.power=""; sellState.colour=""; if(p) sellState.price=String(p.sellingPrice); render(); }
+function clearSellSel() { sellState.selectedId=null; sellState.power=""; sellState.colour=""; render(); }
+function setSellField(k,v) { sellState[k]=v; }
+function setSellPower(pw) { sellState.power=pw; render(); }
+function setSellColour(c) { sellState.colour=c; render(); }
+
+function recordSale() {
+  const sel = state.products.find(p=>p.id===sellState.selectedId);
+  if (!sel) return alert("Select a product");
+  if (!sellState.bill.trim()) return alert("Enter bill/slip number");
+  if ((sel.type==="rx_lens"||sel.type==="rg_lens")&&!sellState.power) return alert("Select a power");
+  const qty = parseInt(sellState.qty)||1;
+  const maxQty = ()=>{
+    if(sel.type==="rx_lens"||sel.type==="rg_lens") return sellState.power?(sel.stock?.[sellState.power]||0):0;
+    if(sel.type==="frame"||sel.type==="sunglasses") return sellState.colour?(sel.variants?.find(v=>v.color===sellState.colour)?.qty||0):(sel.variants||[]).reduce((a,v)=>a+v.qty,0);
+    return sel.currentStock||0;
+  };
+  if (qty>maxQty()) return alert(`Only ${maxQty()} in stock`);
+  const price = parseFloat(sellState.price)||sel.sellingPrice;
+  const sale = {id:uid(),productId:sel.id,billNumber:sellState.bill.trim(),qty,amount:price*qty,sellingPrice:price,date:sellState.date,notes:sellState.notes,type:sel.type,power:sellState.power||null,colour:sellState.colour||null};
+  state.sales.push(sale);
+  saveSales();
+  if (sel.type==="rx_lens"||sel.type==="rg_lens") {
+    state.products = state.products.map(p=>p.id===sel.id?{...p,stock:{...p.stock,[sellState.power]:(p.stock[sellState.power]||0)-qty}}:p);
+  } else if (sel.type==="frame"||sel.type==="sunglasses") {
+    const nv=(sel.variants||[]).map(v=>v.color===sellState.colour?{...v,qty:v.qty-qty}:v);
+    state.products = state.products.map(p=>p.id===sel.id?{...p,variants:nv,currentStock:nv.reduce((a,v)=>a+v.qty,0)}:p);
+  } else {
+    state.products = state.products.map(p=>p.id===sel.id?{...p,currentStock:p.currentStock-qty}:p);
+  }
+  saveProducts();
+  sellState = {search:"",selectedId:null,power:"",colour:"",bill:"",qty:"1",price:"",date:today(),notes:""};
+  goTab("inventory");
+}
+
+// Scan
+function startScan() { state.scanStep="intro"; state.scanResult=null; state.scanPreview=null; render(); }
+function closeScan() { state.scanStep=null; render(); }
+function retakeScan() { state.scanStep="intro"; state.scanResult=null; state.scanPreview=null; render(); }
+
+async function handleScanPhoto(e) {
+  const files = Array.from(e.target.files);
+  if (!files.length) return;
+  const file = files[0];
+  state.scanPreview = URL.createObjectURL(file);
+  state.scanStep = "scanning";
+  render();
+  // Show the photo and let user read + fill manually
+  state.scanResult = {brand:"",sku:"",size:"",material:"",color:"",collection:"",notes:"",confidence:"manual"};
+  state.scanStep = "result";
+  render();
+}
+
+function applyScan() {
+  const r = state.scanResult;
+  if (!r) return;
+  if (r.brand) formData.brand=r.brand;
+  if (r.sku) formData.sku=r.sku;
+  if (r.size) formData.size=r.size;
+  if (r.material) formData.material=r.material;
+  if (r.collection) formData.collection=r.collection;
+  if (r.notes) formData.notes=r.notes;
+  state.scanStep=null;
+  state.flashMsg="✅ Scan complete! Fields pre-filled below.";
+  render();
+  setTimeout(()=>{state.flashMsg="";render();},4000);
+}
+
+// Lists
+function setListActive(k) { state.listActive=k; state.listInput=""; render(); }
+function setListInput(v) { state.listInput=v; }
+function addListItem() {
+  const v = state.listInput.trim();
+  if (!v) return;
+  const cur = state.customs[state.listActive]||[];
+  if (cur.includes(v)) { state.listInput=""; render(); return; }
+  state.customs = {...state.customs,[state.listActive]:[...cur,v]};
+  saveCustoms();
+  state.listInput="";
+  render();
+}
+function removeListItem(item) {
+  const cur = state.customs[state.listActive]||[];
+  state.customs = {...state.customs,[state.listActive]:cur.filter(x=>x!==item)};
+  saveCustoms();
+  render();
+}
+
+// ═══════════════════════════════
+// INIT
+// ═══════════════════════════════
+render();
+</script>
+</body>
+</html>

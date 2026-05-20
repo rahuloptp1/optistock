@@ -2,11 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
+<meta http-equiv="Pragma" content="no-cache"/>
+<meta http-equiv="Expires" content="0"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="theme-color" content="#030712"/>
-<title>OptiStock</title>
+<title>OptiStock v3.1</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 body{background:#030712;color:#fff;font-family:system-ui,-apple-system,sans-serif;overscroll-behavior:none;min-height:100vh;}
@@ -1301,22 +1304,30 @@ function buildScanScreen() {
   </div>`;
 
   if (state.scanStep==="result"&&state.scanResult) {
+    const r = state.scanResult;
+    const filled = ["brand","sku","size","material","color","collection"].filter(k=>r[k]&&r[k].trim()).length;
     return `
     <div class="fullscreen">
-      <div class="fs-header"><button class="fs-back" onclick="closeScan()">←</button><div style="font-weight:700">📷 Temple Photo</div></div>
+      <div class="fs-header"><button class="fs-back" onclick="retakeScan()">←</button><div style="font-weight:700">Scan Result</div></div>
       <div class="fs-body">
-        ${state.scanPreview?`<img src="${state.scanPreview}" style="width:100%;max-height:320px;object-fit:contain;border-radius:16px;margin-bottom:16px;background:#111"/>`:""}
-        <div style="background:rgba(30,58,138,0.2);border:1px solid rgba(37,99,235,0.4);border-radius:16px;padding:16px;margin-bottom:16px">
-          <p style="font-weight:700;color:#60a5fa;margin-bottom:8px">📖 Read temple text and type into form</p>
-          <div style="font-size:13px;color:#d1d5db;line-height:2">
-            🏷️ Brand name (e.g. Ray-Ban, Fastrack)<br/>
-            🔢 Model number (e.g. RB3025, LP6002)<br/>
-            📐 Size numbers (e.g. 52-18-145)<br/>
-            🔩 Material if printed
-          </div>
+        ${state.scanPreview?`<img src="${state.scanPreview}" style="width:100%;max-height:180px;object-fit:cover;border-radius:16px;margin-bottom:16px"/>`:""}
+        <div style="border-radius:16px;padding:12px;margin-bottom:16px;background:${filled>0?"rgba(6,78,59,0.2)":"rgba(120,53,15,0.2)"};border:1px solid ${filled>0?"rgba(4,120,87,0.4)":"rgba(146,64,14,0.4)"}">
+          <p style="font-weight:600;font-size:14px;color:${filled>0?"#34d399":"#fbbf24"}">${filled>0?"✅ "+filled+" fields extracted by AI":"⚠ Could not read clearly — fill manually"}</p>
         </div>
-        <p style="font-size:13px;color:#9ca3af;text-align:center;margin-bottom:16px">Zoom into the photo to read the text clearly, then close and fill the form</p>
-        <button class="btn btn-blue" onclick="closeScan()">← Back to Form</button>
+        <div style="background:rgba(31,41,55,0.8);border:1px solid rgba(55,65,81,0.5);border-radius:16px;padding:16px;margin-bottom:16px">
+          ${[["brand","Brand","🏷️"],["sku","Model No","🔢"],["size","Size","📐"],["material","Material","🔩"],["color","Color","🎨"],["notes","Notes","📝"]].map(([k,l,ic])=>
+            r[k]?`<div style="display:flex;gap:12px;align-items:center;background:rgba(55,65,81,0.4);border-radius:12px;padding:10px;margin-bottom:8px">
+              <span>${ic}</span><div style="flex:1"><div style="font-size:11px;color:#9ca3af">${l}</div><div style="font-size:14px;font-weight:600">${r[k]}</div></div><span style="color:#34d399">✓</span>
+            </div>`:`<div style="display:flex;gap:12px;align-items:center;background:rgba(55,65,81,0.15);border-radius:12px;padding:10px;margin-bottom:8px;opacity:0.4">
+              <span>${ic}</span><div><div style="font-size:11px;color:#9ca3af">${l}</div><div style="font-size:12px;color:#6b7280">Not found</div></div>
+            </div>`
+          ).join("")}
+        </div>
+        <p style="font-size:12px;color:#f59e0b;text-align:center;margin-bottom:16px">Fields will be pre-filled in form. You can edit before saving.</p>
+        <div style="display:flex;gap:12px">
+          <button class="btn btn-gray" style="flex:1" onclick="retakeScan()">Retake</button>
+          <button class="btn btn-blue" style="flex:1" onclick="applyScan()">✓ Use Details</button>
+        </div>
       </div>
     </div>`;
   }

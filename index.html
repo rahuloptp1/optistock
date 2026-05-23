@@ -386,8 +386,37 @@ async function uploadPhoto(file) {
 // ═══════════════════════════════
 // CLAUDE VISION
 // ═══════════════════════════════
+// Key management
+function setGroqKey(key) {
+  if (key && key.startsWith('gsk_')) {
+    sessionStorage.setItem('gk', key.trim());
+    localStorage.setItem('gk', key.trim());
+    alert('✅ Groq key saved! Temple scan is now ready.');
+  } else {
+    alert('❌ Invalid key. Must start with gsk_');
+  }
+}
+
+function getGroqKey() {
+  return sessionStorage.getItem('gk') || localStorage.getItem('gk') || '';
+}
+
+// Auto-restore from localStorage on page load
+(function() {
+  const saved = localStorage.getItem('gk');
+  if (saved) sessionStorage.setItem('gk', saved);
+})();
+
 async function scanTemple(file) {
-  const GROQ_KEY = "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";
+  const GROQ_KEY = getGroqKey();
+  if (!GROQ_KEY) {
+    const k = prompt('Enter Groq API key (gsk_...):');
+    if (k && k.startsWith('gsk_')) {
+      setGroqKey(k);
+      throw new Error('Key saved! Please take photo again.');
+    }
+    throw new Error('No API key. Enter your Groq key when prompted.');
+  }
   const MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
 
   // Resize image to max 1024px before sending

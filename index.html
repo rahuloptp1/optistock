@@ -2,6 +2,12 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="OptiStock"/>
+<meta name="theme-color" content="#030712"/>
+<link rel="manifest" href="manifest.json"/>
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
 <meta http-equiv="Pragma" content="no-cache"/>
 <meta http-equiv="Expires" content="0"/>
@@ -386,7 +392,140 @@ async function uploadPhoto(file) {
 // ═══════════════════════════════
 // CLAUDE VISION
 // ═══════════════════════════════
+// ===== PWA INSTALL PROMPT =====
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('installBanner')?.style.setProperty('display','flex');
+});
+
+function installApp() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.then(r => { deferredPrompt = null; });
+  }
+  document.getElementById('installBanner')?.style.setProperty('display','none');
+}
+
+// ===== GOOGLE SHEETS BACKUP =====
+function backupToSheets() {
+  const key = prompt('Enter your Google Sheets Web App URL\n(Setup guide: Extensions → Apps Script → Deploy as Web App)\n\nOr press Cancel to skip:');
+  if (!key) return;
+  localStorage.setItem('sheets_url', key.trim());
+  pushToSheets();
+}
+
+async function pushToSheets() {
+  const url = localStorage.getItem('sheets_url');
+  if (!url) { alert('No Sheets URL. Go to More → Backup → Setup Google Sheets first.'); return; }
+  try {
+    const data = {
+      products: state.products,
+      sales: state.sales,
+      timestamp: new Date().toISOString()
+    };
+    await fetch(url, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(data)
+    });
+    alert('✅ Backup sent to Google Sheets!');
+  } catch(e) {
+    alert('❌ Backup failed: ' + e.message);
+  }
+}
+
+// ===== SCAN TO LOOKUP =====
+async function scanToLookup(file) {
+  const GROQ_KEY = getGroqKey();
+  if (!GROQ_KEY) {
+    const k = prompt('Enter Groq API key (gsk_...):');
+    if (k && k.startsWith('gsk_')) { setGroqKey(k); }
+    return null;
+  }
+  const b64 = await new Promise((res,rej) => {
+    const img = new Image();
+    img.onload = () => {
+      const MAX=1024; let w=img.width,h=img.height;
+      if(w>MAX||h>MAX){if(w>h){h=Math.round(h*MAX/w);w=MAX;}else{w=Math.round(w*MAX/h);h=MAX;}}
+      const c=document.createElement('canvas');c.width=w;c.height=h;
+      c.getContext('2d').drawImage(img,0,0,w,h);
+      res(c.toDataURL('image/jpeg',0.85).split(',')[1]);
+    };
+    img.src = URL.createObjectURL(file);
+  });
+  const resp = await fetch('https://api.groq.com/openai/v1/chat/completions',{
+    method:'POST',
+    headers:{'Authorization':'Bearer '+GROQ_KEY,'Content-Type':'application/json'},
+    body: JSON.stringify({
+      model:'meta-llama/llama-4-scout-17b-16e-instruct',
+      messages:[{role:'user',content:[
+        {type:'image_url',image_url:{url:'data:image/jpeg;base64,'+b64}},
+        {type:'text',text:'Read the model/SKU number from this eyewear temple arm. Return ONLY the model number, nothing else. Just the code like: NBM138BK1 or LB020 or 998208'}
+      ]}],
+      max_tokens:50,temperature:0.1
+    })
+  });
+  const d = await resp.json();
+  const sku = (d.choices?.[0]?.message?.content||'').trim().replace(/[^A-Z0-9\-]/gi,'');
+  if (!sku) return null;
+  // Search inventory
+  const found = state.products.filter(p =>
+    p.sku?.toLowerCase()===sku.toLowerCase() ||
+    p.collection?.toLowerCase().includes(sku.toLowerCase()) ||
+    p.name?.toLowerCase().includes(sku.toLowerCase())
+  );
+  return {sku, found};
+}
+
+// ===== AUTO BACKUP EVERY 10 SAVES =====
+let saveCount = 0;
+const origSaveProducts = saveProducts;
+function saveProducts() {
+  origSaveProducts();
+  saveCount++;
+  if (saveCount % 10 === 0) {
+    const url = localStorage.getItem('sheets_url');
+    if (url) pushToSheets();
+  }
+}
+
 // Key management
+
+function setupSheetsBackup() {
+  alert('Setup Guide:\n\n1. Go to sheets.google.com → New spreadsheet\n2. Extensions → Apps Script\n3. Delete existing code, paste this:\n\nfunction doPost(e){\n  var sheet = SpreadsheetApp.getActiveSheet();\n  var data = JSON.parse(e.postData.contents);\n  sheet.appendRow([new Date(), JSON.stringify(data)]);\n  return ContentService.createTextOutput("OK");\n}\n\n4. Deploy → New deployment → Web app → Anyone → Deploy\n5. Copy the URL and paste in Backup setup');
+  const url = prompt('Paste your Google Apps Script URL here:');
+  if (url && url.includes('script.google.com')) {
+    localStorage.setItem('sheets_url', url.trim());
+    alert('✅ Google Sheets backup configured!');
+    render();
+  }
+}
+
+async function showLookup() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.capture = 'environment';
+  input.onchange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const loadingAlert = '🔍 Scanning temple arm...';
+    const result = await scanToLookup(file);
+    if (!result) { alert('Could not read SKU. Try a clearer photo.'); return; }
+    if (result.found.length === 0) {
+      alert('SKU found: ' + result.sku + '\n\n❌ Not in your inventory yet.\nUse Add Stock to add it.');
+    } else {
+      const item = result.found[0];
+      const stock = getStock(item);
+      alert('✅ Found in inventory!\n\nSKU: ' + result.sku + '\nBrand: ' + item.brand + '\nModel: ' + (item.collection||item.name||'') + '\nSize: ' + (item.size||'—') + '\nStock: ' + stock.label + '\nPrice: ₹' + (item.sellingPrice||'—'));
+    }
+  };
+  input.click();
+}
+
 function setGroqKey(key) {
   if (key && key.startsWith('gsk_')) {
     sessionStorage.setItem('gk', key.trim());
@@ -840,7 +979,7 @@ function photoRow(fieldName) {
     <label class="photo-add" style="cursor:pointer">
       <span style="font-size:24px">+</span>
       <small>${uploadingPhotos?"...":"Photo"}</small>
-      <input type="file" accept="image/*" multiple onchange="handlePhotos(event)" style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer"/>
+      <input type="file" accept="image/*" capture="environment" multiple onchange="handlePhotos(event)" style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer"/>
     </label>
   </div>
   <div class="photo-hint">Tap + to take photo or choose from gallery</div>`;
@@ -1255,8 +1394,31 @@ function buildAnalytics() {
 // MORE / LISTS / DELETED
 // ═══════════════════════════════
 function buildMore() {
+  const hasSheets = !!localStorage.getItem('sheets_url');
+  const sheetsStatus = hasSheets ? '✅ Connected' : '⚠️ Not setup';
+
   return `
   <div class="page-title">More</div>
+  <button class="more-btn" onclick="pushToSheets()" style="background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3)">
+    <span class="more-icon">☁️</span>
+    <div><div class="more-label">Backup to Google Sheets</div>
+    <div class="more-sub">Auto-saves your inventory safely · ${sheetsStatus}</div></div>
+  </button>
+  <button class="more-btn" onclick="setupSheetsBackup()" style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3)">
+    <span class="more-icon">🔧</span>
+    <div><div class="more-label">Setup Cloud Backup</div>
+    <div class="more-sub">Connect Google Sheets for safe storage</div></div>
+  </button>
+  <button class="more-btn" onclick="showLookup()" style="background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.3)">
+    <span class="more-icon">🔍</span>
+    <div><div class="more-label">Scan to Lookup</div>
+    <div class="more-sub">Scan temple → find in inventory instantly</div></div>
+  </button>
+  <button class="more-btn" onclick="installApp()" style="background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.3)">
+    <span class="more-icon">📱</span>
+    <div><div class="more-label">Install as App</div>
+    <div class="more-sub">Add to home screen for quick access</div></div>
+  </button>
   <button class="more-btn" onclick="goTab('lists')"><span class="more-icon">⚙️</span><div><div class="more-label">Manage Lists & Brands</div><div class="more-sub">Add brands, collections, suppliers</div></div></button>
   <button class="more-btn" style="border-color:rgba(153,27,27,0.3)" onclick="goTab('deleted')"><span class="more-icon">🗑️</span><div><div class="more-label">Deleted Records</div><div class="more-sub">${state.deleted.length} records — audit trail</div></div></button>
   <div class="card card-p" style="margin-top:8px"><div style="font-size:12px;color:#4b5563;font-weight:600;margin-bottom:4px">Data Storage</div><div style="font-size:12px;color:#4b5563">${state.products.length} products · ${state.sales.length} sales · Stored in browser</div></div>`;
@@ -1353,7 +1515,7 @@ function buildScanScreen() {
       ${state.scanResult&&state.scanResult.error?`<div style="background:rgba(127,29,29,0.3);border:1px solid rgba(153,27,27,0.5);border-radius:16px;padding:12px;margin-bottom:16px"><p style="color:#f87171;font-size:14px">${state.scanResult.error}</p></div>`:""}
       <label style="display:flex;align-items:center;justify-content:center;gap:12px;background:#2563eb;border-radius:16px;padding:20px;font-size:18px;font-weight:700;cursor:pointer;position:relative;overflow:hidden;width:100%;margin-bottom:8px">
         📷 Take Photo of Temple
-        <input type="file" accept="image/*" onchange="handleScanPhoto(event)" style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer"/>
+        <input type="file" accept="image/*" capture="environment" onchange="handleScanPhoto(event)" style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer"/>
       </label>
       <p style="text-align:center;font-size:12px;color:#4b5563">Tap above — camera will open</p>
     </div>

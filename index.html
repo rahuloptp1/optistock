@@ -277,13 +277,29 @@ textarea.form-input{resize:vertical;min-height:80px}
       </div>
       <!-- TEMPLE -->
       <div id="templeSect" style="display:none">
+        <!-- API Key Banner (shown when no key) -->
+        <div id="templeKeyBanner" style="display:none" class="card mb-12" style="background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.3)">
+          <div class="bold mb-8" style="color:var(--yellow)">⚠️ Groq API Key Required</div>
+          <div class="xs muted mb-10" style="line-height:1.6">Enter your Groq key once to enable AI temple scanning. It will be saved automatically.</div>
+          <div class="form-group" style="margin-bottom:10px">
+            <input class="form-input" id="inlineGroqKey" type="text" placeholder="gsk_…" autocomplete="off" style="font-size:13px">
+          </div>
+          <button class="btn btn-primary btn-full btn-sm" onclick="saveInlineGroqKey()">✓ Save Key & Enable Temple Scan</button>
+        </div>
+        <!-- Key set indicator -->
+        <div id="templeKeyOk" style="display:none" class="card mb-12" style="background:rgba(34,197,94,.08);border-color:rgba(34,197,94,.2)">
+          <div class="row between center">
+            <div class="xs c-green bold">✅ Groq AI Connected</div>
+            <button class="btn btn-outline btn-sm" style="padding:5px 10px;font-size:11px" onclick="clearGroqKey()">Change Key</button>
+          </div>
+        </div>
         <div class="card mb-12">
           <div class="sec-title" style="margin-top:0">How it works</div>
           <div class="muted sm" style="line-height:1.7">📸 Take a clear photo of the glasses temple arm → AI reads the SKU/model code → looks it up in your inventory</div>
         </div>
         <div style="display:flex;gap:10px;margin-bottom:14px">
-          <button class="btn btn-primary grow" onclick="document.getElementById('templeFile').click()">📷 Take Photo</button>
-          <button class="btn btn-outline grow" onclick="document.getElementById('templeGallery').click()">🖼 Gallery</button>
+          <button class="btn btn-primary grow" onclick="checkKeyThenScan('templeFile')">📷 Take Photo</button>
+          <button class="btn btn-outline grow" onclick="checkKeyThenScan('templeGallery')">🖼 Gallery</button>
         </div>
         <input type="file" id="templeFile" accept="image/*" capture="environment" style="display:none" onchange="handleTemplePhoto(this)">
         <input type="file" id="templeGallery" accept="image/*" style="display:none" onchange="handleTemplePhoto(this)">
@@ -1191,7 +1207,7 @@ function setScanMode(mode) {
   document.getElementById('barcodeSect').style.display=mode==='barcode'?'block':'none';
   document.getElementById('templeSect').style.display=mode==='temple'?'block':'none';
   if(mode!=='barcode') stopBarcodeScanner();
-  if(mode==='temple') document.getElementById('templeResult').innerHTML='';
+  if(mode==='temple') { document.getElementById('templeResult').innerHTML=''; updateTempleKeyUI(); }
 }
 
 async function startBarcodeScanner() {
@@ -1279,20 +1295,56 @@ function openScanForItem() {
   setScanMode('temple');
 }
 
+/* ── Groq key stored in 2 places for reliability ── */
+function getGroqKey() {
+  // Try dedicated key first, then settings object
+  return localStorage.getItem('optistock_groq_key') || getSettings().groqKey || '';
+}
+function storeGroqKey(key) {
+  localStorage.setItem('optistock_groq_key', key);
+  saveSetting('groqKey', key);
+}
+function clearGroqKey() {
+  localStorage.removeItem('optistock_groq_key');
+  saveSetting('groqKey','');
+  updateTempleKeyUI();
+}
+function updateTempleKeyUI() {
+  const key=getGroqKey();
+  const banner=document.getElementById('templeKeyBanner');
+  const ok=document.getElementById('templeKeyOk');
+  if(!banner||!ok) return;
+  if(key) { banner.style.display='none'; ok.style.display='block'; }
+  else     { banner.style.display='block'; ok.style.display='none'; }
+}
+function saveInlineGroqKey() {
+  const val=(document.getElementById('inlineGroqKey').value||'').trim();
+  if(!val||!val.startsWith('gsk_')){showToast('Invalid key — must start with gsk_');return;}
+  storeGroqKey(val);
+  document.getElementById('inlineGroqKey').value='';
+  showToast('Key saved! ✅ Now take a photo.');
+  updateTempleKeyUI();
+}
+function checkKeyThenScan(inputId) {
+  const key=getGroqKey();
+  if(!key){ showToast('Enter your Groq key above first'); return; }
+  document.getElementById(inputId).click();
+}
+
 async function handleTemplePhoto(input) {
   const f=input.files[0]; if(!f)return;
   input.value='';
   const resultEl=document.getElementById('templeResult');
-  resultEl.innerHTML=`<div class="card" style="text-align:center"><div style="font-size:32px;animation:pulse 1.5s infinite">🔍</div><div class="muted sm mt-8">AI reading temple arm…</div></div>`;
+  resultEl.innerHTML=`<div class="card" style="text-align:center;padding:24px"><div style="font-size:36px;animation:pulse 1.5s infinite">🔍</div><div class="muted sm" style="margin-top:10px">AI reading temple arm…</div></div>`;
   try {
     const b64=await fileToBase64(f);
     const code=await callGroqVision(b64);
     if(!code||code==='UNCLEAR'||code.length<2) {
-      resultEl.innerHTML=`<div class="card"><div class="bold mb-8">⚠️ Could not read text</div><div class="muted sm">Try better lighting, hold camera steady, focus on the temple arm text</div>
-        <button class="btn btn-outline btn-sm btn-full mt-8" style="margin-top:10px" onclick="document.getElementById('templeFile').click()">Try Again</button></div>`;
+      resultEl.innerHTML=`<div class="card"><div class="bold mb-8">⚠️ Could not read text</div>
+        <div class="muted sm" style="line-height:1.7">Tips:<br>• Point at the temple arm text directly<br>• Use good lighting<br>• Hold phone steady, text in focus</div>
+        <button class="btn btn-outline btn-sm btn-full" style="margin-top:12px" onclick="checkKeyThenScan('templeFile')">📷 Try Again</button></div>`;
       return;
     }
-    // Search inventory
     const inv=getInventory();
     const found=inv.find(i=>
       (i.sku&&i.sku.toLowerCase()===code.toLowerCase())||
@@ -1303,7 +1355,7 @@ async function handleTemplePhoto(input) {
       resultEl.innerHTML=`
         <div class="card mb-12" style="background:rgba(34,197,94,.08);border-color:rgba(34,197,94,.2)">
           <div class="bold mb-4 c-green">✅ Match Found!</div>
-          <div class="xs muted">Read: <b>${code}</b></div>
+          <div class="xs muted">Read from frame: <b>${code}</b></div>
         </div>
         <div class="item-row" onclick="openItemDetail('${found.id}')">
           <div class="item-thumb">${found.photo?`<img src="${found.photo}">`:'📦'}</div>
@@ -1314,15 +1366,19 @@ async function handleTemplePhoto(input) {
       resultEl.innerHTML=`
         <div class="card mb-12">
           <div class="bold mb-4">Text Read: <span class="c-blue">${code}</span></div>
-          <div class="muted xs">No matching item in inventory</div>
+          <div class="muted xs mb-4">No matching item found in inventory</div>
         </div>
         <div style="display:flex;flex-direction:column;gap:8px">
           <button class="btn btn-outline btn-full" onclick="switchTab('inventory');setTimeout(()=>{document.getElementById('invSearch').value='${code}';renderInventory();},100)">🔍 Search Inventory</button>
-          <button class="btn btn-primary btn-full" onclick="openAddItem('${code}')">➕ Add as New Item</button>
+          <button class="btn btn-primary btn-full" onclick="openAddItem('${code}')">➕ Add as New Item (SKU: ${code})</button>
+          <button class="btn btn-outline btn-sm btn-full" onclick="checkKeyThenScan('templeFile')">📷 Scan Again</button>
         </div>`;
     }
   } catch(e) {
-    resultEl.innerHTML=`<div class="card"><div class="bold c-red mb-8">Error</div><div class="muted sm">${e.message}</div></div>`;
+    resultEl.innerHTML=`<div class="card">
+      <div class="bold c-red mb-8">❌ ${e.message}</div>
+      <button class="btn btn-outline btn-sm btn-full" style="margin-top:8px" onclick="checkKeyThenScan('templeFile')">Try Again</button>
+    </div>`;
   }
 }
 
@@ -1336,8 +1392,8 @@ function fileToBase64(file) {
 }
 
 async function callGroqVision(b64) {
-  const key=getSettings().groqKey||'';
-  if(!key) throw new Error('Groq API key not set. Go to Settings → Groq API Key');
+  const key=getGroqKey();
+  if(!key) throw new Error('Groq API key not set — enter it above');
   const resp=await fetch('https://api.groq.com/openai/v1/chat/completions',{
     method:'POST',
     headers:{'Authorization':'Bearer '+key,'Content-Type':'application/json'},
@@ -1346,11 +1402,11 @@ async function callGroqVision(b64) {
       max_tokens:80,
       messages:[{role:'user',content:[
         {type:'image_url',image_url:{url:`data:image/jpeg;base64,${b64}`}},
-        {type:'text',text:'Look at this eyeglass/spectacle frame. Read the text printed on the temple arm (the side piece). Return ONLY the model code or SKU text visible. If nothing is readable, return exactly: UNCLEAR'}
+        {type:'text',text:'Look at this eyeglass/spectacle frame. Read the text printed on the temple arm (the side piece). Return ONLY the model code or SKU text you see. If nothing is readable, return exactly: UNCLEAR'}
       ]}]
     })
   });
-  if(!resp.ok){const e=await resp.json();throw new Error(e.error?.message||'Groq API error');}
+  if(!resp.ok){const e=await resp.json();throw new Error(e.error?.message||'Groq API error '+resp.status);}
   const data=await resp.json();
   return (data.choices?.[0]?.message?.content||'UNCLEAR').trim().replace(/['"]/g,'');
 }
@@ -1548,7 +1604,7 @@ function renderSettings() {
   document.getElementById('stShopPhone').value=s.shopPhone||'';
   document.getElementById('stGST').value=s.gstNo||'';
   document.getElementById('stAddress').value=s.shopAddress||'';
-  document.getElementById('stGroqKey').value=s.groqKey||'';
+  document.getElementById('stGroqKey').value=getGroqKey()||'';
   document.getElementById('stSheetUrl').value=s.sheetUrl||'';
   document.getElementById('stPin1').value='';
   document.getElementById('stPin2').value='';
@@ -1569,7 +1625,10 @@ function saveSettings() {
     if(p1!==p2){showToast('PINs do not match');return;}
     updates.pin=p1;
   }
-  saveSettingsObj(updates); showToast('Settings saved ✓');
+  saveSettingsObj(updates);
+  if(updates.groqKey) storeGroqKey(updates.groqKey);
+  showToast('Settings saved ✓');
+  updateTempleKeyUI();
 }
 async function testSheetUrl() {
   const url=document.getElementById('stSheetUrl').value.trim();

@@ -1218,12 +1218,11 @@ async function startBarcodeScanner() {
     document.getElementById('btnStartScan').style.display='none';
     document.getElementById('btnStopScan').style.display='block';
     zxReader=new ZXing.BrowserMultiFormatReader();
-    const devices=await ZXing.BrowserCodeReader.listVideoInputDevices();
-    // Prefer back camera
-    const backCam=devices.find(d=>/back|rear|environment/i.test(d.label))||devices[devices.length-1];
-    const devId=backCam?.deviceId||undefined;
     scanActive=true;
-    await zxReader.decodeFromVideoDevice(devId,'scanVideo',(result,err)=>{
+    // Use environment (back) camera directly via constraints — no listVideoInputDevices needed
+    const hints=new Map();
+    const constraints={video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}}};
+    await zxReader.decodeFromConstraints(constraints,'scanVideo',(result,err)=>{
       if(result&&scanActive){
         const code=result.getText();
         stopBarcodeScanner();

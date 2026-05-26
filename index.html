@@ -1,1891 +1,1724 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="mobile-web-app-capable" content="yes"/>
-<meta name="apple-mobile-web-app-capable" content="yes"/>
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-<meta name="apple-mobile-web-app-title" content="OptiStock"/>
-<meta name="theme-color" content="#030712"/>
-<link rel="manifest" href="manifest.json"/>
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
-<meta http-equiv="Pragma" content="no-cache"/>
-<meta http-equiv="Expires" content="0"/>
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
-<meta name="mobile-web-app-capable" content="yes"/>
-<meta name="apple-mobile-web-app-capable" content="yes"/>
-<meta name="theme-color" content="#030712"/>
-<title>OptiStock v3.1</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="OptiStock">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#030712">
+<title>OptiStock v4.0</title>
+<script src="https://unpkg.com/@zxing/library@0.19.1/umd/index.min.js"></script>
 <style>
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-body{background:#030712;color:#fff;font-family:system-ui,-apple-system,sans-serif;overscroll-behavior:none;min-height:100vh;}
-input,select,textarea,button{font-family:inherit;font-size:14px;}
-button{cursor:pointer;border:none;background:none;}
-::-webkit-scrollbar{display:none;}
-.app{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;position:relative;}
+:root{
+  --bg:#030712;--bg2:#0f172a;--card:#0f172a;--card2:#1e293b;
+  --bdr:#1e293b;--bdr2:#334155;--txt:#f1f5f9;--txt2:#94a3b8;--txt3:#64748b;
+  --accent:#3b82f6;--accent2:#1d4ed8;--green:#22c55e;--red:#ef4444;
+  --yellow:#f59e0b;--orange:#f97316;--purple:#a855f7;
+  --r:12px;--r2:16px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;font-size:15px;overflow:hidden}
+body{display:flex;flex-direction:column}
 
-/* Header */
-.header{background:#111827;border-bottom:1px solid #1f2937;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:30;}
-.header-left{display:flex;align-items:center;gap:8px;}
-.header-title{font-size:16px;font-weight:700;line-height:1;}
-.header-sub{font-size:11px;color:#6b7280;margin-top:2px;}
-.header-badges{display:flex;gap:6px;align-items:center;}
+/* ── PIN ── */
+#pinScreen{position:fixed;inset:0;background:var(--bg);z-index:1000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px}
+.pin-logo{font-size:60px;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+.pin-title{font-size:26px;font-weight:800;letter-spacing:-0.5px}
+.pin-sub{font-size:13px;color:var(--txt2);margin-top:-20px}
+.pin-dots{display:flex;gap:18px}
+.pin-dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--bdr2);transition:all .2s}
+.pin-dot.filled{background:var(--accent);border-color:var(--accent);transform:scale(1.2)}
+.pin-keypad{display:grid;grid-template-columns:repeat(3,76px);gap:12px}
+.pin-key{height:76px;border-radius:50%;background:var(--card2);border:none;color:var(--txt);font-size:24px;font-weight:600;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center}
+.pin-key:active{transform:scale(0.88);background:var(--bdr2)}
+.pin-key.del{background:transparent;color:var(--txt2);font-size:22px}
+.pin-err{color:var(--red);font-size:13px;font-weight:500;min-height:18px;animation:shake .4s}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
 
-/* Bottom Nav */
-.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:#111827;border-top:1px solid #1f2937;display:flex;z-index:50;}
-.nav-btn{flex:1;padding:10px 4px;display:flex;flex-direction:column;align-items:center;gap:2px;color:#4b5563;border:none;background:none;}
-.nav-btn.active{color:#3b82f6;}
-.nav-btn span:first-child{font-size:18px;}
-.nav-btn span:last-child{font-size:9px;font-weight:500;}
+/* ── APP SHELL ── */
+#app{display:none;flex-direction:column;height:100%}
+.topbar{display:flex;align-items:center;gap:10px;padding:52px 16px 12px;background:var(--bg);border-bottom:1px solid var(--bdr);flex-shrink:0}
+#btnBack{width:36px;height:36px;border-radius:50%;background:var(--card2);border:none;color:var(--txt);font-size:18px;cursor:pointer;display:none;align-items:center;justify-content:center;flex-shrink:0}
+#topTitle{font-size:18px;font-weight:700;flex:1}
+.topbar-acts{display:flex;gap:8px}
+.tbtn{width:36px;height:36px;border-radius:10px;background:var(--card2);border:none;color:var(--txt);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
 
-/* Main */
-.main{flex:1;overflow-y:auto;padding:16px;padding-bottom:96px;}
+.content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;position:relative}
+.page{padding:16px;display:none;min-height:100%}
+.page.active{display:block}
+.subpage{display:none;padding:16px;min-height:100%;animation:fadein .25s}
+@keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 
-/* Cards */
-.card{background:rgba(31,41,55,0.6);border:1px solid rgba(55,65,81,0.5);border-radius:16px;}
-.card-p{padding:16px;}
-.sect-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:12px;}
-.blue{color:#60a5fa;}.green{color:#34d399;}.amber{color:#fbbf24;}.purple{color:#c084fc;}.cyan{color:#22d3ee;}.red{color:#f87171;}
+.bottom-nav{display:flex;background:var(--bg2);border-top:1px solid var(--bdr);padding:8px 0 calc(8px + env(safe-area-inset-bottom));flex-shrink:0}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 4px;cursor:pointer;border:none;background:transparent;color:var(--txt3);font-size:10px;font-weight:500;transition:color .2s}
+.nav-item.active{color:var(--accent)}
+.nav-icon{font-size:22px;line-height:1}
 
-/* Form fields */
-.field{margin-bottom:12px;}
-.field label{display:block;font-size:11px;color:#9ca3af;margin-bottom:4px;}
-.field input,.field select,.field textarea{width:100%;background:rgba(55,65,81,0.6);border:1px solid #4b5563;border-radius:12px;padding:10px 12px;color:#fff;outline:none;font-size:14px;}
-.field input:focus,.field select:focus,.field textarea:focus{border-color:#3b82f6;}
-.field input.err,.field select.err{border-color:#ef4444;}
-.err-msg{font-size:11px;color:#f87171;margin-top:2px;}
-.field textarea{resize:none;}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+/* ── COMPONENTS ── */
+.card{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r2);padding:16px}
+.card2{background:var(--card2);border-radius:var(--r);padding:12px}
 
-/* Badges */
-.badge{font-size:11px;padding:2px 8px;border-radius:20px;border:1px solid;display:inline-block;}
-.badge-blue{background:rgba(30,58,138,0.5);color:#93c5fd;border-color:#1d4ed8;}
-.badge-green{background:rgba(6,78,59,0.5);color:#6ee7b7;border-color:#065f46;}
-.badge-yellow{background:rgba(120,53,15,0.5);color:#fde68a;border-color:#92400e;}
-.badge-red{background:rgba(127,29,29,0.5);color:#fca5a5;border-color:#991b1b;}
-.badge-purple{background:rgba(88,28,135,0.5);color:#e9d5ff;border-color:#6b21a8;}
-.badge-orange{background:rgba(124,45,18,0.5);color:#fed7aa;border-color:#9a3412;}
-.badge-cyan{background:rgba(8,51,68,0.5);color:#a5f3fc;border-color:#0e7490;}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.stat-card{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r2);padding:14px}
+.stat-label{font-size:11px;color:var(--txt2);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.stat-val{font-size:28px;font-weight:800;letter-spacing:-1px;line-height:1}
+.stat-sub{font-size:11px;color:var(--txt2);margin-top:4px}
 
-/* Buttons */
-.btn{padding:14px;border-radius:16px;font-weight:600;font-size:15px;width:100%;display:block;text-align:center;border:none;cursor:pointer;}
-.btn-blue{background:#2563eb;color:#fff;}
-.btn-blue:disabled{opacity:0.5;}
-.btn-gray{background:rgba(55,65,81,1);color:#d1d5db;border:1px solid #4b5563;}
-.btn-green{background:#059669;color:#fff;}
-.btn-purple{background:#7c3aed;color:#fff;}
-.btn-red{background:#dc2626;color:#fff;}
-.btn-sm{padding:6px 12px;font-size:12px;border-radius:10px;}
-.flex-btns{display:flex;gap:12px;}
-.flex-btns .btn{flex:1;}
+.btn{border:none;border-radius:var(--r);padding:13px 18px;font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px;justify-content:center}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:active{background:var(--accent2)}
+.btn-green{background:var(--green);color:#fff}
+.btn-red{background:var(--red);color:#fff}
+.btn-outline{background:transparent;color:var(--txt);border:1px solid var(--bdr2)}
+.btn-outline:active{background:var(--card2)}
+.btn-wa{background:#25D366;color:#fff}
+.btn-sm{padding:8px 12px;font-size:13px;border-radius:10px}
+.btn-full{width:100%}
 
-/* Stat cards */
-.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-.stat-card{border-radius:16px;padding:16px;border:1px solid;}
-.stat-blue{background:rgba(30,58,138,0.2);border-color:rgba(59,130,246,0.3);}
-.stat-green{background:rgba(6,78,59,0.2);border-color:rgba(52,211,153,0.3);}
-.stat-yellow{background:rgba(120,53,15,0.2);border-color:rgba(251,191,36,0.3);}
-.stat-label{font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.05em;}
-.stat-value{font-size:24px;font-weight:700;margin-top:4px;}
-.stat-blue .stat-value{color:#60a5fa;}
-.stat-green .stat-value{color:#34d399;}
-.stat-yellow .stat-value{color:#fbbf24;}
-.stat-sub{font-size:11px;color:#9ca3af;margin-top:2px;}
+.form-group{margin-bottom:14px}
+.form-label{display:block;font-size:11px;font-weight:700;color:var(--txt2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+.form-input{width:100%;background:var(--card2);border:1px solid var(--bdr2);border-radius:var(--r);color:var(--txt);padding:12px 14px;font-size:15px;outline:none;transition:border-color .2s;-webkit-appearance:none;font-family:inherit}
+.form-input:focus{border-color:var(--accent)}
+select.form-input{-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%2364748b' viewBox='0 0 24 24'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;background-size:20px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 
-/* Alerts */
-.alert{border-radius:16px;padding:12px;border:1px solid;margin-bottom:8px;}
-.alert-red{background:rgba(127,29,29,0.3);border-color:rgba(153,27,27,0.5);}
-.alert-amber{background:rgba(120,53,15,0.2);border-color:rgba(146,64,14,0.5);}
-.alert-orange{background:rgba(124,45,18,0.2);border-color:rgba(154,52,18,0.5);}
-.alert-msg{font-size:14px;font-weight:600;}
-.alert-red .alert-msg{color:#f87171;}
-.alert-amber .alert-msg{color:#fbbf24;}
-.alert-orange .alert-msg{color:#fb923c;}
+.item-row{display:flex;align-items:center;gap:12px;padding:12px;background:var(--card);border:1px solid var(--bdr);border-radius:var(--r2);margin-bottom:8px;cursor:pointer;transition:background .15s}
+.item-row:active{background:var(--card2)}
+.item-thumb{width:48px;height:48px;border-radius:10px;background:var(--card2);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:24px;overflow:hidden}
+.item-thumb img{width:100%;height:100%;object-fit:cover}
+.item-info{flex:1;min-width:0}
+.item-name{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item-sub{font-size:12px;color:var(--txt2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
 
-/* Photo upload */
-.photo-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;}
-.photo-thumb{position:relative;width:80px;height:80px;border-radius:12px;overflow:hidden;}
-.photo-thumb img{width:100%;height:100%;object-fit:cover;}
-.photo-del{position:absolute;top:2px;right:2px;background:#ef4444;color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
-.photo-add{position:relative;width:80px;height:80px;border:2px dashed #4b5563;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#9ca3af;overflow:hidden;}
-.photo-add span{font-size:24px;line-height:1;}
-.photo-add small{font-size:11px;}
-.photo-add input[type=file]{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer;}
-.photo-hint{font-size:11px;color:#4b5563;margin-top:4px;}
+.badge{font-size:11px;padding:3px 8px;border-radius:6px;font-weight:600;white-space:nowrap}
+.badge-green{background:rgba(34,197,94,.15);color:var(--green)}
+.badge-red{background:rgba(239,68,68,.15);color:var(--red)}
+.badge-yellow{background:rgba(245,158,11,.15);color:var(--yellow)}
+.badge-blue{background:rgba(59,130,246,.15);color:var(--accent)}
+.badge-purple{background:rgba(168,85,247,.15);color:var(--purple)}
 
-/* Scan button */
-.scan-btn{background:linear-gradient(135deg,#1d4ed8,#2563eb);border:1px solid rgba(59,130,246,0.4);border-radius:16px;padding:16px;display:flex;align-items:center;gap:16px;width:100%;text-align:left;cursor:pointer;margin-bottom:16px;}
-.scan-icon{width:48px;height:48px;background:rgba(59,130,246,0.3);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
-.scan-title{font-size:16px;font-weight:700;color:#fff;}
-.scan-sub{font-size:11px;color:#93c5fd;margin-top:2px;}
-.scan-arrow{color:#93c5fd;font-size:20px;margin-left:auto;}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex-shrink:0;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:500;border:1px solid var(--bdr2);background:transparent;color:var(--txt2);cursor:pointer;white-space:nowrap;transition:all .15s}
+.chip.active{background:var(--accent);border-color:var(--accent);color:#fff}
 
-/* Product grid */
-.prod-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-.prod-card{background:rgba(31,41,55,0.6);border:1px solid rgba(55,65,81,0.5);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;}
-.prod-img{aspect-ratio:1;background:rgba(55,65,81,0.5);position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:48px;opacity:0.2;}
-.prod-img img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;opacity:1;}
-.prod-stock-badge{position:absolute;top:8px;right:8px;border-radius:20px;padding:2px 6px;font-size:11px;font-weight:700;color:#fff;}
-.stock-ok{background:rgba(5,150,105,0.8);}
-.stock-low{background:rgba(180,83,9,0.8);}
-.stock-out{background:rgba(185,28,28,0.8);}
-.prod-type-badge{position:absolute;bottom:8px;left:8px;}
-.prod-info{padding:12px;flex:1;display:flex;flex-direction:column;gap:4px;}
-.prod-brand{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.prod-sub{font-size:12px;color:#9ca3af;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.prod-price{font-size:14px;font-weight:700;color:#34d399;margin-top:4px;}
-.prod-variants{display:flex;flex-wrap:wrap;gap:4px;margin-top:2px;}
-.prod-var-tag{font-size:10px;background:rgba(55,65,81,0.5);color:#9ca3af;padding:2px 6px;border-radius:6px;}
-.prod-actions{display:flex;gap:6px;margin-top:8px;}
-.prod-actions button{flex:1;padding:6px;border-radius:10px;font-size:11px;font-weight:600;}
-.btn-sell-sm{background:rgba(5,150,105,0.5);border:1px solid rgba(4,120,87,0.5);color:#fff;}
-.btn-edit-sm{background:rgba(55,65,81,0.5);border:1px solid rgba(75,85,99,0.5);color:#d1d5db;}
-.btn-del-sm{background:rgba(127,29,29,0.4);border:1px solid rgba(153,27,27,0.4);color:#f87171;padding:6px 8px;border-radius:10px;}
+.search-wrap{position:relative;margin-bottom:12px}
+.search-input{width:100%;background:var(--card2);border:1px solid var(--bdr2);border-radius:var(--r);color:var(--txt);padding:12px 14px 12px 42px;font-size:15px;outline:none;-webkit-appearance:none}
+.search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--txt3);font-size:17px;pointer-events:none}
 
-/* List view */
-.prod-row{background:rgba(31,41,55,0.6);border:1px solid rgba(55,65,81,0.5);border-radius:16px;padding:12px;display:flex;gap:12px;align-items:center;}
-.prod-row-img{width:56px;height:56px;border-radius:12px;background:rgba(55,65,81,0.5);flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:22px;opacity:0.2;position:relative;}
-.prod-row-img img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;opacity:1;}
-.prod-row-info{flex:1;min-width:0;}
-.prod-row-actions{display:flex;flex-direction:column;gap:6px;}
-.prod-row-actions button{padding:6px 10px;border-radius:10px;font-size:11px;}
+.sec-title{font-size:11px;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.8px;margin:20px 0 10px}
+.sec-title:first-child{margin-top:0}
 
-/* Bar chart */
-.bar-item{margin-bottom:10px;}
-.bar-labels{display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;}
-.bar-label{color:#d1d5db;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:55%;}
-.bar-val{color:#9ca3af;}
-.bar-track{height:6px;background:#374151;border-radius:4px;overflow:hidden;}
-.bar-fill{height:100%;border-radius:4px;transition:width 0.5s;}
+.menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.menu-card{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r2);padding:16px;cursor:pointer;transition:background .15s;display:flex;flex-direction:column;gap:5px}
+.menu-card:active{background:var(--card2)}
+.menu-icon{font-size:28px}
+.menu-label{font-size:14px;font-weight:600}
+.menu-sub{font-size:11px;color:var(--txt2)}
 
-/* Modal */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:50;display:flex;align-items:center;justify-content:center;padding:24px;}
-.modal{background:#1f2937;border:1px solid #374151;border-radius:20px;padding:24px;width:100%;max-width:360px;}
-.modal h3{font-size:18px;font-weight:700;margin-bottom:4px;}
-.modal p{font-size:14px;color:#9ca3af;margin-bottom:20px;}
+.fab{position:fixed;bottom:calc(72px + env(safe-area-inset-bottom) + 16px);right:16px;width:56px;height:56px;border-radius:50%;background:var(--accent);border:none;color:#fff;font-size:28px;cursor:pointer;box-shadow:0 4px 20px rgba(59,130,246,.45);display:flex;align-items:center;justify-content:center;z-index:100;transition:transform .15s}
+.fab:active{transform:scale(0.9)}
 
-/* Fullscreen */
-.fullscreen{position:fixed;inset:0;background:#030712;z-index:50;display:flex;flex-direction:column;}
-.fs-header{background:#111827;border-bottom:1px solid #1f2937;padding:12px 16px;display:flex;align-items:center;gap:12px;}
-.fs-back{font-size:24px;color:#9ca3af;line-height:1;background:none;border:none;cursor:pointer;}
-.fs-body{flex:1;overflow-y:auto;padding:16px;}
+.modal-wrap{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:600;display:none;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px)}
+.modal-wrap.open{display:flex}
+.modal{background:var(--card);border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:480px;max-height:85vh;overflow-y:auto;animation:slideUp .3s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-handle{width:36px;height:4px;background:var(--bdr2);border-radius:2px;margin:0 auto 20px}
+.modal-title{font-size:18px;font-weight:700;margin-bottom:16px}
 
-/* Power grid */
-.power-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
-.power-cell{border-radius:12px;padding:8px;border:1px solid;}
-.power-cell-empty{border-color:rgba(55,65,81,0.5);background:rgba(55,65,81,0.2);}
-.power-cell-filled{border-color:rgba(37,99,235,0.5);background:rgba(30,58,138,0.3);}
-.power-cell label{font-size:11px;color:#9ca3af;display:block;margin-bottom:4px;}
-.power-cell input{width:100%;background:transparent;border:none;color:#fff;font-size:14px;font-weight:700;outline:none;}
+#toast{position:fixed;bottom:calc(82px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:var(--card2);color:var(--txt);padding:12px 20px;border-radius:24px;font-size:14px;font-weight:500;z-index:999;white-space:nowrap;opacity:0;transition:opacity .3s;pointer-events:none;box-shadow:0 4px 20px rgba(0,0,0,.5);border:1px solid var(--bdr2)}
+#toast.show{opacity:1}
 
-/* Colour variants */
-.variant-row{display:flex;align-items:center;gap:8px;background:rgba(55,65,81,0.4);border-radius:12px;padding:10px;margin-bottom:8px;}
-.variant-color{flex:1;font-size:14px;}
-.variant-qty{width:60px;background:rgba(75,85,99,1);border:1px solid #6b7280;border-radius:8px;padding:6px 8px;color:#fff;text-align:center;font-size:14px;}
-.variant-del{color:#f87171;font-size:14px;background:none;border:none;cursor:pointer;padding:0 4px;}
+/* Scanner */
+#scanVideo{width:100%;border-radius:var(--r2);background:#000;display:block;max-height:280px;object-fit:cover}
+.scan-box-wrap{position:relative;margin-bottom:14px;border-radius:var(--r2);overflow:hidden}
+.scan-aim{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.scan-aim-box{width:220px;height:100px;border:2.5px solid var(--accent);border-radius:12px;box-shadow:0 0 0 9999px rgba(0,0,0,.5)}
+.scan-line{position:absolute;width:200px;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);animation:scanmove 2s ease-in-out infinite}
+@keyframes scanmove{0%,100%{top:30%}50%{top:65%}}
 
-/* Type selector */
-.type-btn{background:rgba(31,41,55,0.6);border:1px solid rgba(55,65,81,0.5);border-radius:16px;padding:16px;display:flex;align-items:center;gap:16px;width:100%;text-align:left;cursor:pointer;margin-bottom:8px;}
-.type-btn:hover{border-color:rgba(59,130,246,0.5);}
-.type-icon{font-size:32px;}
-.type-label{font-size:16px;font-weight:600;}
-.type-desc{font-size:12px;color:#9ca3af;margin-top:2px;}
+.toggle-row{display:flex;gap:4px;background:var(--card2);border-radius:var(--r);padding:4px;margin-bottom:16px}
+.toggle-btn{flex:1;padding:10px;border:none;border-radius:10px;background:transparent;color:var(--txt2);font-size:14px;font-weight:500;cursor:pointer;transition:all .2s}
+.toggle-btn.active{background:var(--card);color:var(--txt);font-weight:600;box-shadow:0 1px 4px rgba(0,0,0,.3)}
 
-/* Filter bar */
-.filter-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-.filter-grid select{background:#374151;border:1px solid #4b5563;border-radius:12px;padding:8px 12px;color:#fff;font-size:12px;width:100%;outline:none;}
-.price-row{display:flex;gap:8px;align-items:center;margin-bottom:12px;}
-.price-row input{flex:1;background:#374151;border:1px solid #4b5563;border-radius:12px;padding:8px 12px;color:#fff;font-size:12px;outline:none;}
-.price-dash{color:#6b7280;}
+.photo-pick{width:78px;height:78px;border-radius:var(--r);background:var(--card2);border:2px dashed var(--bdr2);display:flex;align-items:center;justify-content:center;font-size:30px;overflow:hidden;cursor:pointer;flex-shrink:0}
+.photo-pick img{width:100%;height:100%;object-fit:cover}
 
-/* Type pills */
-.type-pills{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:8px;}
-.type-pill{flex-shrink:0;padding:6px 12px;border-radius:20px;font-size:11px;font-weight:500;border:1px solid;cursor:pointer;}
-.type-pill.active{background:#2563eb;border-color:#1d4ed8;color:#fff;}
-.type-pill.inactive{background:#1f2937;border-color:#374151;color:#9ca3af;}
+.divider{height:1px;background:var(--bdr);margin:14px 0}
 
-/* Colour picker for sale */
-.colour-pills{display:flex;flex-wrap:wrap;gap:8px;}
-.colour-pill{padding:8px 12px;border-radius:12px;font-size:13px;border:1px solid;cursor:pointer;}
-.colour-pill.active{border-color:#3b82f6;background:rgba(30,58,138,0.5);color:#fff;}
-.colour-pill.inactive{border-color:#374151;color:#d1d5db;}
-.colour-pill.disabled{opacity:0.3;cursor:not-allowed;}
+.code-box{background:#0d1117;border:1px solid var(--bdr2);border-radius:var(--r);padding:14px;font-family:'SF Mono',Consolas,monospace;font-size:11px;color:#79c0ff;white-space:pre-wrap;overflow-x:auto;max-height:260px;overflow-y:auto;line-height:1.6}
 
-/* Search */
-.search-row{display:flex;gap:8px;margin-bottom:12px;}
-.search-input{flex:1;background:#1f2937;border:1px solid #374151;border-radius:12px;padding:10px 16px;color:#fff;font-size:14px;outline:none;}
-.search-input::placeholder{color:#6b7280;}
-.icon-btn{background:#1f2937;border:1px solid #374151;border-radius:12px;padding:10px 12px;color:#9ca3af;position:relative;}
+.row{display:flex;align-items:center;gap:10px}
+.col{display:flex;flex-direction:column}
+.between{justify-content:space-between}
+.grow{flex:1}
+.gap-8{gap:8px}
+.gap-10{gap:10px}
+.mb-8{margin-bottom:8px}
+.mb-12{margin-bottom:12px}
+.mb-16{margin-bottom:16px}
+.bold{font-weight:700}
+.sm{font-size:13px}
+.xs{font-size:12px}
+.muted{color:var(--txt2)}
+.c-green{color:var(--green)}
+.c-red{color:var(--red)}
+.c-yellow{color:var(--yellow)}
+.c-blue{color:var(--accent)}
 
-/* Sale summary box */
-.sale-summary{background:rgba(6,78,59,0.2);border:1px solid rgba(4,120,87,0.5);border-radius:16px;padding:12px;}
-.sale-row{display:flex;justify-content:space-between;font-size:14px;margin-bottom:4px;}
-.sale-row:last-child{margin-bottom:0;}
+.empty-state{display:flex;flex-direction:column;align-items:center;gap:12px;padding:60px 20px;color:var(--txt3)}
+.empty-icon{font-size:48px;opacity:.5}
+.empty-text{font-size:15px;font-weight:500;text-align:center}
+.empty-sub{font-size:13px;text-align:center;max-width:240px}
 
-/* List items */
-.list-tag{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:12px;border:1px solid;font-size:13px;background:rgba(30,58,138,0.3);border-color:#1d4ed8;color:#93c5fd;display:inline-flex;margin:4px;}
-.list-tag-x{color:#6b7280;cursor:pointer;font-size:11px;}
-
-/* Margin box */
-.margin-box{border-radius:12px;padding:10px 12px;font-size:13px;margin-top:4px;}
-.margin-pos{background:rgba(6,78,59,0.2);border:1px solid rgba(4,120,87,0.5);color:#34d399;}
-.margin-neg{background:rgba(127,29,29,0.2);border:1px solid rgba(153,27,27,0.5);color:#f87171;}
-
-/* Empty state */
-.empty{text-align:center;padding:80px 16px;}
-.empty-icon{font-size:64px;margin-bottom:16px;}
-.empty-title{font-size:18px;font-weight:600;margin-bottom:8px;}
-.empty-sub{font-size:14px;color:#9ca3af;}
-
-/* Plano badge */
-.plano-badge{background:rgba(88,28,135,0.3);border:1px solid rgba(107,33,168,0.5);border-radius:12px;padding:8px 12px;font-size:12px;color:#c084fc;}
-
-/* Gradient card */
-.grad-card{background:linear-gradient(135deg,rgba(30,58,138,0.4),rgba(88,28,135,0.4));border:1px solid rgba(59,130,246,0.3);border-radius:16px;padding:16px;margin-bottom:16px;}
-
-/* Scanning screen */
-.scanning-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:24px;padding:32px;}
-.scanning-icon{font-size:64px;animation:pulse 1s infinite;}
-@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.5};}
-
-/* Notice */
-.notice{font-size:11px;color:#4b5563;margin-top:8px;}
-.notice-amber{color:#f59e0b;font-size:12px;background:rgba(120,53,15,0.2);border:1px solid rgba(146,64,14,0.4);border-radius:12px;padding:10px 12px;margin-top:8px;}
-
-/* Section spacing */
-.section{margin-bottom:16px;}
-.back-btn{font-size:24px;color:#9ca3af;line-height:1;margin-bottom:16px;background:none;border:none;cursor:pointer;display:block;}
-.page-title{font-size:20px;font-weight:700;margin-bottom:4px;}
-.page-sub{font-size:12px;color:#9ca3af;margin-bottom:16px;}
-
-/* Deleted record */
-.del-record{background:rgba(31,41,55,0.6);border:1px solid rgba(153,27,27,0.3);border-radius:16px;padding:16px;margin-bottom:12px;}
-.warn-tag{font-size:11px;color:#f87171;font-weight:600;margin-top:6px;}
-
-/* More menu */
-.more-btn{background:rgba(31,41,55,0.6);border:1px solid rgba(55,65,81,0.5);border-radius:16px;padding:16px;display:flex;align-items:center;gap:16px;width:100%;text-align:left;cursor:pointer;margin-bottom:8px;}
-.more-icon{font-size:28px;}
-.more-label{font-size:16px;font-weight:600;}
-.more-sub{font-size:12px;color:#9ca3af;margin-top:2px;}
-
-/* Flash */
-.flash{background:rgba(6,78,59,0.3);border:1px solid rgba(4,120,87,0.5);border-radius:16px;padding:12px;display:flex;align-items:center;gap:10px;margin-bottom:16px;}
-.flash-text{font-size:14px;font-weight:600;color:#34d399;}
+::-webkit-scrollbar{width:0;height:0}
+textarea.form-input{resize:vertical;min-height:80px}
 </style>
 </head>
 <body>
-<div class="app" id="app"></div>
 
-<script>
-// ═══════════════════════════════
-// CONFIG
-// ═══════════════════════════════
-const CLOUD = "d1lg3bid3";
-const PRESET = "opticalinventory";
-const PIN = "1986";
+<!-- ══════════════════════ PIN SCREEN ══════════════════════ -->
+<div id="pinScreen">
+  <div class="pin-logo">👓</div>
+  <div class="pin-title">OptiStock</div>
+  <div class="pin-sub">Your Smart Optical Store Manager</div>
+  <div class="pin-dots">
+    <div class="pin-dot" id="d0"></div>
+    <div class="pin-dot" id="d1"></div>
+    <div class="pin-dot" id="d2"></div>
+    <div class="pin-dot" id="d3"></div>
+  </div>
+  <div class="pin-err" id="pinErr"></div>
+  <div class="pin-keypad" id="pinKeypad">
+    <button class="pin-key" onclick="pinPress('1')">1</button>
+    <button class="pin-key" onclick="pinPress('2')">2</button>
+    <button class="pin-key" onclick="pinPress('3')">3</button>
+    <button class="pin-key" onclick="pinPress('4')">4</button>
+    <button class="pin-key" onclick="pinPress('5')">5</button>
+    <button class="pin-key" onclick="pinPress('6')">6</button>
+    <button class="pin-key" onclick="pinPress('7')">7</button>
+    <button class="pin-key" onclick="pinPress('8')">8</button>
+    <button class="pin-key" onclick="pinPress('9')">9</button>
+    <button class="pin-key" onclick="pinPress('')"></button>
+    <button class="pin-key" onclick="pinPress('0')">0</button>
+    <button class="pin-key del" onclick="pinDel()">⌫</button>
+  </div>
+</div>
 
-// ═══════════════════════════════
-// DB
-// ═══════════════════════════════
-const db = {
-  get: k => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : null; } catch { return null; } },
-  set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) {} }
-};
+<!-- ══════════════════════ APP ══════════════════════ -->
+<div id="app">
+  <div class="topbar">
+    <button id="btnBack" onclick="goBack()">‹</button>
+    <span id="topTitle">OptiStock</span>
+    <div class="topbar-acts" id="topActs"></div>
+  </div>
 
-// ═══════════════════════════════
-// UTILS
-// ═══════════════════════════════
-const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2);
-const fmt = n => "₹" + (n||0).toLocaleString("en-IN");
-const today = () => new Date().toISOString().slice(0,10);
-const daysSince = d => Math.floor((Date.now() - new Date(d||today()).getTime()) / 86400000);
+  <div class="content" id="mainContent">
 
-const RX_POWERS = Array.from({length:21}, (_,i) => (-(1+i*0.25)).toFixed(2));
-const RG_POWERS = ["+1.00","+1.25","+1.50","+1.75","+2.00","+2.25","+2.50","+2.75","+3.00"];
-const SHAPES = ["Aviator","Round","Square","Rectangle","Cat Eye","Oval","Wayfarer","Clubmaster","Geometric","Rimless","Semi-Rimless"];
-const MATERIALS = ["Acetate","Metal","Titanium","TR90","Fiber","Wood","Carbon Fiber","Mixed"];
-const GENDERS = ["Men","Women","Kids","Unisex"];
-const FRAME_CATS = ["Eyeglasses","Sunglasses","Sports","Reading Glasses","Kids","Safety"];
-const COLORS = ["Black","Brown","Gold","Silver","Blue","Red","Green","Pink","Purple","Transparent","Tortoise","Multi"];
-const LENS_COLORS = ["Brown","Grey","Blue","Green","Violet","Hazel","Turquoise","Honey","Aqua","Gemstone Green"];
-const WEAR_SCHED = ["Daily","Monthly","Quarterly","Yearly","2-Weekly"];
-const SUN_BRANDS = ["Fastrack","Generic"];
-const LENS_BRANDS = ["Freshlook","Acuvue","Air Optix","SofLens","Bausch & Lomb","Cooper Vision","Generic"];
-const ACC_TYPES = ["Specs Case","Selvet / Cleaning Cloth","Carry Bag","Lens Solution","Packaging Box","Other"];
-const PROD_TYPES = [
-  {id:"frame",label:"Eyeglasses / Frame",icon:"👓",desc:"Frames + Smart Temple Scan"},
-  {id:"sunglasses",label:"Sunglasses",icon:"🕶️",desc:"Fastrack, Generic + Temple Scan"},
-  {id:"rx_lens",label:"Rx Contact Lens",icon:"🔵",desc:"Power -1.00 to -6.00, stock per power"},
-  {id:"colour_lens",label:"Colour Contact Lens",icon:"🌈",desc:"Plano colour lenses"},
-  {id:"rg_lens",label:"Reading Glasses",icon:"👁️",desc:"Power +1.00 to +3.00"},
-  {id:"accessory",label:"Accessory / Packaging",icon:"📦",desc:"Cases, selvets, bags, solution"},
-];
+    <!-- ── HOME ── -->
+    <div class="page active" id="pgHome">
+      <div class="stats-grid" id="statsGrid"></div>
+      <div class="sec-title">Quick Actions</div>
+      <div class="menu-grid">
+        <div class="menu-card" onclick="openAddItem()"><div class="menu-icon">➕</div><div class="menu-label">Add Item</div><div class="menu-sub">Add new stock</div></div>
+        <div class="menu-card" onclick="openSaleForm()"><div class="menu-icon">💰</div><div class="menu-label">New Sale</div><div class="menu-sub">Record a sale</div></div>
+        <div class="menu-card" onclick="switchTab('scan');setScanMode('barcode')"><div class="menu-icon">📷</div><div class="menu-label">Scan Barcode</div><div class="menu-sub">Quick lookup</div></div>
+        <div class="menu-card" onclick="switchTab('scan');setScanMode('temple')"><div class="menu-icon">👓</div><div class="menu-label">Temple Scan</div><div class="menu-sub">AI scan frames</div></div>
+      </div>
+      <div class="sec-title">Low Stock Alert</div>
+      <div id="lowStockList"></div>
+      <div class="sec-title">Recent Sales</div>
+      <div id="recentSales"></div>
+    </div>
 
-function getStock(p) {
-  if (p.type==="frame"||p.type==="sunglasses") {
-    const t = (p.variants||[]).reduce((a,v)=>a+v.qty,0);
-    return {total:t, label:`${t} pcs`, isLow:t>0&&t<=(p.reorderLevel||5), isOut:t===0};
-  }
-  if (p.type==="rx_lens"||p.type==="rg_lens") {
-    const t = Object.values(p.stock||{}).reduce((a,v)=>a+v,0);
-    const pw = Object.values(p.stock||{}).filter(v=>v>0).length;
-    return {total:t, label:`${t} ${p.type==="rx_lens"?"boxes":"pcs"} · ${pw} powers`, isLow:t<=5, isOut:t===0};
-  }
-  const t = p.currentStock||0;
-  return {total:t, label:`${t} ${p.type==="colour_lens"?"boxes":"units"}`, isLow:t>0&&t<=(p.reorderLevel||5), isOut:t===0};
-}
-const tIcon = t => ({frame:"👓",sunglasses:"🕶️",rx_lens:"🔵",colour_lens:"🌈",rg_lens:"👁️",accessory:"📦"}[t]||"📦");
-const tBadge = t => ({frame:"badge-green",sunglasses:"badge-yellow",rx_lens:"badge-blue",colour_lens:"badge-purple",rg_lens:"badge-orange",accessory:"badge-cyan"}[t]||"badge-blue");
-const stockBg = si => si.isOut?"stock-out":si.isLow?"stock-low":"stock-ok";
+    <!-- ── INVENTORY ── -->
+    <div class="page" id="pgInventory">
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input class="search-input" id="invSearch" placeholder="Search name, SKU, brand…" oninput="renderInventory()">
+      </div>
+      <div class="chips" id="catChips"></div>
+      <div id="invList"></div>
+    </div>
 
-// ═══════════════════════════════
-// STATE
-// ═══════════════════════════════
-let state = {
-  tab: "dashboard",
-  addType: null,
-  editing: null,
-  sellProduct: null,
-  scanStep: null,
-  scanResult: null,
-  scanPreview: null,
-  products: db.get("opti_v3")||[],
-  sales: db.get("sales_v3")||[],
-  customs: db.get("customs_v2")||{sunglass_brands:["Fastrack","Generic"],frame_brands:[],lens_brands:[],collections:[],suppliers:[],frame_categories:[],lens_colors:[],wear_schedules:[],shapes:[],materials:[],colors:[]},
-  deleted: db.get("deleted_v1")||[],
-  inv_search: "",
-  inv_typeFilter: "all",
-  inv_showFilter: false,
-  inv_view: "grid",
-  inv_pMin: "",
-  inv_pMax: "",
-  inv_filters: {brand:"",shape:"",material:"",gender:"",status:""},
-  pinTarget: null,
-  pinVal: "",
-  pinErr: false,
-  delTarget: null,
-  delReason: "",
-  showDelModal: false,
-  flashMsg: "",
-  listActive: "sunglass_brands",
-  listInput: "",
-};
+    <!-- ── SALES ── -->
+    <div class="page" id="pgSales">
+      <div class="card mb-12" id="salesTodayCard"></div>
+      <div class="sec-title">History</div>
+      <div id="salesList"></div>
+    </div>
 
-function saveProducts() { db.set("opti_v3", state.products); }
-function saveSales() { db.set("sales_v3", state.sales); }
-function saveCustoms() { db.set("customs_v2", state.customs); }
-function saveDeleted() { db.set("deleted_v1", state.deleted); }
-
-// ═══════════════════════════════
-// CLOUDINARY
-// ═══════════════════════════════
-async function uploadPhoto(file) {
-  // Save photo locally as base64 - no internet needed
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (e) => resolve(e.target.result);
-    reader.onerror = () => reject(new Error("Could not read photo"));
-    reader.readAsDataURL(file);
-  });
-}
-
-// ═══════════════════════════════
-// CLAUDE VISION
-// ═══════════════════════════════
-// ===== PWA INSTALL PROMPT =====
-let deferredPrompt = null;
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  deferredPrompt = e;
-  document.getElementById('installBanner')?.style.setProperty('display','flex');
-});
-
-function installApp() {
-  if (deferredPrompt) {
-    deferredPrompt.prompt();
-    deferredPrompt.then(r => { deferredPrompt = null; });
-  }
-  document.getElementById('installBanner')?.style.setProperty('display','none');
-}
-
-// ===== GOOGLE SHEETS BACKUP =====
-function backupToSheets() {
-  const key = prompt('Enter your Google Sheets Web App URL\n(Setup guide: Extensions → Apps Script → Deploy as Web App)\n\nOr press Cancel to skip:');
-  if (!key) return;
-  localStorage.setItem('sheets_url', key.trim());
-  pushToSheets();
-}
-
-async function pushToSheets() {
-  const url = localStorage.getItem('sheets_url');
-  if (!url) { alert('No Sheets URL. Go to More → Backup → Setup Google Sheets first.'); return; }
-  try {
-    const data = {
-      products: state.products,
-      sales: state.sales,
-      timestamp: new Date().toISOString()
-    };
-    await fetch(url, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(data)
-    });
-    alert('✅ Backup sent to Google Sheets!');
-  } catch(e) {
-    alert('❌ Backup failed: ' + e.message);
-  }
-}
-
-// ===== SCAN TO LOOKUP =====
-async function scanToLookup(file) {
-  const GROQ_KEY = getGroqKey();
-  if (!GROQ_KEY) {
-    const k = prompt('Enter Groq API key (gsk_...):');
-    if (k && k.startsWith('gsk_')) { setGroqKey(k); }
-    return null;
-  }
-  const b64 = await new Promise((res,rej) => {
-    const img = new Image();
-    img.onload = () => {
-      const MAX=1024; let w=img.width,h=img.height;
-      if(w>MAX||h>MAX){if(w>h){h=Math.round(h*MAX/w);w=MAX;}else{w=Math.round(w*MAX/h);h=MAX;}}
-      const c=document.createElement('canvas');c.width=w;c.height=h;
-      c.getContext('2d').drawImage(img,0,0,w,h);
-      res(c.toDataURL('image/jpeg',0.85).split(',')[1]);
-    };
-    img.src = URL.createObjectURL(file);
-  });
-  const resp = await fetch('https://api.groq.com/openai/v1/chat/completions',{
-    method:'POST',
-    headers:{'Authorization':'Bearer '+GROQ_KEY,'Content-Type':'application/json'},
-    body: JSON.stringify({
-      model:'meta-llama/llama-4-scout-17b-16e-instruct',
-      messages:[{role:'user',content:[
-        {type:'image_url',image_url:{url:'data:image/jpeg;base64,'+b64}},
-        {type:'text',text:'Read the model/SKU number from this eyewear temple arm. Return ONLY the model number, nothing else. Just the code like: NBM138BK1 or LB020 or 998208'}
-      ]}],
-      max_tokens:50,temperature:0.1
-    })
-  });
-  const d = await resp.json();
-  const sku = (d.choices?.[0]?.message?.content||'').trim().replace(/[^A-Z0-9\-]/gi,'');
-  if (!sku) return null;
-  // Search inventory
-  const found = state.products.filter(p =>
-    p.sku?.toLowerCase()===sku.toLowerCase() ||
-    p.collection?.toLowerCase().includes(sku.toLowerCase()) ||
-    p.name?.toLowerCase().includes(sku.toLowerCase())
-  );
-  return {sku, found};
-}
-
-// ===== AUTO BACKUP EVERY 10 SAVES =====
-let saveCount = 0;
-const origSaveProducts = saveProducts;
-function saveProducts() {
-  origSaveProducts();
-  saveCount++;
-  if (saveCount % 10 === 0) {
-    const url = localStorage.getItem('sheets_url');
-    if (url) pushToSheets();
-  }
-}
-
-// Key management
-
-function setupSheetsBackup() {
-  alert('Setup Guide:\n\n1. Go to sheets.google.com → New spreadsheet\n2. Extensions → Apps Script\n3. Delete existing code, paste this:\n\nfunction doPost(e){\n  var sheet = SpreadsheetApp.getActiveSheet();\n  var data = JSON.parse(e.postData.contents);\n  sheet.appendRow([new Date(), JSON.stringify(data)]);\n  return ContentService.createTextOutput("OK");\n}\n\n4. Deploy → New deployment → Web app → Anyone → Deploy\n5. Copy the URL and paste in Backup setup');
-  const url = prompt('Paste your Google Apps Script URL here:');
-  if (url && url.includes('script.google.com')) {
-    localStorage.setItem('sheets_url', url.trim());
-    alert('✅ Google Sheets backup configured!');
-    render();
-  }
-}
-
-async function showLookup() {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = 'image/*';
-  input.capture = 'environment';
-  input.onchange = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const loadingAlert = '🔍 Scanning temple arm...';
-    const result = await scanToLookup(file);
-    if (!result) { alert('Could not read SKU. Try a clearer photo.'); return; }
-    if (result.found.length === 0) {
-      alert('SKU found: ' + result.sku + '\n\n❌ Not in your inventory yet.\nUse Add Stock to add it.');
-    } else {
-      const item = result.found[0];
-      const stock = getStock(item);
-      alert('✅ Found in inventory!\n\nSKU: ' + result.sku + '\nBrand: ' + item.brand + '\nModel: ' + (item.collection||item.name||'') + '\nSize: ' + (item.size||'—') + '\nStock: ' + stock.label + '\nPrice: ₹' + (item.sellingPrice||'—'));
-    }
-  };
-  input.click();
-}
-
-function setGroqKey(key) {
-  if (key && key.startsWith('gsk_')) {
-    sessionStorage.setItem('gk', key.trim());
-    localStorage.setItem('gk', key.trim());
-    alert('✅ Groq key saved! Temple scan is now ready.');
-  } else {
-    alert('❌ Invalid key. Must start with gsk_');
-  }
-}
-
-function getGroqKey() {
-  return sessionStorage.getItem('gk') || localStorage.getItem('gk') || '';
-}
-
-// Auto-restore from localStorage on page load
-(function() {
-  const saved = localStorage.getItem('gk');
-  if (saved) sessionStorage.setItem('gk', saved);
-})();
-
-async function scanTemple(file) {
-  const GROQ_KEY = getGroqKey();
-  if (!GROQ_KEY) {
-    const k = prompt('Enter Groq API key (gsk_...):');
-    if (k && k.startsWith('gsk_')) {
-      setGroqKey(k);
-      throw new Error('Key saved! Please take photo again.');
-    }
-    throw new Error('No API key. Enter your Groq key when prompted.');
-  }
-  const MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
-
-  // Resize image to max 1024px before sending
-  const b64 = await new Promise((res, rej) => {
-    const img = new Image();
-    img.onload = () => {
-      const MAX = 1024;
-      let w = img.width, h = img.height;
-      if (w > MAX || h > MAX) {
-        if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
-        else { w = Math.round(w * MAX / h); h = MAX; }
-      }
-      const c = document.createElement('canvas');
-      c.width = w; c.height = h;
-      c.getContext('2d').drawImage(img, 0, 0, w, h);
-      res(c.toDataURL('image/jpeg', 0.85).split(',')[1]);
-    };
-    img.onerror = () => rej(new Error('Image load failed'));
-    img.src = URL.createObjectURL(file);
-  });
-
-  const resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': 'Bearer ' + GROQ_KEY,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      messages: [{
-        role: 'user',
-        content: [
-          { type: 'image_url', image_url: { url: 'data:image/jpeg;base64,' + b64 } },
-          { type: 'text', text: `You are reading an eyewear frame temple arm. Read ALL text carefully.
-Temple arms show: brand name, model/SKU (e.g. NBM138BK1, M183GR5PV, LB020, 998208), size (e.g. 53-18-145 or 52□20-147), color code (e.g. C1, C4, COL8).
-Return ONLY a JSON object, no markdown:
-{"brand":"","sku":"","size":"","color":"","material":"","notes":"","confidence":"high"}
-- sku: exact model number as printed
-- size: lens-bridge-temple measurements
-- color: color code
-- notes: ALL visible text exactly as seen
-- confidence: high/medium/low` }
-        ]
-      }],
-      max_tokens: 300,
-      temperature: 0.1
-    })
-  });
-
-  const d = await resp.json();
-  if (d.error) throw new Error(d.error.message || JSON.stringify(d.error));
-
-  const txt = d.choices?.[0]?.message?.content || '';
-  let fields = { brand:'', sku:'', size:'', color:'', material:'', notes: txt, confidence:'low' };
-  try {
-    const m = txt.replace(/```json|```/gi, '').trim().match(/\{[\s\S]*\}/);
-    if (m) fields = { ...fields, ...JSON.parse(m[0]) };
-  } catch(e) {}
-
-  return fields;
-}
-
-// ═══════════════════════════════
-// FORM STATE
-// ═══════════════════════════════
-let formData = {};
-let formVariants = [];
-let formStock = {};
-let uploadingPhotos = false;
-
-function initForm(initial, type) {
-  if (initial) {
-    formData = {...initial,
-      purchasePrice: String(initial.purchasePrice||""),
-      sellingPrice: String(initial.sellingPrice||""),
-      mrp: String(initial.mrp||""),
-      reorderLevel: String(initial.reorderLevel||5),
-      currentStock: String(initial.currentStock||""),
-      leadTimeDays: String(initial.leadTimeDays||21),
-      tags: (initial.tags||[]).join(", ")
-    };
-    formVariants = initial.variants ? [...initial.variants.map(v=>({...v}))] : [];
-    formStock = initial.stock ? {...initial.stock} : {};
-  } else {
-    formData = {
-      id:"", type:type, brand:"", collection:"", sku:"", shape:"", material:"", size:"",
-      gender:"", category:(type==="sunglasses"?"Sunglasses":""), subcategory:"", supplier:"",
-      purchasePrice:"", sellingPrice:"", mrp:"", reorderLevel:"5", currentStock:"",
-      leadTimeDays:"21", purchaseDate:today(), location:"", notes:"", tags:"",
-      name:"", baseCurve:"", diameter:"", wearSchedule:"", packSize:(type==="rx_lens"?"3":"1"),
-      lensColor:"", accessoryType:"Specs Case", images:[]
-    };
-    formVariants = (type==="frame"||type==="sunglasses") ? [{color:"Black",qty:0}] : [];
-    const powers = type==="rx_lens"?RX_POWERS:type==="rg_lens"?RG_POWERS:[];
-    formStock = {};
-    powers.forEach(p => formStock[p]=0);
-  }
-}
-
-// ═══════════════════════════════
-// RENDER ENGINE
-// ═══════════════════════════════
-function render() {
-  const app = document.getElementById("app");
-  app.innerHTML = buildApp();
-  attachEvents();
-}
-
-function buildApp() {
-  const si_out = state.products.filter(p=>getStock(p).isOut).length;
-  const si_low = state.products.filter(p=>getStock(p).isLow).length;
-
-  return `
-  ${buildPinModal()}
-  ${buildDelModal()}
-  <div class="header">
-    <div class="header-left">
-      <span style="font-size:22px">👓</span>
-      <div>
-        <div class="header-title">OptiStock</div>
-        <div class="header-sub">Optical Inventory</div>
+    <!-- ── SCAN ── -->
+    <div class="page" id="pgScan">
+      <div class="toggle-row">
+        <button class="toggle-btn active" id="tgBarcode" onclick="setScanMode('barcode')">📷 Barcode</button>
+        <button class="toggle-btn" id="tgTemple" onclick="setScanMode('temple')">👓 Temple Scan</button>
+      </div>
+      <!-- BARCODE -->
+      <div id="barcodeSect">
+        <div class="scan-box-wrap">
+          <video id="scanVideo" autoplay muted playsinline></video>
+          <div class="scan-aim">
+            <div class="col" style="align-items:center;gap:0">
+              <div class="scan-aim-box"></div>
+              <div class="scan-line"></div>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="text-align:center;margin-bottom:12px">
+          <div class="muted sm" id="barcodeStatus">Point camera at barcode</div>
+        </div>
+        <button class="btn btn-outline btn-full" id="btnStartScan" onclick="startBarcodeScanner()">▶ Start Scanner</button>
+        <button class="btn btn-red btn-full mt-8" id="btnStopScan" onclick="stopBarcodeScanner()" style="display:none;margin-top:8px">■ Stop Scanner</button>
+      </div>
+      <!-- TEMPLE -->
+      <div id="templeSect" style="display:none">
+        <div class="card mb-12">
+          <div class="sec-title" style="margin-top:0">How it works</div>
+          <div class="muted sm" style="line-height:1.7">📸 Take a clear photo of the glasses temple arm → AI reads the SKU/model code → looks it up in your inventory</div>
+        </div>
+        <div style="display:flex;gap:10px;margin-bottom:14px">
+          <button class="btn btn-primary grow" onclick="document.getElementById('templeFile').click()">📷 Take Photo</button>
+          <button class="btn btn-outline grow" onclick="document.getElementById('templeGallery').click()">🖼 Gallery</button>
+        </div>
+        <input type="file" id="templeFile" accept="image/*" capture="environment" style="display:none" onchange="handleTemplePhoto(this)">
+        <input type="file" id="templeGallery" accept="image/*" style="display:none" onchange="handleTemplePhoto(this)">
+        <div id="templeResult"></div>
       </div>
     </div>
-    <div class="header-badges">
-      ${si_out>0?`<span class="badge badge-red">🚫 ${si_out}</span>`:""}
-      ${si_low>0?`<span class="badge badge-yellow">⚠ ${si_low}</span>`:""}
+
+    <!-- ── MORE ── -->
+    <div class="page" id="pgMore">
+      <div class="sec-title">Management</div>
+      <div class="menu-grid">
+        <div class="menu-card" onclick="showSub('pgPOs','Purchase Orders');renderPOs()"><div class="menu-icon">📋</div><div class="menu-label">Purchase Orders</div><div class="menu-sub" id="poCount">0 orders</div></div>
+        <div class="menu-card" onclick="showSub('pgSuppliers','Suppliers');renderSuppliers()"><div class="menu-icon">🏭</div><div class="menu-label">Suppliers</div><div class="menu-sub" id="supplierCount">0 suppliers</div></div>
+        <div class="menu-card" onclick="exportCSV()"><div class="menu-icon">📤</div><div class="menu-label">Export CSV</div><div class="menu-sub">Download data</div></div>
+        <div class="menu-card" onclick="doBackup()"><div class="menu-icon">☁️</div><div class="menu-label">Sync Sheets</div><div class="menu-sub">Google Backup</div></div>
+      </div>
+      <div class="sec-title">App</div>
+      <div class="menu-grid">
+        <div class="menu-card" onclick="showSub('pgSettings','Settings');renderSettings()"><div class="menu-icon">⚙️</div><div class="menu-label">Settings</div><div class="menu-sub">Configure app</div></div>
+        <div class="menu-card" onclick="showSub('pgSheetSetup','Google Sheets Setup')"><div class="menu-icon">📊</div><div class="menu-label">Sheets Setup</div><div class="menu-sub">Auto backup guide</div></div>
+      </div>
+      <div class="card" style="font-size:12px;color:var(--txt2);line-height:1.9">
+        <b style="color:var(--txt)">OptiStock v4.0</b><br>
+        Temple Scan (Groq AI) · ZXing Barcode · WhatsApp Invoice · Purchase Orders · Google Sheets Backup
+      </div>
     </div>
+
+    <!-- ═══════════ SUB-PAGES ═══════════ -->
+
+    <!-- ADD / EDIT ITEM -->
+    <div class="subpage" id="pgAddItem">
+      <div class="sec-title">Photo</div>
+      <div class="row gap-10 mb-16">
+        <div class="photo-pick" id="itemThumbPick" onclick="document.getElementById('itemPhotoFile').click()">
+          <span id="itemThumbIcon">📦</span>
+        </div>
+        <div class="col gap-8 grow">
+          <button class="btn btn-outline btn-sm" onclick="document.getElementById('itemPhotoFile').click()">📷 Choose Photo</button>
+          <button class="btn btn-outline btn-sm" onclick="openScanForItem()">👓 Temple Scan</button>
+        </div>
+        <input type="file" id="itemPhotoFile" accept="image/*" style="display:none" onchange="previewItemPhoto(this)">
+      </div>
+      <div class="sec-title">Basic Info</div>
+      <div class="form-group"><label class="form-label">Item Name *</label><input class="form-input" id="fName" placeholder="e.g. Ray-Ban Aviator"></div>
+      <div class="form-row mb-8">
+        <div class="form-group" style="margin:0"><label class="form-label">SKU / Code</label><div class="row gap-8"><input class="form-input" id="fSku" placeholder="NBM138BK1"><button class="btn btn-outline btn-sm" onclick="scanForField('fSku')" style="flex-shrink:0;padding:12px">📷</button></div></div>
+        <div class="form-group" style="margin:0"><label class="form-label">Brand</label><input class="form-input" id="fBrand" placeholder="Ray-Ban"></div>
+      </div>
+      <div class="form-row mb-8">
+        <div class="form-group" style="margin:0"><label class="form-label">Category</label>
+          <select class="form-input" id="fCategory">
+            <option value="">Select</option>
+            <option>Optical Frame</option><option>Sunglasses</option><option>Contact Lens</option>
+            <option>Reading Glass</option><option>Lens</option><option>Accessories</option><option>Other</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin:0"><label class="form-label">Frame Type</label>
+          <select class="form-input" id="fFrameType">
+            <option value="">Select</option>
+            <option>Full Rim</option><option>Half Rim</option><option>Rimless</option><option>N/A</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row mb-16">
+        <div class="form-group" style="margin:0"><label class="form-label">Color</label><input class="form-input" id="fColor" placeholder="Black"></div>
+        <div class="form-group" style="margin:0"><label class="form-label">Material</label><input class="form-input" id="fMaterial" placeholder="Metal"></div>
+      </div>
+      <div class="sec-title">Stock & Pricing</div>
+      <div class="form-row mb-8">
+        <div class="form-group" style="margin:0"><label class="form-label">Stock Qty *</label><input class="form-input" id="fStock" type="number" placeholder="10" min="0"></div>
+        <div class="form-group" style="margin:0"><label class="form-label">Low Stock Alert</label><input class="form-input" id="fLowAt" type="number" placeholder="3" min="0"></div>
+      </div>
+      <div class="form-row mb-16">
+        <div class="form-group" style="margin:0"><label class="form-label">Selling Price ₹ *</label><input class="form-input" id="fPrice" type="number" placeholder="2500" min="0"></div>
+        <div class="form-group" style="margin:0"><label class="form-label">Cost Price ₹</label><input class="form-input" id="fCost" type="number" placeholder="1200" min="0"></div>
+      </div>
+      <div class="sec-title">More Details</div>
+      <div class="form-group">
+        <label class="form-label">Barcode</label>
+        <div class="row gap-8">
+          <input class="form-input grow" id="fBarcode" placeholder="Scan or type barcode">
+          <button class="btn btn-outline btn-sm" onclick="scanForField('fBarcode')" style="flex-shrink:0;padding:12px">📷</button>
+        </div>
+      </div>
+      <div class="form-row mb-8">
+        <div class="form-group" style="margin:0"><label class="form-label">Supplier</label>
+          <select class="form-input" id="fSupplier"><option value="">None</option></select>
+        </div>
+        <div class="form-group" style="margin:0"><label class="form-label">Location</label><input class="form-input" id="fLocation" placeholder="Rack A-1"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Notes</label><textarea class="form-input" id="fNotes" placeholder="Any extra notes…"></textarea></div>
+      <div style="display:flex;gap:10px;margin-top:8px">
+        <button class="btn btn-primary grow" onclick="saveItem()">✓ Save Item</button>
+        <button class="btn btn-red btn-sm" id="btnDeleteItem" onclick="confirmDeleteItem()" style="display:none">🗑</button>
+      </div>
+    </div>
+
+    <!-- ITEM DETAIL -->
+    <div class="subpage" id="pgItemDetail">
+      <div id="itemDetailContent"></div>
+    </div>
+
+    <!-- SALE FORM -->
+    <div class="subpage" id="pgSaleForm">
+      <div class="sec-title">Customer</div>
+      <div class="form-row mb-8">
+        <div class="form-group" style="margin:0"><label class="form-label">Customer Name</label><input class="form-input" id="sCustName" placeholder="Optional"></div>
+        <div class="form-group" style="margin:0"><label class="form-label">Phone (for WhatsApp)</label><input class="form-input" id="sCustPhone" type="tel" placeholder="9876543210"></div>
+      </div>
+      <div class="sec-title">Items</div>
+      <div id="saleItemsList" class="mb-12"></div>
+      <button class="btn btn-outline btn-full mb-12" onclick="openAddSaleItem()">➕ Add Item</button>
+      <div class="card mb-12" id="saleSummaryCard" style="display:none">
+        <div class="row between mb-8"><span class="muted">Subtotal</span><span id="sSubtotal" class="bold">₹0</span></div>
+        <div class="row between mb-8">
+          <span class="muted">Discount ₹</span>
+          <input class="form-input" id="sDiscount" type="number" placeholder="0" min="0" style="width:100px;text-align:right" oninput="calcSaleSummary()">
+        </div>
+        <div class="divider"></div>
+        <div class="row between"><span class="bold" style="font-size:16px">Total</span><span class="bold c-green" id="sTotal" style="font-size:18px">₹0</span></div>
+      </div>
+      <div class="form-group"><label class="form-label">Notes</label><input class="form-input" id="sSaleNotes" placeholder="Optional"></div>
+      <button class="btn btn-green btn-full" onclick="saveSale()">💰 Complete Sale</button>
+    </div>
+
+    <!-- SALE DETAIL -->
+    <div class="subpage" id="pgSaleDetail">
+      <div id="saleDetailContent"></div>
+    </div>
+
+    <!-- PURCHASE ORDERS LIST -->
+    <div class="subpage" id="pgPOs">
+      <div class="chips" id="poFilterChips">
+        <button class="chip active" onclick="setPOFilter('all',this)">All</button>
+        <button class="chip" onclick="setPOFilter('pending',this)">Pending</button>
+        <button class="chip" onclick="setPOFilter('received',this)">Received</button>
+      </div>
+      <div id="poList"></div>
+      <button class="fab" onclick="openAddPO()">+</button>
+    </div>
+
+    <!-- ADD PO -->
+    <div class="subpage" id="pgAddPO">
+      <div class="form-group"><label class="form-label">Supplier *</label>
+        <select class="form-input" id="poSupplier"><option value="">Select Supplier</option></select>
+      </div>
+      <div class="form-row mb-8">
+        <div class="form-group" style="margin:0"><label class="form-label">Order Date</label><input class="form-input" id="poDate" type="date"></div>
+        <div class="form-group" style="margin:0"><label class="form-label">Expected By</label><input class="form-input" id="poExpected" type="date"></div>
+      </div>
+      <div class="sec-title">Items to Order</div>
+      <div id="poItemsList" class="mb-12"></div>
+      <button class="btn btn-outline btn-full mb-16" onclick="addPOItemRow()">➕ Add Item</button>
+      <div class="form-group"><label class="form-label">Notes</label><textarea class="form-input" id="poNotes" placeholder="Any notes for supplier…"></textarea></div>
+      <button class="btn btn-primary btn-full" onclick="savePO()">📋 Create Purchase Order</button>
+    </div>
+
+    <!-- PO DETAIL -->
+    <div class="subpage" id="pgPODetail">
+      <div id="poDetailContent"></div>
+    </div>
+
+    <!-- SUPPLIERS -->
+    <div class="subpage" id="pgSuppliers">
+      <div id="supplierList" class="mb-12"></div>
+      <div class="sec-title">Add Supplier</div>
+      <div class="form-row mb-8">
+        <div class="form-group" style="margin:0"><label class="form-label">Name *</label><input class="form-input" id="supName" placeholder="Supplier name"></div>
+        <div class="form-group" style="margin:0"><label class="form-label">Phone</label><input class="form-input" id="supPhone" type="tel" placeholder="Phone"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Company / Brand</label><input class="form-input" id="supCompany" placeholder="Company name"></div>
+      <button class="btn btn-primary btn-full" onclick="addSupplier()">➕ Add Supplier</button>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="subpage" id="pgSettings">
+      <div class="sec-title">Shop Info</div>
+      <div class="form-group"><label class="form-label">Shop Name</label><input class="form-input" id="stShopName" placeholder="My Optical Store"></div>
+      <div class="form-row mb-8">
+        <div class="form-group" style="margin:0"><label class="form-label">Phone</label><input class="form-input" id="stShopPhone" type="tel" placeholder="9876543210"></div>
+        <div class="form-group" style="margin:0"><label class="form-label">GST No.</label><input class="form-input" id="stGST" placeholder="27XXXXX"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Address</label><textarea class="form-input" id="stAddress" placeholder="Shop address…" style="min-height:60px"></textarea></div>
+      <div class="sec-title">API Keys</div>
+      <div class="form-group"><label class="form-label">Groq API Key (for Temple Scan)</label><input class="form-input" id="stGroqKey" type="password" placeholder="gsk_…" autocomplete="off"></div>
+      <div class="form-group">
+        <label class="form-label">Google Sheets Web App URL</label>
+        <input class="form-input" id="stSheetUrl" placeholder="https://script.google.com/…">
+        <div class="xs muted mt-8" style="margin-top:6px">Get this URL from <b>Sheets Setup</b> guide in More tab</div>
+      </div>
+      <div class="sec-title">Security</div>
+      <div class="form-row mb-16">
+        <div class="form-group" style="margin:0"><label class="form-label">New PIN</label><input class="form-input" id="stPin1" type="password" maxlength="4" placeholder="4 digits" inputmode="numeric"></div>
+        <div class="form-group" style="margin:0"><label class="form-label">Confirm PIN</label><input class="form-input" id="stPin2" type="password" maxlength="4" placeholder="4 digits" inputmode="numeric"></div>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-primary grow" onclick="saveSettings()">✓ Save Settings</button>
+        <button class="btn btn-outline btn-sm" onclick="testSheetUrl()">Test Sheets</button>
+      </div>
+    </div>
+
+    <!-- GOOGLE SHEETS SETUP -->
+    <div class="subpage" id="pgSheetSetup">
+      <div class="card mb-16" style="background:rgba(59,130,246,.1);border-color:rgba(59,130,246,.3)">
+        <div class="bold mb-8">🔒 100% Private & Free</div>
+        <div class="xs muted" style="line-height:1.7">Your data goes directly to YOUR Google Sheet. No third-party servers. Free forever. One-time 5-minute setup.</div>
+      </div>
+      <div class="sec-title">Step-by-Step Setup</div>
+
+      <div class="card mb-12">
+        <div class="row gap-10 mb-8"><div style="width:28px;height:28px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0">1</div><div class="bold">Create a Google Sheet</div></div>
+        <div class="xs muted" style="line-height:1.7">Go to <b>sheets.google.com</b> → Click <b>+</b> to create new sheet → Name it <b>"OptiStock Backup"</b></div>
+      </div>
+
+      <div class="card mb-12">
+        <div class="row gap-10 mb-8"><div style="width:28px;height:28px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0">2</div><div class="bold">Open Apps Script</div></div>
+        <div class="xs muted" style="line-height:1.7">In your sheet, click <b>Extensions</b> → <b>Apps Script</b> → Delete all existing code</div>
+      </div>
+
+      <div class="card mb-12">
+        <div class="row gap-10 mb-8"><div style="width:28px;height:28px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0">3</div><div class="bold">Paste This Script</div></div>
+        <button class="btn btn-outline btn-sm btn-full mb-8" onclick="copyScript()">📋 Copy Script to Clipboard</button>
+        <div class="code-box" id="scriptCode"></div>
+      </div>
+
+      <div class="card mb-12">
+        <div class="row gap-10 mb-8"><div style="width:28px;height:28px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0">4</div><div class="bold">Save & Deploy</div></div>
+        <div class="xs muted" style="line-height:1.9">
+          1. Click 💾 Save (Ctrl+S)<br>
+          2. Click <b>Deploy</b> → <b>New Deployment</b><br>
+          3. Type = <b>Web app</b><br>
+          4. Execute as = <b>Me</b><br>
+          5. Who has access = <b>Anyone</b><br>
+          6. Click <b>Deploy</b> → Authorize → <b>Copy the web app URL</b>
+        </div>
+      </div>
+
+      <div class="card mb-16">
+        <div class="row gap-10 mb-8"><div style="width:28px;height:28px;background:var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0">5</div><div class="bold">Paste URL in Settings</div></div>
+        <div class="xs muted mb-12" style="line-height:1.7">Go to <b>Settings</b> in More tab → Paste URL in <b>"Google Sheets Web App URL"</b> field → Save</div>
+        <button class="btn btn-primary btn-full" onclick="showSub('pgSettings','Settings');renderSettings()">Open Settings →</button>
+      </div>
+
+      <div class="card" style="background:rgba(34,197,94,.08);border-color:rgba(34,197,94,.2)">
+        <div class="bold mb-4 c-green">✓ After setup, every sale auto-syncs!</div>
+        <div class="xs muted">OptiStock will send your inventory, sales and purchase orders to Google Sheets automatically after each sale.</div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+
+  <div class="bottom-nav" id="bottomNav">
+    <button class="nav-item active" data-tab="home" onclick="switchTab('home')"><span class="nav-icon">🏠</span><span>Home</span></button>
+    <button class="nav-item" data-tab="inventory" onclick="switchTab('inventory')"><span class="nav-icon">📦</span><span>Stock</span></button>
+    <button class="nav-item" data-tab="sales" onclick="switchTab('sales')"><span class="nav-icon">💰</span><span>Sales</span></button>
+    <button class="nav-item" data-tab="scan" onclick="switchTab('scan')"><span class="nav-icon">📷</span><span>Scan</span></button>
+    <button class="nav-item" data-tab="more" onclick="switchTab('more')"><span class="nav-icon">☰</span><span>More</span></button>
   </div>
-  <div class="main" id="main-content">
-    ${buildPage()}
+</div><!-- /app -->
+
+<!-- MODAL -->
+<div class="modal-wrap" id="modalWrap" onclick="closeModal(event)">
+  <div class="modal" id="modal">
+    <div class="modal-handle"></div>
+    <div id="modalBody"></div>
   </div>
-  <nav class="nav">
-    ${[{id:"dashboard",i:"🏠",l:"Home"},{id:"inventory",i:"📦",l:"Stock"},{id:"add",i:"➕",l:"Add"},{id:"sell",i:"💰",l:"Sell"},{id:"analytics",i:"📊",l:"Report"},{id:"more",i:"⚙️",l:"More"}].map(n=>`
-    <button class="nav-btn ${state.tab===n.id||(["lists","deleted"].includes(state.tab)&&n.id==="more")?"active":""}" onclick="goTab('${n.id}')">
-      <span>${n.i}</span><span>${n.l}</span>
-    </button>`).join("")}
-  </nav>
-  ${buildScanScreen()}
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ═══════════════════════════════════════════════
+   DATA LAYER
+═══════════════════════════════════════════════ */
+const DB_KEY = 'optistock_v4';
+
+function loadDB() {
+  try { return JSON.parse(localStorage.getItem(DB_KEY) || '{}'); } catch(e) { return {}; }
+}
+function saveDB(d) { localStorage.setItem(DB_KEY, JSON.stringify(d)); }
+
+function getInventory() { return loadDB().inventory || []; }
+function getSales()     { return loadDB().sales || []; }
+function getPOs()       { return loadDB().pos || []; }
+function getSuppliers() { return loadDB().suppliers || []; }
+function getSettings()  { return loadDB().settings || {}; }
+
+function saveInventory(v) { const d=loadDB(); d.inventory=v; saveDB(d); }
+function saveSales(v)     { const d=loadDB(); d.sales=v; saveDB(d); }
+function savePOs(v)       { const d=loadDB(); d.pos=v; saveDB(d); }
+function saveSuppliers(v) { const d=loadDB(); d.suppliers=v; saveDB(d); }
+function saveSetting(k,v) { const d=loadDB(); d.settings=d.settings||{}; d.settings[k]=v; saveDB(d); }
+function saveSettingsObj(s){ const d=loadDB(); d.settings=Object.assign(d.settings||{},s); saveDB(d); }
+
+function uid() { return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+
+function nextBillNo() {
+  const s=getSales(); const nums=s.map(x=>parseInt((x.billNo||'').replace(/\D/g,'')||0)).filter(n=>n);
+  return 'B-'+String(Math.max(0,...nums)+1).padStart(4,'0');
+}
+function nextPONo() {
+  const p=getPOs(); const nums=p.map(x=>parseInt((x.poNumber||'').replace(/\D/g,'')||0)).filter(n=>n);
+  return 'PO-'+String(Math.max(0,...nums)+1).padStart(3,'0');
+}
+function fDate(ts) {
+  if(!ts) return '';
+  const d=new Date(ts); return d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+}
+function fTime(ts) {
+  if(!ts) return ''; const d=new Date(ts); return d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+}
+function fCur(n) { return '₹'+(parseFloat(n)||0).toLocaleString('en-IN'); }
+function todayISO() { return new Date().toISOString().split('T')[0]; }
+
+/* ═══════════════════════════════════════════════
+   PIN
+═══════════════════════════════════════════════ */
+let pinEntry = '';
+function pinPress(d) {
+  if(d===''||pinEntry.length>=4) return;
+  pinEntry += d;
+  updateDots();
+  if(pinEntry.length===4) setTimeout(checkPin,100);
+}
+function pinDel() { if(pinEntry.length>0){pinEntry=pinEntry.slice(0,-1);updateDots();} }
+function updateDots() {
+  for(let i=0;i<4;i++) document.getElementById('d'+i).classList.toggle('filled',i<pinEntry.length);
+}
+function checkPin() {
+  const correct = getSettings().pin || '1986';
+  if(pinEntry===correct) {
+    document.getElementById('pinScreen').style.display='none';
+    document.getElementById('app').style.display='flex';
+    initApp();
+  } else {
+    document.getElementById('pinErr').textContent='Incorrect PIN. Try again.';
+    pinEntry='';updateDots();
+    setTimeout(()=>document.getElementById('pinErr').textContent='',2000);
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════════════ */
+let curTab='home', subStack=[];
+let editId=null, viewSaleId=null, viewPOId=null, scanFieldTarget=null;
+let poFilterMode='all';
+
+function switchTab(tab) {
+  if(curTab==='scan') stopBarcodeScanner();
+  curTab=tab; subStack=[];
+  document.querySelectorAll('.page,.subpage').forEach(p=>p.style.display='none');
+  document.getElementById('pg'+cap(tab)).style.display='block';
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.tab===tab));
+  document.getElementById('btnBack').style.display='none';
+  document.getElementById('topActs').innerHTML='';
+  const titles={home:'OptiStock',inventory:'Inventory',sales:'Sales',scan:'Scan',more:'More'};
+  document.getElementById('topTitle').textContent = titles[tab]||tab;
+  const renders={home:renderHome,inventory:renderInventory,sales:renderSales,more:renderMore};
+  renders[tab]?.();
+  if(tab==='inventory') {
+    document.getElementById('topActs').innerHTML=`<button class="tbtn" onclick="openAddItem()">+</button>`;
+  }
+  if(tab==='sales') {
+    document.getElementById('topActs').innerHTML=`<button class="tbtn" onclick="openSaleForm()">+</button>`;
+  }
+}
+
+function showSub(id, title) {
+  subStack.push({id,title});
+  document.querySelectorAll('.page,.subpage').forEach(p=>p.style.display='none');
+  const el=document.getElementById(id);
+  if(el){el.style.display='block';el.scrollTop=0;}
+  document.getElementById('btnBack').style.display='flex';
+  document.getElementById('topTitle').textContent=title||'';
+  document.getElementById('topActs').innerHTML='';
+  document.getElementById('mainContent').scrollTop=0;
+}
+
+function goBack() {
+  subStack.pop();
+  if(subStack.length===0) {
+    switchTab(curTab);
+  } else {
+    const prev=subStack[subStack.length-1];
+    document.querySelectorAll('.page,.subpage').forEach(p=>p.style.display='none');
+    const el=document.getElementById(prev.id);
+    if(el)el.style.display='block';
+    document.getElementById('topTitle').textContent=prev.title||'';
+    // Re-render if needed
+    if(prev.id==='pgPOs') renderPOs();
+    if(prev.id==='pgSuppliers') renderSuppliers();
+  }
+}
+
+function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
+
+/* ═══════════════════════════════════════════════
+   TOAST & MODAL
+═══════════════════════════════════════════════ */
+let toastTimer;
+function showToast(msg, dur=2500) {
+  const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),dur);
+}
+function openModal(html) { document.getElementById('modalBody').innerHTML=html; document.getElementById('modalWrap').classList.add('open'); }
+function closeModal(e) { if(!e||e.target===document.getElementById('modalWrap')) document.getElementById('modalWrap').classList.remove('open'); }
+function closeModalForce(){document.getElementById('modalWrap').classList.remove('open');}
+
+/* ═══════════════════════════════════════════════
+   RENDER: HOME
+═══════════════════════════════════════════════ */
+function renderHome() {
+  const inv=getInventory(), sales=getSales(), today=todayISO();
+  const todaySales=sales.filter(s=>s.date&&s.date.startsWith(today));
+  const todayRev=todaySales.reduce((a,s)=>a+(s.grandTotal||0),0);
+  const lowStock=inv.filter(i=>(parseInt(i.stock)||0)<=(parseInt(i.lowAt)||3)&&parseInt(i.stock)>0);
+  const outOfStock=inv.filter(i=>parseInt(i.stock)===0);
+
+  document.getElementById('statsGrid').innerHTML=`
+    <div class="stat-card"><div class="stat-label">Total Items</div><div class="stat-val">${inv.length}</div><div class="stat-sub">${outOfStock.length} out of stock</div></div>
+    <div class="stat-card"><div class="stat-label">Today Sales</div><div class="stat-val">${todaySales.length}</div><div class="stat-sub">${fCur(todayRev)} revenue</div></div>
+    <div class="stat-card"><div class="stat-label">Total Stock</div><div class="stat-val">${inv.reduce((a,i)=>a+(parseInt(i.stock)||0),0)}</div><div class="stat-sub">units across all items</div></div>
+    <div class="stat-card"><div class="stat-label">This Month</div><div class="stat-val">${fCur(sales.filter(s=>s.date&&s.date.startsWith(today.slice(0,7))).reduce((a,s)=>a+(s.grandTotal||0),0))}</div><div class="stat-sub">revenue</div></div>
+  `;
+
+  const lsEl=document.getElementById('lowStockList');
+  if(lowStock.length===0&&outOfStock.length===0) {
+    lsEl.innerHTML=`<div class="card" style="color:var(--green);font-size:13px">✅ All items have adequate stock</div>`;
+  } else {
+    lsEl.innerHTML=[...outOfStock.slice(0,3),...lowStock.slice(0,3)].map(i=>`
+      <div class="item-row" onclick="openItemDetail('${i.id}')">
+        <div class="item-thumb">${i.photo?`<img src="${i.photo}">`:'📦'}</div>
+        <div class="item-info"><div class="item-name">${i.name}</div><div class="item-sub">${i.sku||''} ${i.brand||''}</div></div>
+        <span class="badge ${parseInt(i.stock)===0?'badge-red':'badge-yellow'}">${parseInt(i.stock)===0?'OUT':'Low: '+i.stock}</span>
+      </div>`).join('');
+  }
+
+  const reEl=document.getElementById('recentSales');
+  const recent=sales.slice().reverse().slice(0,5);
+  if(!recent.length) { reEl.innerHTML=`<div class="card muted sm">No sales yet</div>`; return; }
+  reEl.innerHTML=recent.map(s=>`
+    <div class="item-row" onclick="openSaleDetail('${s.id}')">
+      <div class="item-thumb" style="font-size:18px">🧾</div>
+      <div class="item-info"><div class="item-name">${s.billNo||''} – ${s.customerName||'Customer'}</div><div class="item-sub">${fDate(s.date)} ${fTime(s.date)} · ${(s.items||[]).length} item${s.items?.length!==1?'s':''}</div></div>
+      <span class="bold c-green" style="font-size:15px">${fCur(s.grandTotal)}</span>
+    </div>`).join('');
+}
+
+/* ═══════════════════════════════════════════════
+   RENDER: INVENTORY
+═══════════════════════════════════════════════ */
+let invCatFilter='All';
+function renderInventory() {
+  const inv=getInventory();
+  const cats=['All',...new Set(inv.map(i=>i.category).filter(Boolean))];
+  document.getElementById('catChips').innerHTML=cats.map(c=>`
+    <button class="chip ${c===invCatFilter?'active':''}" onclick="invCatFilter='${c}';renderInventory()">${c}</button>`).join('');
+
+  const q=(document.getElementById('invSearch')?.value||'').toLowerCase();
+  let list=inv;
+  if(invCatFilter!=='All') list=list.filter(i=>i.category===invCatFilter);
+  if(q) list=list.filter(i=>(i.name+i.sku+i.brand+i.barcode+'').toLowerCase().includes(q));
+
+  const el=document.getElementById('invList');
+  if(!list.length) {
+    el.innerHTML=`<div class="empty-state"><div class="empty-icon">📦</div><div class="empty-text">${inv.length?'No results':'No items yet'}</div><div class="empty-sub">${inv.length?'Try a different search':'Tap + to add your first item'}</div></div>`;
+    return;
+  }
+  el.innerHTML=list.map(i=>{
+    const st=parseInt(i.stock)||0;
+    const lowAt=parseInt(i.lowAt)||3;
+    const badge=st===0?'<span class="badge badge-red">OUT</span>':st<=lowAt?`<span class="badge badge-yellow">Low: ${st}</span>`:`<span class="badge badge-green">${st} pcs</span>`;
+    return `<div class="item-row" onclick="openItemDetail('${i.id}')">
+      <div class="item-thumb">${i.photo?`<img src="${i.photo}">`:'📦'}</div>
+      <div class="item-info"><div class="item-name">${i.name}</div><div class="item-sub">${[i.brand,i.sku,i.color].filter(Boolean).join(' · ')}</div></div>
+      <div class="item-right">${badge}<span class="muted xs">${fCur(i.price)}</span></div>
+    </div>`;
+  }).join('');
+}
+
+/* ═══════════════════════════════════════════════
+   ITEM DETAIL
+═══════════════════════════════════════════════ */
+function openItemDetail(id) {
+  viewSaleId=null; editId=null;
+  const item=getInventory().find(i=>i.id===id);
+  if(!item) return;
+  showSub('pgItemDetail', item.name);
+  document.getElementById('topActs').innerHTML=`<button class="tbtn" onclick="openEditItem('${id}')">✏️</button>`;
+  const st=parseInt(item.stock)||0;
+  const badge=st===0?'badge-red':st<=(parseInt(item.lowAt)||3)?'badge-yellow':'badge-green';
+  document.getElementById('itemDetailContent').innerHTML=`
+    ${item.photo?`<img src="${item.photo}" style="width:100%;max-height:220px;object-fit:cover;border-radius:var(--r2);margin-bottom:16px">`:''}
+    <div class="row between mb-16 center">
+      <div><div style="font-size:22px;font-weight:800">${item.name}</div><div class="muted sm">${[item.brand,item.sku].filter(Boolean).join(' · ')}</div></div>
+      <span class="badge ${badge}" style="font-size:13px">${st===0?'OUT OF STOCK':st+' in stock'}</span>
+    </div>
+    <div class="card mb-12">
+      <div class="sec-title" style="margin-top:0">Pricing</div>
+      <div class="row between mb-8"><span class="muted">Selling Price</span><span class="bold c-green" style="font-size:17px">${fCur(item.price)}</span></div>
+      ${item.cost?`<div class="row between mb-8"><span class="muted">Cost Price</span><span>${fCur(item.cost)}</span></div>`:''}
+      ${item.cost&&item.price?`<div class="row between"><span class="muted">Margin</span><span class="c-green bold">${Math.round(((item.price-item.cost)/item.price)*100)}%</span></div>`:''}
+    </div>
+    <div class="card mb-12">
+      <div class="sec-title" style="margin-top:0">Details</div>
+      ${renderDetailRow('Category',item.category)}
+      ${renderDetailRow('Frame Type',item.frameType)}
+      ${renderDetailRow('Color',item.color)}
+      ${renderDetailRow('Material',item.material)}
+      ${renderDetailRow('Location',item.location)}
+      ${renderDetailRow('Supplier',item.supplier)}
+      ${renderDetailRow('Barcode',item.barcode)}
+      ${item.notes?`<div class="divider"></div><div class="muted xs" style="line-height:1.6">${item.notes}</div>`:''}
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-primary grow" onclick="openEditItem('${item.id}')">✏️ Edit</button>
+      <button class="btn btn-green btn-sm" onclick="openSaleForm('${item.id}')">💰 Sell</button>
+      <button class="btn btn-outline btn-sm" onclick="adjustStock('${item.id}')">±</button>
+    </div>
+  `;
+}
+function renderDetailRow(label,val){return val?`<div class="row between mb-8"><span class="muted">${label}</span><span class="bold">${val}</span></div>`:''}
+
+function adjustStock(id) {
+  openModal(`
+    <div class="modal-title">Adjust Stock</div>
+    <div class="form-group"><label class="form-label">Add or Remove Qty (use - to reduce)</label>
+      <input class="form-input" id="adjQty" type="number" placeholder="e.g. 5 or -2">
+    </div>
+    <div class="form-group"><label class="form-label">Reason (optional)</label><input class="form-input" id="adjReason" placeholder="Received new stock / Lost / etc."></div>
+    <button class="btn btn-primary btn-full" onclick="doAdjustStock('${id}')">✓ Adjust</button>
+  `);
+}
+function doAdjustStock(id) {
+  const qty=parseInt(document.getElementById('adjQty').value||0);
+  if(!qty){showToast('Enter a quantity');return;}
+  const inv=getInventory(); const item=inv.find(i=>i.id===id);
+  if(!item)return;
+  item.stock=Math.max(0,(parseInt(item.stock)||0)+qty);
+  saveInventory(inv); closeModalForce(); showToast('Stock updated');
+  openItemDetail(id);
+}
+
+/* ═══════════════════════════════════════════════
+   ADD / EDIT ITEM
+═══════════════════════════════════════════════ */
+function openAddItem(prefillSku) {
+  editId=null;
+  showSub('pgAddItem','Add Item');
+  clearItemForm();
+  if(prefillSku) document.getElementById('fSku').value=prefillSku;
+  document.getElementById('btnDeleteItem').style.display='none';
+  populateSupplierSelect('fSupplier');
+}
+function openEditItem(id) {
+  editId=id; const item=getInventory().find(i=>i.id===id);
+  if(!item)return;
+  showSub('pgAddItem','Edit Item');
+  document.getElementById('fName').value=item.name||'';
+  document.getElementById('fSku').value=item.sku||'';
+  document.getElementById('fBrand').value=item.brand||'';
+  document.getElementById('fCategory').value=item.category||'';
+  document.getElementById('fFrameType').value=item.frameType||'';
+  document.getElementById('fColor').value=item.color||'';
+  document.getElementById('fMaterial').value=item.material||'';
+  document.getElementById('fStock').value=item.stock||'';
+  document.getElementById('fLowAt').value=item.lowAt||'';
+  document.getElementById('fPrice').value=item.price||'';
+  document.getElementById('fCost').value=item.cost||'';
+  document.getElementById('fBarcode').value=item.barcode||'';
+  document.getElementById('fLocation').value=item.location||'';
+  document.getElementById('fNotes').value=item.notes||'';
+  populateSupplierSelect('fSupplier', item.supplier);
+  if(item.photo){
+    const pp=document.getElementById('itemThumbPick');
+    pp.innerHTML=`<img src="${item.photo}">`;
+  }
+  document.getElementById('btnDeleteItem').style.display='flex';
+}
+function clearItemForm() {
+  ['fName','fSku','fBrand','fColor','fMaterial','fStock','fLowAt','fPrice','fCost','fBarcode','fLocation','fNotes'].forEach(id=>{
+    const el=document.getElementById(id); if(el)el.value='';
+  });
+  ['fCategory','fFrameType'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('itemThumbPick').innerHTML='<span id="itemThumbIcon">📦</span>';
+  window._pendingPhoto=null;
+}
+function previewItemPhoto(input) {
+  const f=input.files[0]; if(!f)return;
+  compressImage(f).then(b64=>{
+    window._pendingPhoto=b64;
+    document.getElementById('itemThumbPick').innerHTML=`<img src="${b64}">`;
+  });
+}
+function saveItem() {
+  const name=document.getElementById('fName').value.trim();
+  if(!name){showToast('Item name is required');return;}
+  const inv=getInventory();
+  const item={
+    id:editId||uid(), name,
+    sku:document.getElementById('fSku').value.trim(),
+    brand:document.getElementById('fBrand').value.trim(),
+    category:document.getElementById('fCategory').value,
+    frameType:document.getElementById('fFrameType').value,
+    color:document.getElementById('fColor').value.trim(),
+    material:document.getElementById('fMaterial').value.trim(),
+    stock:parseInt(document.getElementById('fStock').value)||0,
+    lowAt:parseInt(document.getElementById('fLowAt').value)||3,
+    price:parseFloat(document.getElementById('fPrice').value)||0,
+    cost:parseFloat(document.getElementById('fCost').value)||0,
+    barcode:document.getElementById('fBarcode').value.trim(),
+    supplier:document.getElementById('fSupplier').value,
+    location:document.getElementById('fLocation').value.trim(),
+    notes:document.getElementById('fNotes').value.trim(),
+    updatedAt:Date.now()
+  };
+  if(window._pendingPhoto) item.photo=window._pendingPhoto;
+  else if(editId) { const old=inv.find(i=>i.id===editId); if(old?.photo) item.photo=old.photo; }
+  window._pendingPhoto=null;
+
+  if(editId) {
+    const idx=inv.findIndex(i=>i.id===editId);
+    if(idx>=0)inv[idx]=item;
+  } else {
+    item.createdAt=Date.now();
+    inv.push(item);
+  }
+  saveInventory(inv);
+  showToast(editId?'Item updated!':'Item added!');
+  goBack();
+  setTimeout(()=>{ if(curTab==='inventory')renderInventory(); },100);
+}
+function confirmDeleteItem() {
+  openModal(`
+    <div class="modal-title">Delete Item?</div>
+    <div class="muted mb-16">This cannot be undone.</div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-outline grow" onclick="closeModalForce()">Cancel</button>
+      <button class="btn btn-red grow" onclick="deleteItem('${editId}')">Delete</button>
+    </div>`);
+}
+function deleteItem(id) {
+  const inv=getInventory().filter(i=>i.id!==id); saveInventory(inv);
+  closeModalForce(); showToast('Item deleted'); goBack(); goBack();
+}
+
+/* ═══════════════════════════════════════════════
+   PHOTO COMPRESSION
+═══════════════════════════════════════════════ */
+function compressImage(file,maxW=480,q=0.72) {
+  return new Promise(resolve=>{
+    const img=new Image(), url=URL.createObjectURL(file);
+    img.onload=()=>{
+      const r=Math.min(maxW/img.width,maxW/img.height,1);
+      const c=document.createElement('canvas'); c.width=img.width*r; c.height=img.height*r;
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      resolve(c.toDataURL('image/jpeg',q)); URL.revokeObjectURL(url);
+    };
+    img.src=url;
+  });
+}
+
+/* ═══════════════════════════════════════════════
+   RENDER: SALES
+═══════════════════════════════════════════════ */
+function renderSales() {
+  const sales=getSales(), today=todayISO();
+  const ts=sales.filter(s=>s.date&&s.date.startsWith(today));
+  const trev=ts.reduce((a,s)=>a+(s.grandTotal||0),0);
+  document.getElementById('salesTodayCard').innerHTML=`
+    <div class="row between center">
+      <div><div class="xs muted mb-4">Today's Revenue</div><div style="font-size:24px;font-weight:800;color:var(--green)">${fCur(trev)}</div></div>
+      <div style="text-align:right"><div class="xs muted mb-4">Sales</div><div style="font-size:24px;font-weight:800">${ts.length}</div></div>
+    </div>`;
+
+  const el=document.getElementById('salesList');
+  if(!sales.length){el.innerHTML=`<div class="empty-state"><div class="empty-icon">🧾</div><div class="empty-text">No sales recorded</div><div class="empty-sub">Tap + to record your first sale</div></div>`;return;}
+  const sorted=sales.slice().reverse();
+  el.innerHTML=sorted.map(s=>`
+    <div class="item-row" onclick="openSaleDetail('${s.id}')">
+      <div class="item-thumb" style="font-size:18px;background:rgba(34,197,94,.1)">🧾</div>
+      <div class="item-info">
+        <div class="item-name">${s.billNo||'—'} ${s.customerName?'· '+s.customerName:''}</div>
+        <div class="item-sub">${fDate(s.date)} ${fTime(s.date)} · ${(s.items||[]).length} item${s.items?.length!==1?'s':''}</div>
+      </div>
+      <div class="item-right">
+        <span class="bold c-green" style="font-size:15px">${fCur(s.grandTotal)}</span>
+        ${s.customerPhone?'<span class="badge badge-green xs">WhatsApp</span>':''}
+      </div>
+    </div>`).join('');
+}
+
+/* ═══════════════════════════════════════════════
+   SALE FORM
+═══════════════════════════════════════════════ */
+let saleItems=[];
+function openSaleForm(prefillItemId) {
+  saleItems=[];
+  showSub('pgSaleForm','New Sale');
+  document.getElementById('sCustName').value='';
+  document.getElementById('sCustPhone').value='';
+  document.getElementById('sDiscount').value='';
+  document.getElementById('sSaleNotes').value='';
+  renderSaleItems();
+  if(prefillItemId) setTimeout(()=>addSpecificSaleItem(prefillItemId),100);
+}
+
+function openAddSaleItem() {
+  const inv=getInventory().filter(i=>parseInt(i.stock)>0);
+  if(!inv.length){showToast('No items with stock');return;}
+  openModal(`
+    <div class="modal-title">Select Item</div>
+    <div class="search-wrap mb-12"><span class="search-icon">🔍</span>
+      <input class="search-input" id="saleItemSearch" placeholder="Search…" oninput="filterSaleItems()">
+    </div>
+    <div id="saleItemModal">${renderSaleItemOptions(inv)}</div>
+  `);
+}
+function renderSaleItemOptions(list) {
+  return list.map(i=>`
+    <div class="item-row" onclick="addSpecificSaleItem('${i.id}')">
+      <div class="item-thumb">${i.photo?`<img src="${i.photo}">`:'📦'}</div>
+      <div class="item-info"><div class="item-name">${i.name}</div><div class="item-sub">${i.sku||''} · Stock: ${i.stock}</div></div>
+      <span class="bold" style="font-size:14px">${fCur(i.price)}</span>
+    </div>`).join('');
+}
+function filterSaleItems() {
+  const q=document.getElementById('saleItemSearch').value.toLowerCase();
+  const inv=getInventory().filter(i=>parseInt(i.stock)>0&&(i.name+i.sku+i.brand+'').toLowerCase().includes(q));
+  document.getElementById('saleItemModal').innerHTML=renderSaleItemOptions(inv);
+}
+function addSpecificSaleItem(itemId) {
+  closeModalForce();
+  const item=getInventory().find(i=>i.id===itemId);
+  if(!item)return;
+  const existing=saleItems.find(s=>s.itemId===itemId);
+  if(existing){existing.qty++;calcSaleSummary();}
+  else saleItems.push({itemId,name:item.name,price:item.price,qty:1,stock:parseInt(item.stock)||0});
+  renderSaleItems();
+}
+function renderSaleItems() {
+  const el=document.getElementById('saleItemsList');
+  if(!saleItems.length){el.innerHTML=`<div class="muted sm" style="padding:12px 0">No items added yet</div>`;document.getElementById('saleSummaryCard').style.display='none';return;}
+  el.innerHTML=saleItems.map((s,i)=>`
+    <div class="card2 row center gap-8 mb-8">
+      <div class="grow"><div class="bold sm">${s.name}</div><div class="xs muted">${fCur(s.price)} × ${s.qty} = ${fCur(s.price*s.qty)}</div></div>
+      <div class="row center gap-8">
+        <button class="btn btn-outline btn-sm" style="width:32px;height:32px;padding:0" onclick="changeSaleQty(${i},-1)">−</button>
+        <span class="bold" style="min-width:24px;text-align:center">${s.qty}</span>
+        <button class="btn btn-outline btn-sm" style="width:32px;height:32px;padding:0" onclick="changeSaleQty(${i},1)">+</button>
+        <button class="btn btn-red btn-sm" style="width:32px;height:32px;padding:0" onclick="removeSaleItem(${i})">×</button>
+      </div>
+    </div>`).join('');
+  document.getElementById('saleSummaryCard').style.display='block';
+  calcSaleSummary();
+}
+function changeSaleQty(idx,d) { saleItems[idx].qty=Math.max(1,saleItems[idx].qty+d); renderSaleItems(); }
+function removeSaleItem(idx) { saleItems.splice(idx,1); renderSaleItems(); }
+function calcSaleSummary() {
+  const sub=saleItems.reduce((a,s)=>a+s.price*s.qty,0);
+  const disc=parseFloat(document.getElementById('sDiscount')?.value||0)||0;
+  document.getElementById('sSubtotal').textContent=fCur(sub);
+  document.getElementById('sTotal').textContent=fCur(Math.max(0,sub-disc));
+}
+function saveSale() {
+  if(!saleItems.length){showToast('Add at least one item');return;}
+  const sub=saleItems.reduce((a,s)=>a+s.price*s.qty,0);
+  const disc=parseFloat(document.getElementById('sDiscount')?.value||0)||0;
+  const sale={
+    id:uid(), billNo:nextBillNo(), date:new Date().toISOString(),
+    customerName:document.getElementById('sCustName').value.trim(),
+    customerPhone:document.getElementById('sCustPhone').value.trim(),
+    items:saleItems.map(s=>({itemId:s.itemId,name:s.name,qty:s.qty,price:s.price,total:s.price*s.qty})),
+    subtotal:sub, discount:disc, grandTotal:Math.max(0,sub-disc),
+    notes:document.getElementById('sSaleNotes').value.trim()
+  };
+  // Deduct stock
+  const inv=getInventory();
+  saleItems.forEach(s=>{
+    const item=inv.find(i=>i.id===s.itemId);
+    if(item) item.stock=Math.max(0,(parseInt(item.stock)||0)-s.qty);
+  });
+  saveInventory(inv);
+  const sales=getSales(); sales.push(sale); saveSales(sales);
+  // Auto backup to sheets
+  autoBackup();
+  goBack();
+  showToast('Sale recorded! 🎉');
+  setTimeout(()=>openSaleDetail(sale.id),300);
+}
+
+/* ═══════════════════════════════════════════════
+   SALE DETAIL + WHATSAPP INVOICE
+═══════════════════════════════════════════════ */
+function openSaleDetail(id) {
+  const sale=getSales().find(s=>s.id===id);
+  if(!sale)return;
+  showSub('pgSaleDetail','Invoice '+sale.billNo);
+  const settings=getSettings();
+  const shopName=settings.shopName||'OptiStock';
+  document.getElementById('saleDetailContent').innerHTML=`
+    <div class="card mb-12" style="background:rgba(34,197,94,.06);border-color:rgba(34,197,94,.2)">
+      <div class="row between center mb-4">
+        <div>
+          <div style="font-size:22px;font-weight:800">${sale.billNo}</div>
+          <div class="xs muted">${fDate(sale.date)} ${fTime(sale.date)}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:22px;font-weight:800;color:var(--green)">${fCur(sale.grandTotal)}</div>
+          ${sale.discount?`<div class="xs muted">Disc: ${fCur(sale.discount)}</div>`:''}
+        </div>
+      </div>
+      ${sale.customerName?`<div class="xs muted">👤 ${sale.customerName} ${sale.customerPhone?'· 📱 '+sale.customerPhone:''}</div>`:''}
+    </div>
+    <div class="card mb-12">
+      <div class="sec-title" style="margin-top:0">Items</div>
+      ${(sale.items||[]).map(it=>`
+        <div class="row between mb-8 center"><div class="grow sm">${it.name}</div><div class="muted xs">${it.qty}×${fCur(it.price)}</div><div class="bold sm ml-12" style="margin-left:12px">${fCur(it.total)}</div></div>`).join('')}
+      ${sale.discount?`<div class="row between muted sm"><span>Discount</span><span>− ${fCur(sale.discount)}</span></div>`:''}
+      <div class="divider"></div>
+      <div class="row between"><span class="bold">Total</span><span class="bold c-green" style="font-size:18px">${fCur(sale.grandTotal)}</span></div>
+    </div>
+    ${sale.notes?`<div class="card mb-12 muted sm">${sale.notes}</div>`:''}
+    <div style="display:flex;flex-direction:column;gap:10px">
+      ${sale.customerPhone?
+        `<button class="btn btn-wa btn-full" onclick="sendWhatsAppInvoice('${sale.id}')">📲 Send WhatsApp Invoice</button>`
+        :`<button class="btn btn-wa btn-full" onclick="sendWhatsAppInvoice('${sale.id}')">📲 Share Invoice via WhatsApp</button>`}
+      <button class="btn btn-outline btn-full" onclick="printInvoice('${sale.id}')">🖨️ Print / PDF</button>
+      <button class="btn btn-red btn-sm btn-full" onclick="confirmDeleteSale('${sale.id}')">🗑 Delete Sale</button>
+    </div>
   `;
 }
 
-function buildPage() {
-  switch(state.tab) {
-    case "dashboard": return buildDashboard();
-    case "inventory": return buildInventory();
-    case "add": return buildAdd();
-    case "sell": return buildSell();
-    case "analytics": return buildAnalytics();
-    case "more": return buildMore();
-    case "lists": return `<button class="back-btn" onclick="goTab('more')">←</button>${buildLists()}`;
-    case "deleted": return `<button class="back-btn" onclick="goTab('more')">←</button>${buildDeleted()}`;
-    default: return buildDashboard();
-  }
+function sendWhatsAppInvoice(saleId) {
+  const sale=getSales().find(s=>s.id===saleId);
+  if(!sale)return;
+  const settings=getSettings();
+  const shop=settings.shopName||'OptiStock';
+  const addr=settings.shopAddress||'';
+  const gst=settings.gstNo||'';
+  let msg=`🏪 *${shop}*\n`;
+  if(addr)msg+=`📍 ${addr}\n`;
+  if(gst)msg+=`GST: ${gst}\n`;
+  msg+=`\n📄 *Invoice ${sale.billNo}*\n`;
+  msg+=`📅 ${fDate(sale.date)} ${fTime(sale.date)}\n`;
+  if(sale.customerName)msg+=`👤 ${sale.customerName}\n`;
+  msg+=`\n*Items:*\n`;
+  (sale.items||[]).forEach(it=>{msg+=`• ${it.name} × ${it.qty} @ ${fCur(it.price)} = *${fCur(it.total)}*\n`;});
+  if(sale.discount)msg+=`\n🏷️ Discount: ${fCur(sale.discount)}`;
+  msg+=`\n💰 *Total: ${fCur(sale.grandTotal)}*`;
+  msg+=`\n\nThank you for choosing ${shop}! 🙏`;
+  const phone=(sale.customerPhone||'').replace(/\D/g,'');
+  const waUrl=phone?`https://wa.me/91${phone}?text=${encodeURIComponent(msg)}`:`https://wa.me/?text=${encodeURIComponent(msg)}`;
+  window.open(waUrl,'_blank');
 }
 
-// ═══════════════════════════════
-// DASHBOARD
-// ═══════════════════════════════
-function buildDashboard() {
-  const P = state.products, S = state.sales;
-  const totalRev = S.reduce((a,s)=>a+s.amount,0);
-  const totalProfit = S.reduce((a,s)=>{const p=P.find(x=>x.id===s.productId);return a+(s.amount-(p?.purchasePrice||0)*s.qty);},0);
-  const frames = P.filter(p=>p.type==="frame"||p.type==="sunglasses");
-  const rxL = P.filter(p=>p.type==="rx_lens");
-  const rgL = P.filter(p=>p.type==="rg_lens");
-  const totalFS = frames.reduce((a,p)=>a+(p.variants||[]).reduce((b,v)=>b+v.qty,0),0);
-  const totalRx = rxL.reduce((a,p)=>a+Object.values(p.stock||{}).reduce((b,v)=>b+v,0),0);
-
-  const alerts = [];
-  P.forEach(p => {
-    const si = getStock(p);
-    const nm = `${p.brand} ${p.name||p.collection||p.lensColor||p.accessoryType||""}`.trim();
-    if (si.isOut) alerts.push({c:"red",msg:`🚫 Out of stock: ${nm}`});
-    else if (si.isLow) alerts.push({c:"amber",msg:`⚠ Low stock: ${nm} (${si.total} left)`});
-    if ((p.type==="frame"||p.type==="sunglasses") && si.total>0) {
-      const ls = S.filter(s=>s.productId===p.id).sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
-      const age = daysSince(p.purchaseDate||p.createdAt);
-      if (age>180 && (!ls||daysSince(ls.date)>180)) alerts.push({c:"orange",msg:`💤 Dead stock 6+ months: ${nm}`});
-    }
-  });
-
-  const colMap = {};
-  S.forEach(s=>{if(s.colour)colMap[s.colour]=(colMap[s.colour]||0)+s.qty;});
-  const topCol = Object.entries(colMap).sort((a,b)=>b[1]-a[1]).slice(0,5);
-  const recent = [...S].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,5);
-
-  if (P.length===0) return `
-    <div class="empty">
-      <div class="empty-icon">👓</div>
-      <div class="empty-title">Welcome to OptiStock</div>
-      <div class="empty-sub">Tap <span style="color:#60a5fa">+ Add</span> to enter your first product</div>
-    </div>`;
-
-  return `
-  <div class="page-title">Dashboard</div>
-  <div class="page-sub">OptiStock Overview</div>
-  <div class="stat-grid section">
-    <div class="stat-card stat-blue"><div class="stat-label">Revenue</div><div class="stat-value">${fmt(totalRev)}</div><div class="stat-sub">${S.length} sales</div></div>
-    <div class="stat-card stat-green"><div class="stat-label">Profit</div><div class="stat-value">${fmt(totalProfit)}</div><div class="stat-sub">${totalRev>0?((totalProfit/totalRev)*100).toFixed(1)+"% margin":""}</div></div>
-    <div class="stat-card stat-blue"><div class="stat-label">Frames</div><div class="stat-value">${totalFS}</div><div class="stat-sub">${frames.length} models</div></div>
-    <div class="stat-card stat-yellow"><div class="stat-label">Rx Lens</div><div class="stat-value">${totalRx}</div><div class="stat-sub">${rxL.length} products</div></div>
-  </div>
-
-  ${alerts.length>0?`
-  <div class="section">
-    <div style="font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.05em;font-weight:600;margin-bottom:8px">⚠ Alerts (${alerts.length})</div>
-    ${alerts.slice(0,5).map(a=>`<div class="alert alert-${a.c}"><div class="alert-msg">${a.msg}</div></div>`).join("")}
-  </div>`:""}
-
-  ${rxL.length>0?`
-  <div class="card card-p section">
-    <div class="sect-title blue">🔵 Rx Lens Power Stock</div>
-    ${rxL.map(p=>{
-      const sp = Object.entries(p.stock||{}).filter(([,v])=>v>0);
-      return `<div style="margin-bottom:8px"><div style="font-size:12px;font-weight:600;margin-bottom:6px">${p.brand} ${p.name}</div>
-      <div style="display:flex;flex-wrap:wrap;gap:6px">
-        ${sp.length?sp.map(([pw,qty])=>`<div style="border-radius:8px;padding:4px 8px;font-size:11px;border:1px solid;${qty<=2?"border-color:rgba(180,83,9,0.5);background:rgba(120,53,15,0.3);color:#fcd34d":"border-color:rgba(37,99,235,0.4);background:rgba(30,58,138,0.3);color:#93c5fd"}">${pw}: ${qty}📦</div>`).join(""):`<span style="font-size:11px;color:#f87171">All out of stock</span>`}
-      </div></div>`;
-    }).join("")}
-  </div>`:""}
-
-  ${rgL.length>0?`
-  <div class="card card-p section">
-    <div class="sect-title" style="color:#fb923c">👁️ Reading Glasses Stock</div>
-    ${rgL.map(p=>{
-      const sp = Object.entries(p.stock||{}).filter(([,v])=>v>0);
-      return `<div style="margin-bottom:8px"><div style="font-size:12px;font-weight:600;margin-bottom:6px">${p.brand} ${p.name}</div>
-      <div style="display:flex;flex-wrap:wrap;gap:6px">
-        ${sp.map(([pw,qty])=>`<div style="border-radius:8px;padding:4px 8px;font-size:11px;border:1px solid;${qty<=2?"border-color:rgba(180,83,9,0.5);background:rgba(120,53,15,0.3);color:#fcd34d":"border-color:rgba(154,52,18,0.4);background:rgba(124,45,18,0.3);color:#fdba74"}">${pw}: ${qty}pcs</div>`).join("")}
-      </div></div>`;
-    }).join("")}
-  </div>`:""}
-
-  ${topCol.length>0?`
-  <div class="card card-p section">
-    <div class="sect-title purple">🎨 Top Selling Colours</div>
-    ${buildBar(topCol.map(([l,v])=>({l,v,d:`${v} sold`})), "#a855f7")}
-  </div>`:""}
-
-  ${recent.length>0?`
-  <div class="card card-p section">
-    <div class="sect-title green">🧾 Recent Sales</div>
-    ${recent.map(s=>{
-      const p = P.find(x=>x.id===s.productId);
-      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(55,65,81,0.5)">
-        <div><div style="font-size:14px;font-weight:500">${p?`${p.brand} ${p.collection||p.name||p.lensColor||""}`:"Unknown"}${s.colour?` · ${s.colour}`:""}${s.power?` · ${s.power}`:""}</div>
-        <div style="font-size:11px;color:#9ca3af">Slip #${s.billNumber} · ${s.date}</div></div>
-        <div style="font-size:14px;font-weight:700;color:#34d399">${fmt(s.amount)}</div>
-      </div>`;
-    }).join("")}
-  </div>`:""}`;
+function printInvoice(saleId) {
+  const sale=getSales().find(s=>s.id===saleId);
+  if(!sale)return;
+  const settings=getSettings();
+  const shop=settings.shopName||'OptiStock';
+  const addr=settings.shopAddress||'';
+  const gst=settings.gstNo||'';
+  const win=window.open('','_blank');
+  win.document.write(`<!DOCTYPE html><html><head><title>Invoice ${sale.billNo}</title>
+  <style>body{font-family:sans-serif;padding:24px;max-width:400px;margin:auto}h2{margin:0}table{width:100%;border-collapse:collapse;margin:16px 0}th,td{padding:8px;border:1px solid #ddd;text-align:left}th{background:#f5f5f5}.total{font-size:18px;font-weight:bold}</style>
+  </head><body>
+  <h2>${shop}</h2>${addr?`<p>${addr}</p>`:''}${gst?`<p>GST: ${gst}</p>`:''}
+  <hr><h3>Invoice ${sale.billNo}</h3>
+  <p>Date: ${fDate(sale.date)} ${fTime(sale.date)}</p>
+  ${sale.customerName?`<p>Customer: ${sale.customerName} ${sale.customerPhone?'| '+sale.customerPhone:''}</p>`:''}
+  <table><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr>
+  ${(sale.items||[]).map(it=>`<tr><td>${it.name}</td><td>${it.qty}</td><td>₹${it.price}</td><td>₹${it.total}</td></tr>`).join('')}
+  </table>
+  ${sale.discount?`<p>Discount: ₹${sale.discount}</p>`:''}
+  <p class="total">Total: ₹${sale.grandTotal}</p>
+  <hr><p style="text-align:center">Thank you!</p>
+  <script>window.print();<\/script></body></html>`);
+  win.document.close();
 }
 
-// ═══════════════════════════════
-// INVENTORY
-// ═══════════════════════════════
-function buildInventory() {
-  const P = state.products, S = state.sales;
-  let filtered = P.filter(p => {
-    const q = state.inv_search.toLowerCase();
-    const ms = !q || [p.brand,p.collection,p.name,p.lensColor,p.sku,p.accessoryType,...(p.tags||[])].some(v=>v?.toLowerCase().includes(q));
-    const mt = state.inv_typeFilter==="all"||p.type===state.inv_typeFilter;
-    const f = state.inv_filters;
-    const mb = !f.brand||p.brand===f.brand;
-    const msh = !f.shape||(p.shape||"")===f.shape;
-    const mm = !f.material||(p.material||"")===f.material;
-    const mg = !f.gender||(p.gender||"")===f.gender;
-    const pr = p.sellingPrice||0;
-    const mpn = !state.inv_pMin||pr>=parseFloat(state.inv_pMin);
-    const mpx = !state.inv_pMax||pr<=parseFloat(state.inv_pMax);
-    const si = getStock(p);
-    let mst = true;
-    if(f.status==="low") mst=si.isLow;
-    if(f.status==="out") mst=si.isOut;
-    if(f.status==="dead") {
-      const ls=S.filter(s=>s.productId===p.id).sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
-      mst=si.total>0&&((!ls&&daysSince(p.purchaseDate||p.createdAt)>180)||(ls&&daysSince(ls.date)>180));
-    }
-    return ms&&mt&&mb&&msh&&mm&&mg&&mpn&&mpx&&mst;
-  });
-
-  const allBrands = [...new Set(P.map(p=>p.brand).filter(Boolean))];
-  const typePills = [{id:"all",l:"All"},{id:"frame",l:"👓 Frames"},{id:"sunglasses",l:"🕶️ Sun"},{id:"rx_lens",l:"🔵 Rx"},{id:"colour_lens",l:"🌈 Colour"},{id:"rg_lens",l:"👁️ Reading"},{id:"accessory",l:"📦 Acc"}];
-  const activeF = Object.values(state.inv_filters).filter(Boolean).length + (state.inv_pMin?1:0) + (state.inv_pMax?1:0);
-
-  return `
-  <div class="page-title">Inventory</div>
-  <div class="search-row">
-    <input class="search-input" placeholder="Search brand, model, SKU..." value="${state.inv_search}" oninput="invSearch(this.value)"/>
-    <button class="icon-btn" onclick="toggleFilter()" style="position:relative">
-      ⚙️${activeF>0?`<span style="position:absolute;top:-4px;right:-4px;background:#2563eb;border-radius:50%;width:16px;height:16px;font-size:10px;display:flex;align-items:center;justify-content:center">${activeF}</span>`:""}
-    </button>
-    <button class="icon-btn" onclick="toggleView()">${state.inv_view==="grid"?"☰":"⊞"}</button>
-  </div>
-
-  <div class="type-pills">
-    ${typePills.map(t=>`<button class="type-pill ${state.inv_typeFilter===t.id?"active":"inactive"}" onclick="setTypeFilter('${t.id}')">${t.l} (${t.id==="all"?P.length:P.filter(p=>p.type===t.id).length})</button>`).join("")}
-  </div>
-
-  ${state.inv_showFilter?`
-  <div class="card card-p section">
-    <div class="sect-title blue">Advanced Filters</div>
-    <div style="font-size:12px;color:#9ca3af;margin-bottom:8px">Price Range ₹</div>
-    <div class="price-row">
-      <input type="number" placeholder="Min ₹" value="${state.inv_pMin}" oninput="setPMin(this.value)" style="background:#374151;border:1px solid #4b5563;border-radius:12px;padding:8px 12px;color:#fff;font-size:12px;outline:none;flex:1"/>
-      <span class="price-dash">—</span>
-      <input type="number" placeholder="Max ₹" value="${state.inv_pMax}" oninput="setPMax(this.value)" style="background:#374151;border:1px solid #4b5563;border-radius:12px;padding:8px 12px;color:#fff;font-size:12px;outline:none;flex:1"/>
-    </div>
-    <div class="filter-grid">
-      <select onchange="setFilter('brand',this.value)"><option value="">All Brands</option>${allBrands.map(b=>`<option value="${b}" ${state.inv_filters.brand===b?"selected":""}>${b}</option>`).join("")}</select>
-      <select onchange="setFilter('shape',this.value)"><option value="">All Shapes</option>${SHAPES.map(s=>`<option value="${s}" ${state.inv_filters.shape===s?"selected":""}>${s}</option>`).join("")}</select>
-      <select onchange="setFilter('material',this.value)"><option value="">All Materials</option>${MATERIALS.map(m=>`<option value="${m}" ${state.inv_filters.material===m?"selected":""}>${m}</option>`).join("")}</select>
-      <select onchange="setFilter('gender',this.value)"><option value="">All Genders</option>${GENDERS.map(g=>`<option value="${g}" ${state.inv_filters.gender===g?"selected":""}>${g}</option>`).join("")}</select>
-      <select onchange="setFilter('status',this.value)">
-        <option value="">All Status</option>
-        <option value="low" ${state.inv_filters.status==="low"?"selected":""}>Low Stock</option>
-        <option value="out" ${state.inv_filters.status==="out"?"selected":""}>Out of Stock</option>
-        <option value="dead" ${state.inv_filters.status==="dead"?"selected":""}>Dead (6mo)</option>
-      </select>
-    </div>
-    <button onclick="clearFilters()" style="font-size:12px;color:#9ca3af;padding:8px;width:100%">Clear All Filters</button>
-  </div>`:""}
-
-  <div style="font-size:12px;color:#9ca3af;margin-bottom:12px">${filtered.length} of ${P.length} products</div>
-
-  ${filtered.length===0?`<div class="empty"><div class="empty-icon">🔍</div><div class="empty-sub">${P.length===0?"No products yet — tap + Add":"No results"}</div></div>`:""}
-
-  ${state.inv_view==="grid"?`
-  <div class="prod-grid">
-    ${filtered.map(p=>buildProductCard(p)).join("")}
-  </div>`:`
-  <div>
-    ${filtered.map(p=>buildProductRow(p)).join("")}
-  </div>`}`;
+function confirmDeleteSale(id) {
+  openModal(`<div class="modal-title">Delete Sale?</div><div class="muted mb-16">Stock will NOT be restored.</div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-outline grow" onclick="closeModalForce()">Cancel</button>
+      <button class="btn btn-red grow" onclick="doDeleteSale('${id}')">Delete</button>
+    </div>`);
+}
+function doDeleteSale(id) {
+  const sales=getSales().filter(s=>s.id!==id); saveSales(sales);
+  closeModalForce(); showToast('Sale deleted'); goBack();
 }
 
-function buildProductCard(p) {
-  const si = getStock(p);
-  const img = p.images?.[0];
-  const name = p.type==="rx_lens"?p.name:p.type==="colour_lens"?`${p.lensColor} Colour`:p.type==="rg_lens"?p.name||"Reading Glasses":p.type==="accessory"?p.accessoryType:p.collection||p.name||"";
-  return `
-  <div class="prod-card">
-    <div class="prod-img">
-      ${img?`<img src="${img}" alt=""/>`:`<span style="opacity:0.2">${tIcon(p.type)}</span>`}
-      <div class="prod-stock-badge ${stockBg(si)}">${si.total}</div>
-      <div class="prod-type-badge"><span class="badge ${tBadge(p.type)}">${tIcon(p.type)}</span></div>
-    </div>
-    <div class="prod-info">
-      <div class="prod-brand">${p.brand||"—"}</div>
-      <div class="prod-sub">${name}</div>
-      ${p.variants?.length?`<div class="prod-variants">${p.variants.slice(0,3).map(v=>`<span class="prod-var-tag">${v.color}:${v.qty}</span>`).join("")}${p.variants.length>3?`<span class="prod-var-tag">+${p.variants.length-3}</span>`:""}</div>`:""}
-      <div class="prod-price">${fmt(p.sellingPrice)}</div>
-      <div class="prod-actions">
-        <button class="btn-sell-sm" onclick="startSell('${p.id}')">Sell</button>
-        <button class="btn-edit-sm" onclick="editProduct('${p.id}')">Edit</button>
-        <button class="btn-del-sm" onclick="requestDelete('${p.id}')">🗑</button>
-      </div>
-    </div>
-  </div>`;
+/* ═══════════════════════════════════════════════
+   BARCODE SCANNER (ZXing)
+═══════════════════════════════════════════════ */
+let zxReader=null, scanActive=false;
+let scanMode='barcode'; // 'barcode' | 'temple'
+
+function setScanMode(mode) {
+  scanMode=mode;
+  document.getElementById('tgBarcode').classList.toggle('active',mode==='barcode');
+  document.getElementById('tgTemple').classList.toggle('active',mode==='temple');
+  document.getElementById('barcodeSect').style.display=mode==='barcode'?'block':'none';
+  document.getElementById('templeSect').style.display=mode==='temple'?'block':'none';
+  if(mode!=='barcode') stopBarcodeScanner();
+  if(mode==='temple') document.getElementById('templeResult').innerHTML='';
 }
 
-function buildProductRow(p) {
-  const si = getStock(p);
-  const img = p.images?.[0];
-  const name = p.type==="colour_lens"?p.lensColor:p.type==="accessory"?p.accessoryType:p.collection||p.name||"";
-  const sCol = si.isOut?"color:#f87171":si.isLow?"color:#fbbf24":"color:#34d399";
-  return `
-  <div class="prod-row" style="margin-bottom:8px">
-    <div class="prod-row-img">
-      ${img?`<img src="${img}" alt=""/>`:`<span style="opacity:0.2">${tIcon(p.type)}</span>`}
-    </div>
-    <div class="prod-row-info">
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
-        <span style="font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.brand}</span>
-        <span class="badge ${tBadge(p.type)}">${tIcon(p.type)}</span>
-      </div>
-      <div style="font-size:12px;color:#9ca3af;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${name}</div>
-      <div style="display:flex;gap:12px;margin-top:4px">
-        <span style="font-size:14px;font-weight:700;color:#34d399">${fmt(p.sellingPrice)}</span>
-        <span style="font-size:12px;font-weight:600;${sCol}">${si.label}</span>
-      </div>
-    </div>
-    <div class="prod-row-actions">
-      <button class="btn-sell-sm" style="background:rgba(5,150,105,0.5);border:1px solid rgba(4,120,87,0.5);color:#fff" onclick="startSell('${p.id}')">💰</button>
-      <button class="btn-sm" style="background:rgba(55,65,81,0.8);border:1px solid #4b5563;color:#d1d5db" onclick="editProduct('${p.id}')">✏️</button>
-      <button class="btn-sm" style="background:rgba(127,29,29,0.4);border:1px solid rgba(153,27,27,0.4);color:#f87171" onclick="requestDelete('${p.id}')">🗑</button>
-    </div>
-  </div>`;
-}
-
-// ═══════════════════════════════
-// ADD PRODUCT
-// ═══════════════════════════════
-function buildAdd() {
-  if (!state.addType) return buildTypeSel();
-  const t = state.addType;
-  if (t==="frame"||t==="sunglasses") return buildFrameForm();
-  if (t==="rx_lens"||t==="rg_lens") return buildPowerForm();
-  if (t==="colour_lens") return buildColourForm();
-  if (t==="accessory") return buildAccForm();
-  return buildTypeSel();
-}
-
-function buildTypeSel() {
-  return `
-  <button class="back-btn" onclick="goTab('inventory')">←</button>
-  <div class="page-title">Add Product</div>
-  <div class="page-sub">What are you adding?</div>
-  ${PROD_TYPES.map(t=>`
-  <button class="type-btn" onclick="selectType('${t.id}')">
-    <span class="type-icon">${t.icon}</span>
-    <div><div class="type-label">${t.label}</div><div class="type-desc">${t.desc}</div></div>
-  </button>`).join("")}`;
-}
-
-function photoRow(fieldName) {
-  const imgs = formData.images||[];
-  return `
-  <div class="photo-row" id="photo-row">
-    ${imgs.map((url,i)=>`<div class="photo-thumb"><img src="${url}"/><button class="photo-del" onclick="removePhoto(${i})">✕</button></div>`).join("")}
-    <label class="photo-add" style="cursor:pointer">
-      <span style="font-size:24px">+</span>
-      <small>${uploadingPhotos?"...":"Photo"}</small>
-      <input type="file" accept="image/*" capture="environment" multiple onchange="handlePhotos(event)" style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer"/>
-    </label>
-  </div>
-  <div class="photo-hint">Tap + to take photo or choose from gallery</div>`;
-}
-
-function buildFrameForm() {
-  const isSun = state.addType==="sunglasses";
-  const C = state.customs;
-  const allBrands = isSun ? [...new Set([...SUN_BRANDS,...(C.sunglass_brands||[])])] : [...new Set([...(C.frame_brands||[])])];
-  const allShapes = [...new Set([...SHAPES,...(C.shapes||[])])];
-  const allMats = [...new Set([...MATERIALS,...(C.materials||[])])];
-  const allCats = [...new Set([...FRAME_CATS,...(C.frame_categories||[])])];
-  const allColls = C.collections||[];
-  const margin = formData.purchasePrice&&formData.sellingPrice ? ((parseFloat(formData.sellingPrice)-parseFloat(formData.purchasePrice))/parseFloat(formData.purchasePrice)*100).toFixed(1) : null;
-  const total = formVariants.reduce((a,v)=>a+v.qty,0);
-
-  return `
-  <button class="back-btn" onclick="backFromAdd()">←</button>
-  <div class="page-title">${state.editing?"Edit":"Add"} ${isSun?"Sunglasses":"Frame"}</div>
-  ${state.flashMsg?`<div class="flash"><span style="font-size:20px">✅</span><div class="flash-text">${state.flashMsg}</div></div>`:""}
-
-  ${!state.editing?`
-  <button class="scan-btn" onclick="startScan()">
-    <div class="scan-icon">📷</div>
-    <div><div class="scan-title">Smart Scan Temple</div><div class="scan-sub">Point camera at frame arm → AI fills form</div></div>
-    <span class="scan-arrow">→</span>
-  </button>`:""}
-
-  <div class="card card-p section">
-    <div class="sect-title blue">📷 Frame Photos</div>
-    ${photoRow()}
-  </div>
-
-  <div class="card card-p section">
-    <div class="sect-title blue">Basic Info</div>
-    ${fieldCmb("Brand","brand",allBrands,true)}
-    ${fieldCmb("Collection","collection",allColls)}
-    ${fieldInp("SKU / Model Number","sku")}
-    <div class="grid2">
-      ${fieldCmb("Shape","shape",allShapes)}
-      ${fieldCmb("Material","material",allMats)}
-      ${fieldSel("Gender","gender",GENDERS)}
-      ${fieldCmb("Category","category",allCats)}
-    </div>
-    ${fieldInp("Size (e.g. 52-18-145)","size")}
-  </div>
-
-  <div class="card card-p section">
-    <div class="sect-title green">Pricing</div>
-    <div class="grid2">
-      ${fieldInp("Purchase Price ₹","purchasePrice","number")}
-      ${fieldInp("MRP ₹","mrp","number")}
-    </div>
-    ${fieldInp("Selling Price ₹","sellingPrice","number",true)}
-    ${margin!==null?`<div class="margin-box ${parseFloat(margin)>0?"margin-pos":"margin-neg"}">Margin: ${fmt(parseFloat(formData.sellingPrice)-parseFloat(formData.purchasePrice))} (${margin}%)</div>`:""}
-  </div>
-
-  <div class="card card-p section">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-      <span class="sect-title amber" style="margin-bottom:0">Colours & Stock</span>
-      <span style="font-size:12px;color:#fbbf24;font-weight:700">Total: ${total} pcs</span>
-    </div>
-    <div style="font-size:12px;color:#9ca3af;margin-bottom:12px">Add each colour with its quantity</div>
-    <div id="variants-list">
-      ${formVariants.map((v,i)=>`
-      <div class="variant-row">
-        <span class="variant-color">${v.color}</span>
-        <input type="number" min="0" value="${v.qty}" class="variant-qty" onchange="updateVariantQty(${i},this.value)"/>
-        <span style="font-size:12px;color:#9ca3af">pcs</span>
-        <button class="variant-del" onclick="removeVariant(${i})">✕</button>
-      </div>`).join("")}
-    </div>
-    <div style="display:flex;gap:8px;margin-top:8px">
-      <input type="text" id="new-colour-input" list="col-list" placeholder="Add colour..." style="flex:1;background:#374151;border:1px solid #4b5563;border-radius:12px;padding:8px 12px;color:#fff;font-size:14px;outline:none"/>
-      <datalist id="col-list">${COLORS.map(c=>`<option value="${c}"/>`).join("")}</datalist>
-      <button onclick="addVariant()" style="background:#2563eb;color:#fff;padding:8px 16px;border-radius:12px;font-weight:600;font-size:14px">Add</button>
-    </div>
-    <div style="margin-top:16px"></div>
-    ${fieldInp("Reorder Level (total pieces)","reorderLevel","number")}
-    ${fieldInp("Purchase Date","purchaseDate","date")}
-    ${fieldInp("Rack / Location","location")}
-  </div>
-
-  <div class="card card-p section">
-    <div class="sect-title purple">Supplier & Tags</div>
-    ${fieldCmb("Supplier","supplier",C.suppliers||[])}
-    ${fieldInp("Tags (comma separated)","tags")}
-    <div class="field"><label>Notes</label><textarea rows="2" onchange="setFormField('notes',this.value)">${formData.notes||""}</textarea></div>
-  </div>
-
-  <div class="flex-btns">
-    <button class="btn btn-gray" onclick="backFromAdd()">Cancel</button>
-    <button class="btn btn-blue" onclick="saveFrame()" id="save-btn">${state.editing?"Update":"Save Frame"}</button>
-  </div>`;
-}
-
-function buildPowerForm() {
-  const isRx = state.addType==="rx_lens";
-  const powers = isRx ? RX_POWERS : RG_POWERS;
-  const C = state.customs;
-  const allBrands = [...new Set([...LENS_BRANDS,...(C.lens_brands||[]),...(C.frame_brands||[])])];
-  const allWear = [...new Set([...WEAR_SCHED,...(C.wear_schedules||[])])];
-  const total = Object.values(formStock).reduce((a,v)=>a+v,0);
-  const label = isRx?"Rx Contact Lens":"Reading Glasses";
-
-  return `
-  <button class="back-btn" onclick="backFromAdd()">←</button>
-  <div class="page-title">${state.editing?"Edit":"Add"} ${label}</div>
-
-  <div class="card card-p section">
-    <div class="sect-title blue">📷 Photos</div>
-    ${photoRow()}
-  </div>
-
-  <div class="card card-p section">
-    <div class="sect-title blue">Product Info</div>
-    ${fieldCmbCustom("Brand","brand",allBrands,true)}
-    ${fieldInp("Product Name","name")}
-    ${isRx?`<div class="grid2">
-      ${fieldInp("Base Curve","baseCurve")}
-      ${fieldInp("Diameter","diameter")}
-      ${fieldCmbCustom("Wear Schedule","wearSchedule",allWear)}
-      ${fieldInp("Pack Size (lenses)","packSize","number")}
-    </div>`:""}
-  </div>
-
-  <div class="card card-p section">
-    <div class="sect-title green">Pricing (per ${isRx?"box":"piece"})</div>
-    <div class="grid2">
-      ${fieldInp("Purchase Price ₹","purchasePrice","number")}
-      ${fieldInp("MRP ₹","mrp","number")}
-    </div>
-    ${fieldInp("Selling Price ₹","sellingPrice","number",true)}
-  </div>
-
-  <div class="card card-p section">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-      <span class="sect-title amber" style="margin-bottom:0">Stock Per Power</span>
-      <span style="font-size:12px;color:#fbbf24;font-weight:700">Total: ${total}</span>
-    </div>
-    <div class="power-grid">
-      ${powers.map(pw=>`
-      <div class="power-cell ${(formStock[pw]||0)>0?"power-cell-filled":"power-cell-empty"}">
-        <label>${pw}</label>
-        <input type="number" min="0" value="${formStock[pw]||0}" onchange="setStockPower('${pw}',this.value)"/>
-      </div>`).join("")}
-    </div>
-  </div>
-
-  <div class="card card-p section">
-    <div class="sect-title purple">Supplier</div>
-    ${fieldCmbCustom("Supplier","supplier",C.suppliers||[])}
-    ${fieldInp("Purchase Date","purchaseDate","date")}
-    ${fieldInp("Tags","tags")}
-    <div class="field"><label>Notes</label><textarea rows="2" onchange="setFormField('notes',this.value)">${formData.notes||""}</textarea></div>
-  </div>
-
-  <div class="flex-btns">
-    <button class="btn btn-gray" onclick="backFromAdd()">Cancel</button>
-    <button class="btn btn-blue" onclick="savePower()">${state.editing?"Update":"Save"}</button>
-  </div>`;
-}
-
-function buildColourForm() {
-  const C = state.customs;
-  const allBrands = [...new Set([...LENS_BRANDS,...(C.lens_brands||[])])];
-  const allLColors = [...new Set([...LENS_COLORS,...(C.lens_colors||[])])];
-  const allWear = [...new Set([...WEAR_SCHED,...(C.wear_schedules||[])])];
-  const margin = formData.purchasePrice&&formData.sellingPrice ? ((parseFloat(formData.sellingPrice)-parseFloat(formData.purchasePrice))/parseFloat(formData.purchasePrice)*100).toFixed(1) : null;
-
-  return `
-  <button class="back-btn" onclick="backFromAdd()">←</button>
-  <div class="page-title">${state.editing?"Edit":"Add"} Colour Lens</div>
-
-  <div class="card card-p section">
-    <div class="sect-title blue">📷 Photos</div>
-    ${photoRow()}
-  </div>
-
-  <div class="card card-p section">
-    <div class="sect-title purple">Lens Info</div>
-    ${fieldCmbCustom("Brand","brand",allBrands,true)}
-    ${fieldCmbCustom("Lens Colour","lensColor",allLColors,true)}
-    <div class="grid2">
-      ${fieldInp("Base Curve","baseCurve")}
-      ${fieldInp("Diameter","diameter")}
-      ${fieldCmbCustom("Wear Schedule","wearSchedule",allWear)}
-    </div>
-    <div class="plano-badge">Power: Plano (0.00) — No prescription</div>
-  </div>
-
-  <div class="card card-p section">
-    <div class="sect-title green">Pricing (per box)</div>
-    <div class="grid2">
-      ${fieldInp("Purchase Price ₹","purchasePrice","number")}
-      ${fieldInp("MRP ₹","mrp","number")}
-    </div>
-    ${fieldInp("Selling Price ₹","sellingPrice","number",true)}
-    ${margin!==null?`<div class="margin-box ${parseFloat(margin)>0?"margin-pos":"margin-neg"}">Margin: ${fmt(parseFloat(formData.sellingPrice)-parseFloat(formData.purchasePrice))} (${margin}%)</div>`:""}
-  </div>
-
-  <div class="card card-p section">
-    <div class="sect-title amber">Stock (boxes)</div>
-    <div class="grid2">
-      ${fieldInp("Current Stock","currentStock","number",true)}
-      ${fieldInp("Reorder Level","reorderLevel","number")}
-    </div>
-    ${fieldInp("Purchase Date","purchaseDate","date")}
-  </div>
-
-  <div class="card card-p section">
-    <div class="sect-title purple">Supplier</div>
-    ${fieldCmbCustom("Supplier","supplier",C.suppliers||[])}
-    ${fieldInp("Tags","tags")}
-    <div class="field"><label>Notes</label><textarea rows="2" onchange="setFormField('notes',this.value)">${formData.notes||""}</textarea></div>
-  </div>
-
-  <div class="flex-btns">
-    <button class="btn btn-gray" onclick="backFromAdd()">Cancel</button>
-    <button class="btn btn-purple" onclick="saveColour()">${state.editing?"Update":"Save"}</button>
-  </div>`;
-}
-
-function buildAccForm() {
-  const C = state.customs;
-  return `
-  <button class="back-btn" onclick="backFromAdd()">←</button>
-  <div class="page-title">${state.editing?"Edit":"Add"} Accessory</div>
-
-  <div class="card card-p section">
-    <div class="sect-title blue">📷 Photos</div>
-    ${photoRow()}
-  </div>
-
-  <div class="card card-p section">
-    <div class="sect-title cyan">Item Info</div>
-    ${fieldSel("Type","accessoryType",ACC_TYPES)}
-    ${fieldInp("Name / Description","name",undefined,true)}
-    ${fieldCmbCustom("Brand","brand",["Generic",...(C.frame_brands||[]),...(C.sunglass_brands||[])])}
-    ${fieldCmbCustom("Supplier","supplier",C.suppliers||[])}
-  </div>
-
-  <div class="card card-p section">
-    <div class="sect-title amber">Stock & Reorder</div>
-    <div class="grid2">
-      ${fieldInp("Current Stock","currentStock","number",true)}
-      ${fieldInp("Reorder Level","reorderLevel","number")}
-      ${fieldInp("Lead Time (days)","leadTimeDays","number")}
-      ${fieldInp("Purchase Price ₹","purchasePrice","number")}
-    </div>
-    ${fieldInp("Purchase Date","purchaseDate","date")}
-    <div class="field"><label>Notes</label><textarea rows="2" onchange="setFormField('notes',this.value)">${formData.notes||""}</textarea></div>
-  </div>
-
-  <div class="flex-btns">
-    <button class="btn btn-gray" onclick="backFromAdd()">Cancel</button>
-    <button class="btn" style="background:#0891b2;color:#fff;flex:1" onclick="saveAcc()">${state.editing?"Update":"Save"}</button>
-  </div>`;
-}
-
-// Helper field builders
-function fieldInp(label, key, type="text", req=false) {
-  return `<div class="field"><label>${label}${req?'<span style="color:#f87171;margin-left:2px">*</span>':""}</label><input type="${type}" value="${(formData[key]||"").toString().replace(/"/g,"&quot;")}" onchange="setFormField('${key}',this.value)" oninput="setFormField('${key}',this.value)"/></div>`;
-}
-function fieldSel(label, key, opts) {
-  return `<div class="field"><label>${label}</label><select onchange="setFormField('${key}',this.value)"><option value="">Select...</option>${opts.map(o=>`<option value="${o}" ${formData[key]===o?"selected":""}>${o}</option>`).join("")}</select></div>`;
-}
-function fieldCmb(label, key, opts, req=false) {
-  const did = "dl_"+key+"_"+Math.random().toString(36).slice(2);
-  return `<div class="field"><label>${label}${req?'<span style="color:#f87171;margin-left:2px">*</span>':""}</label><input list="${did}" value="${(formData[key]||"").toString().replace(/"/g,"&quot;")}" placeholder="Select or type..." onchange="setFormField('${key}',this.value)" oninput="setFormField('${key}',this.value)"/><datalist id="${did}">${opts.map(o=>`<option value="${o}"/>`).join("")}</datalist></div>`;
-}
-function fieldCmbCustom(label, key, opts, req=false) { return fieldCmb(label,key,opts,req); }
-
-// ═══════════════════════════════
-// SELL
-// ═══════════════════════════════
-let sellState = { search:"", selectedId:null, power:"", colour:"", bill:"", qty:"1", price:"", date:today(), notes:"" };
-
-function buildSell() {
-  const P = state.products;
-  const sel = sellState.selectedId ? P.find(p=>p.id===sellState.selectedId) : null;
-
-  if (!sel) {
-    const avail = P.filter(p=>{
-      const q = sellState.search.toLowerCase();
-      return !q||[p.brand,p.collection,p.name,p.lensColor,p.sku,p.accessoryType].some(v=>v?.toLowerCase().includes(q));
+async function startBarcodeScanner() {
+  if(scanActive)return;
+  if(typeof ZXing==='undefined'){showToast('Scanner library not loaded');return;}
+  try {
+    document.getElementById('barcodeStatus').textContent='Starting camera…';
+    document.getElementById('btnStartScan').style.display='none';
+    document.getElementById('btnStopScan').style.display='block';
+    zxReader=new ZXing.BrowserMultiFormatReader();
+    const devices=await ZXing.BrowserCodeReader.listVideoInputDevices();
+    // Prefer back camera
+    const backCam=devices.find(d=>/back|rear|environment/i.test(d.label))||devices[devices.length-1];
+    const devId=backCam?.deviceId||undefined;
+    scanActive=true;
+    await zxReader.decodeFromVideoDevice(devId,'scanVideo',(result,err)=>{
+      if(result&&scanActive){
+        const code=result.getText();
+        stopBarcodeScanner();
+        handleBarcodeResult(code);
+      } else if(err&&!(err instanceof ZXing.NotFoundException)){
+        console.warn('Scan err:',err);
+      }
     });
-    return `
-    <div class="page-title">Record Sale</div>
-    <div class="page-sub">Enter 5-digit slip from billing software</div>
-    <input class="search-input" style="width:100%;margin-bottom:12px" placeholder="Search product..." value="${sellState.search}" oninput="setSellSearch(this.value)"/>
-    <div style="max-height:70vh;overflow-y:auto">
-      ${avail.map(p=>{const si=getStock(p);const img=p.images?.[0];
-        return `<button onclick="selectSellProduct('${p.id}')" style="width:100%;background:rgba(31,41,55,0.6);border:1px solid rgba(55,65,81,0.5);border-radius:16px;padding:12px;display:flex;gap:12px;align-items:center;text-align:left;margin-bottom:8px">
-          <div style="width:56px;height:56px;border-radius:12px;background:rgba(55,65,81,0.5);flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:22px;opacity:0.2;position:relative">${img?`<img src="${img}" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;opacity:1"/>`:`${tIcon(p.type)}`}</div>
-          <div style="flex:1;min-width:0">
-            <div style="display:flex;gap:6px;align-items:center"><span style="font-size:14px;font-weight:600">${p.brand}</span><span class="badge ${tBadge(p.type)}">${tIcon(p.type)}</span></div>
-            <div style="font-size:12px;color:#9ca3af">${p.type==="colour_lens"?p.lensColor:p.type==="accessory"?p.accessoryType:p.collection||p.name||""}</div>
-            <div style="display:flex;gap:12px;margin-top:4px"><span style="font-size:14px;font-weight:700;color:#34d399">${fmt(p.sellingPrice)}</span><span style="font-size:12px;${si.isOut?"color:#f87171":si.isLow?"color:#fbbf24":"color:#34d399"}">${si.label}</span></div>
-          </div>
-        </button>`;
-      }).join("")}
-      ${avail.length===0?`<div class="empty"><div class="empty-icon" style="font-size:32px">🔍</div><div style="color:#9ca3af">No products found</div></div>`:""}
-    </div>`;
+    document.getElementById('barcodeStatus').textContent='Scanning — point at barcode';
+  } catch(e) {
+    stopBarcodeScanner();
+    document.getElementById('barcodeStatus').textContent='Camera error: '+e.message;
+    showToast('Camera error. Allow camera permission and try again.');
   }
-
-  const si = getStock(sel);
-  const powers = sel.type==="rx_lens"?RX_POWERS:sel.type==="rg_lens"?RG_POWERS:[];
-  const total = (parseFloat(sellState.price)||0) * (parseInt(sellState.qty)||0);
-  const profit = sel ? (parseFloat(sellState.price||sel.sellingPrice)-sel.purchasePrice)*(parseInt(sellState.qty)||1) : 0;
-
-  return `
-  <div class="page-title">Record Sale</div>
-  <div style="background:rgba(30,58,138,0.2);border:1px solid rgba(37,99,235,0.3);border-radius:16px;padding:12px;display:flex;gap:12px;align-items:center;margin-bottom:16px">
-    <div style="width:64px;height:64px;border-radius:12px;background:rgba(55,65,81,0.5);flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:28px;opacity:0.2;position:relative">${sel.images?.[0]?`<img src="${sel.images[0]}" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;opacity:1"/>`:`${tIcon(sel.type)}`}</div>
-    <div style="flex:1"><div style="font-weight:600">${sel.brand}</div><div style="font-size:13px;color:#9ca3af">${sel.type==="colour_lens"?sel.lensColor:sel.collection||sel.name}</div><div style="font-weight:700;color:#34d399">${fmt(sel.sellingPrice)}</div></div>
-    <button onclick="clearSellSel()" style="font-size:12px;color:#60a5fa;border:1px solid #1d4ed8;padding:4px 8px;border-radius:8px">Change</button>
-  </div>
-
-  ${(sel.type==="frame"||sel.type==="sunglasses")&&sel.variants?.length?`
-  <div class="card card-p" style="margin-bottom:16px">
-    <div style="font-size:14px;font-weight:600;margin-bottom:12px">Select Colour</div>
-    <div class="colour-pills">
-      ${sel.variants.map(v=>`<button onclick="setSellColour('${v.color}')" class="colour-pill ${sellState.colour===v.color?"active":v.qty===0?"disabled":"inactive"}" ${v.qty===0?"disabled":""}>
-        ${v.color} <span style="font-size:11px;color:${v.qty<=2?"#fbbf24":"#34d399"}">(${v.qty})</span>
-      </button>`).join("")}
-    </div>
-    ${sellState.colour?`<div style="font-size:12px;color:#60a5fa;margin-top:8px">${sellState.colour} — ${sel.variants.find(v=>v.color===sellState.colour)?.qty||0} pcs available</div>`:""}
-  </div>`:""}
-
-  ${powers.length?`
-  <div class="card card-p" style="margin-bottom:16px">
-    <div style="font-size:14px;font-weight:600;margin-bottom:12px">Select Power</div>
-    <div class="power-grid">
-      ${powers.map(pw=>{const s=sel.stock?.[pw]||0;return`<button onclick="setSellPower('${pw}')" ${s===0?"disabled":""} style="border-radius:12px;padding:8px;border:1px solid;text-align:center;background:${sellState.power===pw?"rgba(30,58,138,0.5)":"rgba(55,65,81,0.3)"};border-color:${sellState.power===pw?"#2563eb":s===0?"rgba(55,65,81,0.3)":"#374151"};opacity:${s===0?0.4:1}">
-        <div style="font-size:12px;font-weight:700">${pw}</div>
-        <div style="font-size:11px;color:${s===0?"#ef4444":s<=2?"#fbbf24":"#34d399"}">${s}</div>
-      </button>`;}).join("")}
-    </div>
-  </div>`:""}
-
-  <div class="card card-p" style="margin-bottom:16px">
-    <div class="field"><label>Bill / Slip Number <span style="color:#f87171">*</span></label><input value="${sellState.bill}" placeholder="5-digit slip e.g. 45231" oninput="setSellField('bill',this.value)"/><div style="font-size:11px;color:#4b5563;margin-top:4px">From your billing software</div></div>
-    <div class="grid2">
-      <div class="field"><label>Quantity</label><input type="number" min="1" value="${sellState.qty}" oninput="setSellField('qty',this.value)"/></div>
-      <div class="field"><label>Sale Price ₹</label><input type="number" value="${sellState.price}" oninput="setSellField('price',this.value)"/></div>
-    </div>
-    <div class="field"><label>Date</label><input type="date" value="${sellState.date}" oninput="setSellField('date',this.value)"/></div>
-    <div class="field"><label>Notes</label><input value="${sellState.notes}" oninput="setSellField('notes',this.value)"/></div>
-  </div>
-
-  ${sellState.price&&sellState.qty?`
-  <div class="sale-summary" style="margin-bottom:16px">
-    <div class="sale-row"><span style="color:#9ca3af">Total:</span><span style="font-weight:700;color:#34d399">${fmt(total)}</span></div>
-    <div class="sale-row"><span style="color:#9ca3af">Profit:</span><span style="font-weight:700;color:${profit>=0?"#34d399":"#f87171"}">${fmt(profit)}</span></div>
-  </div>`:""}
-
-  <div class="flex-btns">
-    <button class="btn btn-gray" onclick="clearSellSel()">Cancel</button>
-    <button class="btn btn-green" onclick="recordSale()">✓ Record Sale</button>
-  </div>`;
 }
 
-// ═══════════════════════════════
-// ANALYTICS
-// ═══════════════════════════════
-function buildAnalytics() {
-  const P = state.products, S = state.sales;
-  const totalRev = S.reduce((a,s)=>a+s.amount,0);
-  const totalCost = S.reduce((a,s)=>{const p=P.find(x=>x.id===s.productId);return a+(p?.purchasePrice||0)*s.qty;},0);
-  const totalSold = S.reduce((a,s)=>a+s.qty,0);
-  const bm={},tm={},pm={},cm={},gm={},mm={};
-  S.forEach(s=>{
-    const p=P.find(x=>x.id===s.productId);if(!p)return;
-    if(p.brand){bm[p.brand]=bm[p.brand]||{sold:0,rev:0};bm[p.brand].sold+=s.qty;bm[p.brand].rev+=s.amount;}
-    const tl={frame:"Frames",sunglasses:"Sunglasses",rx_lens:"Rx Lens",colour_lens:"Colour Lens",rg_lens:"Reading Glasses",accessory:"Accessories"}[p.type]||p.type;
-    tm[tl]=(tm[tl]||0)+s.qty;
-    if((p.type==="rx_lens"||p.type==="rg_lens")&&s.power)pm[s.power]=(pm[s.power]||0)+s.qty;
-    if(s.colour)cm[s.colour]=(cm[s.colour]||0)+s.qty;
-    if(p.type==="colour_lens"&&p.lensColor)cm[p.lensColor]=(cm[p.lensColor]||0)+s.qty;
-    if(p.gender)gm[p.gender]=(gm[p.gender]||0)+s.qty;
-    if(p.material)mm[p.material]=(mm[p.material]||0)+s.qty;
-  });
-  const topBrands=Object.entries(bm).sort((a,b)=>b[1].rev-a[1].rev).slice(0,6);
-  const topPowers=Object.entries(pm).sort((a,b)=>b[1]-a[1]).slice(0,8);
-  const topColours=Object.entries(cm).sort((a,b)=>b[1]-a[1]).slice(0,6);
-  const dead=P.filter(p=>{if(p.type==="accessory")return false;const si=getStock(p);if(si.total<=0)return false;const ls=S.filter(s=>s.productId===p.id).sort((a,b)=>new Date(b.date)-new Date(a.date))[0];return(!ls&&daysSince(p.purchaseDate||p.createdAt)>180)||(ls&&daysSince(ls.date)>180);});
-
-  return `
-  <div class="page-title">Analytics</div>
-  <div class="page-sub">Business intelligence</div>
-  <div class="stat-grid section">
-    <div class="stat-card stat-blue"><div class="stat-label">Revenue</div><div class="stat-value">${fmt(totalRev)}</div><div class="stat-sub">${totalSold} sold</div></div>
-    <div class="stat-card stat-green"><div class="stat-label">Profit</div><div class="stat-value">${fmt(totalRev-totalCost)}</div><div class="stat-sub">${totalRev>0?((totalRev-totalCost)/totalRev*100).toFixed(1)+"% margin":""}</div></div>
-  </div>
-  ${S.length===0?`<div class="empty"><div class="empty-icon">📊</div><div class="empty-sub">Record sales to see analytics</div></div>`:""}
-  ${Object.keys(tm).length?`<div class="card card-p section"><div class="sect-title cyan">📂 Sales by Category</div>${buildBar(Object.entries(tm).sort((a,b)=>b[1]-a[1]).map(([l,v])=>({l,v,d:`${v} sold`})),"#06b6d4")}</div>`:""}
-  ${topBrands.length?`<div class="card card-p section"><div class="sect-title green">🏆 Top Brands</div>${topBrands.map(([br,d],i)=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(55,65,81,0.5)"><div style="display:flex;gap:8px;align-items:center"><span style="color:#4b5563;font-size:13px;width:16px">${i+1}</span><span style="font-size:14px">${br}</span></div><div style="text-align:right"><div style="font-size:14px;font-weight:700;color:#34d399">${fmt(d.rev)}</div><div style="font-size:11px;color:#9ca3af">${d.sold} sold</div></div></div>`).join("")}</div>`:""}
-  ${Object.keys(gm).length?`<div class="card card-p section"><div class="sect-title" style="color:#f472b6">👥 Sales by Gender</div>${buildBar(Object.entries(gm).sort((a,b)=>b[1]-a[1]).map(([l,v])=>({l,v,d:`${v} sold`})),"#ec4899")}</div>`:""}
-  ${Object.keys(mm).length?`<div class="card card-p section"><div class="sect-title amber">🔩 Material Trends</div>${buildBar(Object.entries(mm).sort((a,b)=>b[1]-a[1]).map(([l,v])=>({l,v,d:`${v} sold`})),"#f59e0b")}</div>`:""}
-  ${topColours.length?`<div class="card card-p section"><div class="sect-title purple">🎨 Top Colours</div>${buildBar(topColours.map(([l,v])=>({l,v,d:`${v} sold`})),"#a855f7")}</div>`:""}
-  ${topPowers.length?`<div class="card card-p section"><div class="sect-title blue">🔢 Top Powers</div>${buildBar(topPowers.map(([l,v])=>({l:`${l} SPH`,v,d:`${v} sold`})),"#3b82f6")}</div>`:""}
-  ${dead.length?`<div style="background:rgba(124,45,18,0.15);border:1px solid rgba(154,52,18,0.4);border-radius:16px;padding:16px" class="section">
-    <div style="font-size:14px;font-weight:600;color:#fb923c;margin-bottom:4px">💤 Dead Stock (6+ months) — ${dead.length} items</div>
-    <div style="font-size:12px;color:#9ca3af;margin-bottom:12px">Locked capital: <span style="color:#fb923c">${fmt(dead.reduce((a,p)=>a+(p.purchasePrice||0)*getStock(p).total,0))}</span></div>
-    ${dead.slice(0,6).map(p=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(124,45,18,0.3)"><div><div style="font-size:14px">${p.brand} ${p.collection||p.name}</div><div style="font-size:11px;color:#9ca3af">${getStock(p).label}</div></div><span style="font-size:12px;color:#fb923c">${fmt((p.purchasePrice||0)*getStock(p).total)}</span></div>`).join("")}
-  </div>`:""}
-  <div style="font-size:12px;color:#4b5563;text-align:center;margin-top:16px">${S.length} sales · ${P.length} products</div>`;
+function stopBarcodeScanner() {
+  scanActive=false;
+  if(zxReader){try{zxReader.reset();}catch(e){}zxReader=null;}
+  const video=document.getElementById('scanVideo');
+  if(video&&video.srcObject){video.srcObject.getTracks().forEach(t=>t.stop());video.srcObject=null;}
+  document.getElementById('btnStartScan').style.display='block';
+  document.getElementById('btnStopScan').style.display='none';
+  if(document.getElementById('barcodeStatus')) document.getElementById('barcodeStatus').textContent='Point camera at barcode';
 }
 
-// ═══════════════════════════════
-// MORE / LISTS / DELETED
-// ═══════════════════════════════
-function buildMore() {
-  const hasSheets = !!localStorage.getItem('sheets_url');
-  const sheetsStatus = hasSheets ? '✅ Connected' : '⚠️ Not setup';
-
-  return `
-  <div class="page-title">More</div>
-  <button class="more-btn" onclick="pushToSheets()" style="background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3)">
-    <span class="more-icon">☁️</span>
-    <div><div class="more-label">Backup to Google Sheets</div>
-    <div class="more-sub">Auto-saves your inventory safely · ${sheetsStatus}</div></div>
-  </button>
-  <button class="more-btn" onclick="setupSheetsBackup()" style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3)">
-    <span class="more-icon">🔧</span>
-    <div><div class="more-label">Setup Cloud Backup</div>
-    <div class="more-sub">Connect Google Sheets for safe storage</div></div>
-  </button>
-  <button class="more-btn" onclick="showLookup()" style="background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.3)">
-    <span class="more-icon">🔍</span>
-    <div><div class="more-label">Scan to Lookup</div>
-    <div class="more-sub">Scan temple → find in inventory instantly</div></div>
-  </button>
-  <button class="more-btn" onclick="installApp()" style="background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.3)">
-    <span class="more-icon">📱</span>
-    <div><div class="more-label">Install as App</div>
-    <div class="more-sub">Add to home screen for quick access</div></div>
-  </button>
-  <button class="more-btn" onclick="goTab('lists')"><span class="more-icon">⚙️</span><div><div class="more-label">Manage Lists & Brands</div><div class="more-sub">Add brands, collections, suppliers</div></div></button>
-  <button class="more-btn" style="border-color:rgba(153,27,27,0.3)" onclick="goTab('deleted')"><span class="more-icon">🗑️</span><div><div class="more-label">Deleted Records</div><div class="more-sub">${state.deleted.length} records — audit trail</div></div></button>
-  <div class="card card-p" style="margin-top:8px"><div style="font-size:12px;color:#4b5563;font-weight:600;margin-bottom:4px">Data Storage</div><div style="font-size:12px;color:#4b5563">${state.products.length} products · ${state.sales.length} sales · Stored in browser</div></div>`;
-}
-
-function buildLists() {
-  const groups=[{k:"sunglass_brands",l:"Sunglass Brands",i:"🕶️"},{k:"frame_brands",l:"Frame Brands",i:"👓"},{k:"lens_brands",l:"Lens Brands",i:"🔵"},{k:"collections",l:"Collections",i:"🗂️"},{k:"suppliers",l:"Suppliers",i:"🚚"},{k:"frame_categories",l:"Categories",i:"📂"},{k:"lens_colors",l:"Lens Colours",i:"🌈"},{k:"wear_schedules",l:"Wear Schedules",i:"📅"},{k:"shapes",l:"Shapes",i:"🔷"},{k:"materials",l:"Materials",i:"🔩"},{k:"colors",l:"Frame Colors",i:"🎨"}];
-  const cur = state.customs[state.listActive]||[];
-  const g = groups.find(x=>x.k===state.listActive);
-  return `
-  <div class="page-title">Lists & Brands</div>
-  <div class="grad-card"><div style="font-size:14px;font-weight:600;color:#93c5fd;margin-bottom:4px">🏷️ White Label Brand</div><div style="font-size:12px;color:#9ca3af">Add your brand to Frame Brands or Sunglass Brands — tracked from day one.</div></div>
-  <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px">
-    ${groups.map(gr=>`<button onclick="setListActive('${gr.k}')" style="padding:6px 12px;border-radius:20px;font-size:12px;font-weight:500;border:1px solid;cursor:pointer;background:${state.listActive===gr.k?"#2563eb":"#1f2937"};border-color:${state.listActive===gr.k?"#1d4ed8":"#374151"};color:${state.listActive===gr.k?"#fff":"#9ca3af"}">${gr.i} ${gr.l}${(state.customs[gr.k]||[]).length>0?` (${(state.customs[gr.k]||[]).length})`:""}</button>`).join("")}
-  </div>
-  <div class="card card-p section">
-    <div style="font-size:14px;font-weight:600;margin-bottom:12px">${g?.i} ${g?.l}</div>
-    <div style="display:flex;gap:8px">
-      <input value="${state.listInput}" oninput="setListInput(this.value)" onkeydown="if(event.key==='Enter')addListItem()" placeholder="Type name and press Enter..." style="flex:1;background:#374151;border:1px solid #4b5563;border-radius:12px;padding:10px 12px;color:#fff;font-size:14px;outline:none"/>
-      <button onclick="addListItem()" style="background:#2563eb;color:#fff;padding:10px 20px;border-radius:12px;font-weight:600;font-size:14px">Add</button>
-    </div>
-  </div>
-  <div class="card card-p">
-    <div style="font-size:14px;font-weight:600;margin-bottom:12px">${g?.l} <span style="color:#9ca3af;font-weight:400">(${cur.length})</span></div>
-    ${cur.length===0?`<div style="color:#4b5563;font-size:14px;text-align:center;padding:12px">Nothing added yet</div>`:`<div style="display:flex;flex-wrap:wrap;gap:4px">${cur.map(item=>`<span class="list-tag">${item}<span class="list-tag-x" onclick="removeListItem('${item}')">✕</span></span>`).join("")}</div>`}
-  </div>`;
-}
-
-function buildDeleted() {
-  const D = state.deleted;
-  return `
-  <div class="page-title">🗑️ Deleted Records</div>
-  <div class="page-sub">Audit trail — owner view only</div>
-  ${D.length===0?`<div class="empty"><div class="empty-icon">✅</div><div class="empty-sub">No deleted records</div></div>`
-  :D.map(r=>`<div class="del-record"><div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px"><span style="font-weight:600">${r.brand} ${r.collection||r.name||r.lensColor||""}</span><span class="badge badge-red">${r.type}</span></div><div style="font-size:12px;color:#9ca3af">🕐 ${new Date(r.deletedAt).toLocaleString("en-IN")}</div><div style="font-size:12px;color:#9ca3af;margin-top:2px">📝 ${r.reason||"No reason"}</div><div style="font-size:12px;color:#9ca3af;margin-top:2px">📦 Stock: ${r.stockAtDeletion}</div>${r.saleExists===false?`<div class="warn-tag">⚠ No matching sale entry — investigate</div>`:""}</div>`).join("")}`;
-}
-
-// ═══════════════════════════════
-// MODALS
-// ═══════════════════════════════
-function buildPinModal() {
-  if (!state.pinTarget) return "";
-  return `<div class="modal-overlay"><div class="modal">
-    <h3>🔐 Delete Product</h3>
-    <p>${state.pinTarget.brand} ${state.pinTarget.collection||state.pinTarget.name||""}<br/>Enter owner PIN to continue</p>
-    <div class="field"><input type="password" maxlength="4" value="${state.pinVal}" placeholder="PIN" oninput="setPinVal(this.value)" onkeydown="if(event.key==='Enter')checkPin()" style="text-align:center;font-size:22px;letter-spacing:8px" id="pin-input"/></div>
-    ${state.pinErr?`<div style="color:#f87171;font-size:12px;text-align:center;margin-bottom:8px">Wrong PIN. Try again.</div>`:""}
-    <div class="flex-btns">
-      <button class="btn btn-gray" onclick="cancelPin()">Cancel</button>
-      <button class="btn btn-red" onclick="checkPin()">Confirm</button>
-    </div>
-  </div></div>`;
-}
-
-function buildDelModal() {
-  if (!state.showDelModal) return "";
-  return `<div class="modal-overlay"><div class="modal">
-    <h3>🗑️ Delete Product</h3>
-    <p style="margin-bottom:12px">${state.delTarget?.brand} ${state.delTarget?.collection||state.delTarget?.name||""}</p>
-    <div class="field"><label>Reason for deletion *</label>
-      <select onchange="state.delReason=this.value">
-        <option value="">Select reason...</option>
-        <option value="Item sold — no stock remaining">Item sold — no stock remaining</option>
-        <option value="Damaged / returned to supplier">Damaged / returned</option>
-        <option value="Data entry mistake">Data entry mistake</option>
-        <option value="Discontinued product">Discontinued</option>
-        <option value="Other">Other</option>
-      </select>
-    </div>
-    <div style="font-size:12px;color:#f59e0b;background:rgba(120,53,15,0.2);border:1px solid rgba(146,64,14,0.4);border-radius:12px;padding:10px;margin-bottom:16px">Saved to Deleted Records with timestamp. Nothing truly erased.</div>
-    <div class="flex-btns">
-      <button class="btn btn-gray" onclick="cancelDel()">Cancel</button>
-      <button class="btn btn-red" onclick="execDel()" ${!state.delReason?"disabled style='opacity:0.4'":""}>Delete</button>
-    </div>
-  </div></div>`;
-}
-
-// ═══════════════════════════════
-// SCAN SCREEN
-// ═══════════════════════════════
-function buildScanScreen() {
-  if (!state.scanStep) return "";
-  if (state.scanStep==="intro") return `
-  <div class="fullscreen">
-    <div class="fs-header"><button class="fs-back" onclick="closeScan()">←</button><div><div style="font-weight:700">📷 Smart Temple Scan</div><div style="font-size:12px;color:#9ca3af">AI reads frame details automatically</div></div></div>
-    <div class="fs-body">
-      <div class="card card-p section">
-        ${[["1","Hold frame — temple (side arm) facing up"],["2","Point camera at inside of arm where text is printed"],["3","Take a clear close-up in good light"],["✓","AI fills brand, model, size automatically"]].map(([n,t])=>`
-        <div style="display:flex;gap:12px;align-items:start;margin-bottom:12px">
-          <div style="min-width:28px;height:28px;border-radius:50%;background:${n==="✓"?"#059669":"#2563eb"};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">${n}</div>
-          <p style="font-size:14px;color:#d1d5db;padding-top:4px">${t}</p>
-        </div>`).join("")}
-      </div>
-      ${state.scanResult&&state.scanResult.error?`<div style="background:rgba(127,29,29,0.3);border:1px solid rgba(153,27,27,0.5);border-radius:16px;padding:12px;margin-bottom:16px"><p style="color:#f87171;font-size:14px">${state.scanResult.error}</p></div>`:""}
-      <label style="display:flex;align-items:center;justify-content:center;gap:12px;background:#2563eb;border-radius:16px;padding:20px;font-size:18px;font-weight:700;cursor:pointer;position:relative;overflow:hidden;width:100%;margin-bottom:8px">
-        📷 Take Photo of Temple
-        <input type="file" accept="image/*" capture="environment" onchange="handleScanPhoto(event)" style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer"/>
-      </label>
-      <p style="text-align:center;font-size:12px;color:#4b5563">Tap above — camera will open</p>
-    </div>
-  </div>`;
-
-  if (state.scanStep==="scanning") return `
-  <div class="fullscreen">
-    <div class="scanning-screen">
-      ${state.scanPreview?`<img src="${state.scanPreview}" style="width:100%;max-height:200px;object-fit:cover;border-radius:16px"/>`:""}
-      <div class="scanning-icon">🔍</div>
-      <div style="text-align:center"><div style="font-size:20px;font-weight:700;margin-bottom:8px">Reading temple...</div><div style="color:#9ca3af">AI extracting brand, model, size</div></div>
-    </div>
-  </div>`;
-
-  if (state.scanStep==="result"&&state.scanResult) {
-    const r = state.scanResult;
-    const filled = ["brand","sku","size","material","color","collection"].filter(k=>r[k]&&r[k].trim()).length;
-    return `
-    <div class="fullscreen">
-      <div class="fs-header"><button class="fs-back" onclick="retakeScan()">←</button><div style="font-weight:700">Scan Result</div></div>
-      <div class="fs-body">
-        ${state.scanPreview?`<img src="${state.scanPreview}" style="width:100%;max-height:180px;object-fit:cover;border-radius:16px;margin-bottom:16px"/>`:""}
-        <div style="border-radius:16px;padding:12px;margin-bottom:16px;background:${filled>0?"rgba(6,78,59,0.2)":"rgba(120,53,15,0.2)"};border:1px solid ${filled>0?"rgba(4,120,87,0.4)":"rgba(146,64,14,0.4)"}">
-          <p style="font-weight:600;font-size:14px;color:${filled>0?"#34d399":"#fbbf24"}">${filled>0?"✅ "+filled+" fields extracted by AI":"⚠ Could not read clearly — fill manually"}</p>
-        </div>
-        <div style="background:rgba(31,41,55,0.8);border:1px solid rgba(55,65,81,0.5);border-radius:16px;padding:16px;margin-bottom:16px">
-          ${[["brand","Brand","🏷️"],["sku","Model No","🔢"],["size","Size","📐"],["material","Material","🔩"],["color","Color","🎨"],["notes","Notes","📝"]].map(([k,l,ic])=>
-            r[k]?`<div style="display:flex;gap:12px;align-items:center;background:rgba(55,65,81,0.4);border-radius:12px;padding:10px;margin-bottom:8px">
-              <span>${ic}</span><div style="flex:1"><div style="font-size:11px;color:#9ca3af">${l}</div><div style="font-size:14px;font-weight:600">${r[k]}</div></div><span style="color:#34d399">✓</span>
-            </div>`:`<div style="display:flex;gap:12px;align-items:center;background:rgba(55,65,81,0.15);border-radius:12px;padding:10px;margin-bottom:8px;opacity:0.4">
-              <span>${ic}</span><div><div style="font-size:11px;color:#9ca3af">${l}</div><div style="font-size:12px;color:#6b7280">Not found</div></div>
-            </div>`
-          ).join("")}
-        </div>
-        <p style="font-size:12px;color:#f59e0b;text-align:center;margin-bottom:16px">Fields will be pre-filled in form. You can edit before saving.</p>
-        <div style="display:flex;gap:12px">
-          <button class="btn btn-gray" style="flex:1" onclick="retakeScan()">Retake</button>
-          <button class="btn btn-blue" style="flex:1" onclick="applyScan()">✓ Use Details</button>
-        </div>
-      </div>
-    </div>`;
+function handleBarcodeResult(code) {
+  showToast('Scanned: '+code);
+  document.getElementById('barcodeStatus').textContent='Found: '+code;
+  // Check if we're scanning for a specific field
+  if(scanFieldTarget) {
+    const el=document.getElementById(scanFieldTarget);
+    if(el){el.value=code; showToast('Barcode set: '+code);}
+    scanFieldTarget=null;
+    goBack();
+    return;
   }
-  return "";
-}
-
-// ═══════════════════════════════
-// BAR CHART
-// ═══════════════════════════════
-function buildBar(data, color) {
-  const mx = Math.max(...data.map(d=>d.v), 1);
-  return data.map(d=>`
-  <div class="bar-item">
-    <div class="bar-labels"><span class="bar-label">${d.l}</span><span class="bar-val">${d.d||d.v}</span></div>
-    <div class="bar-track"><div class="bar-fill" style="width:${(d.v/mx)*100}%;background:${color}"></div></div>
-  </div>`).join("");
-}
-
-// ═══════════════════════════════
-// EVENT HANDLERS
-// ═══════════════════════════════
-function attachEvents() {
-  // Nothing needed - all via onclick attributes
-}
-
-// Navigation
-function goTab(tab) {
-  if (tab==="add") { state.editing=null; state.addType=null; initForm({...{}}, null); }
-  state.tab = tab;
-  if (tab==="sell") { sellState = {search:"",selectedId:null,power:"",colour:"",bill:"",qty:"1",price:"",date:today(),notes:""}; }
-  render();
-  document.getElementById("main-content")?.scrollTo(0,0);
-}
-
-// Inventory
-function invSearch(v) { state.inv_search=v; render(); }
-function toggleFilter() { state.inv_showFilter=!state.inv_showFilter; render(); }
-function toggleView() { state.inv_view=state.inv_view==="grid"?"list":"grid"; render(); }
-function setTypeFilter(t) { state.inv_typeFilter=t; render(); }
-function setFilter(k,v) { state.inv_filters={...state.inv_filters,[k]:v}; render(); }
-function setPMin(v) { state.inv_pMin=v; render(); }
-function setPMax(v) { state.inv_pMax=v; render(); }
-function clearFilters() { state.inv_filters={brand:"",shape:"",material:"",gender:"",status:""}; state.inv_pMin=""; state.inv_pMax=""; render(); }
-
-// Add product
-function selectType(t) { state.addType=t; initForm(null,t); render(); }
-function backFromAdd() { state.editing=null; state.addType=null; state.flashMsg=""; goTab("inventory"); }
-function setFormField(k,v) { formData[k]=v; }
-
-// Photo upload
-async function handlePhotos(e) {
-  const files = Array.from(e.target.files);
-  if (!files.length) return;
-  uploadingPhotos = true;
-  // Show uploading state immediately
-  const photoRow = document.getElementById("photo-row");
-  if (photoRow) {
-    const hint = photoRow.parentElement.querySelector(".photo-hint");
-    if (hint) hint.textContent = "Uploading... please wait";
+  // Lookup in inventory
+  const inv=getInventory();
+  const item=inv.find(i=>i.barcode===code||i.sku===code);
+  if(item) {
+    showToast('Found: '+item.name);
+    setTimeout(()=>{switchTab('inventory');setTimeout(()=>openItemDetail(item.id),100);},500);
+  } else {
+    openModal(`
+      <div class="modal-title">Barcode Scanned</div>
+      <div class="card2 mb-12 bold" style="font-size:16px;text-align:center">${code}</div>
+      <div class="muted sm mb-16">This barcode is not in your inventory.</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <button class="btn btn-primary btn-full" onclick="closeModalForce();openAddItem('');setTimeout(()=>{document.getElementById('fBarcode').value='${code}'},100)">➕ Add New Item with this Barcode</button>
+        <button class="btn btn-outline btn-full" onclick="closeModalForce()">Close</button>
+      </div>`);
   }
+}
+
+// Scan to fill a specific field (e.g. SKU or barcode in add item form)
+function scanForField(fieldId) {
+  scanFieldTarget=fieldId;
+  switchTab('scan');
+  setScanMode('barcode');
+  showToast('Scan barcode — will fill in automatically');
+}
+
+/* ═══════════════════════════════════════════════
+   TEMPLE SCAN (Groq AI)
+═══════════════════════════════════════════════ */
+function openScanForItem() {
+  switchTab('scan');
+  setScanMode('temple');
+}
+
+async function handleTemplePhoto(input) {
+  const f=input.files[0]; if(!f)return;
+  input.value='';
+  const resultEl=document.getElementById('templeResult');
+  resultEl.innerHTML=`<div class="card" style="text-align:center"><div style="font-size:32px;animation:pulse 1.5s infinite">🔍</div><div class="muted sm mt-8">AI reading temple arm…</div></div>`;
   try {
-    const urls = [];
-    for (let i=0; i<files.length; i++) {
-      const url = await uploadPhoto(files[i]);
-      urls.push(url);
+    const b64=await fileToBase64(f);
+    const code=await callGroqVision(b64);
+    if(!code||code==='UNCLEAR'||code.length<2) {
+      resultEl.innerHTML=`<div class="card"><div class="bold mb-8">⚠️ Could not read text</div><div class="muted sm">Try better lighting, hold camera steady, focus on the temple arm text</div>
+        <button class="btn btn-outline btn-sm btn-full mt-8" style="margin-top:10px" onclick="document.getElementById('templeFile').click()">Try Again</button></div>`;
+      return;
     }
-    formData.images = [...(formData.images||[]), ...urls];
-    uploadingPhotos = false;
-    render();
-    // Scroll to show the uploaded photo
-    setTimeout(() => {
-      const row = document.getElementById("photo-row");
-      if (row) row.scrollIntoView({behavior:"smooth", block:"center"});
-    }, 200);
-  } catch(err) {
-    uploadingPhotos = false;
-    alert("Upload failed: " + err.message);
-    render();
+    // Search inventory
+    const inv=getInventory();
+    const found=inv.find(i=>
+      (i.sku&&i.sku.toLowerCase()===code.toLowerCase())||
+      (i.name&&i.name.toLowerCase().includes(code.toLowerCase()))||
+      (i.barcode&&i.barcode===code)
+    );
+    if(found) {
+      resultEl.innerHTML=`
+        <div class="card mb-12" style="background:rgba(34,197,94,.08);border-color:rgba(34,197,94,.2)">
+          <div class="bold mb-4 c-green">✅ Match Found!</div>
+          <div class="xs muted">Read: <b>${code}</b></div>
+        </div>
+        <div class="item-row" onclick="openItemDetail('${found.id}')">
+          <div class="item-thumb">${found.photo?`<img src="${found.photo}">`:'📦'}</div>
+          <div class="item-info"><div class="item-name">${found.name}</div><div class="item-sub">Stock: ${found.stock} · ${fCur(found.price)}</div></div>
+          <span class="badge badge-green">${found.stock} pcs</span>
+        </div>`;
+    } else {
+      resultEl.innerHTML=`
+        <div class="card mb-12">
+          <div class="bold mb-4">Text Read: <span class="c-blue">${code}</span></div>
+          <div class="muted xs">No matching item in inventory</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <button class="btn btn-outline btn-full" onclick="switchTab('inventory');setTimeout(()=>{document.getElementById('invSearch').value='${code}';renderInventory();},100)">🔍 Search Inventory</button>
+          <button class="btn btn-primary btn-full" onclick="openAddItem('${code}')">➕ Add as New Item</button>
+        </div>`;
+    }
+  } catch(e) {
+    resultEl.innerHTML=`<div class="card"><div class="bold c-red mb-8">Error</div><div class="muted sm">${e.message}</div></div>`;
   }
 }
-function removePhoto(i) { formData.images = formData.images.filter((_,j)=>j!==i); render(); }
 
-// Variants
-function addVariant() {
-  const inp = document.getElementById("new-colour-input");
-  const v = inp?.value?.trim();
-  if (!v || formVariants.find(x=>x.color===v)) { if(inp) inp.value=""; return; }
-  formVariants.push({color:v,qty:0});
-  if(inp) inp.value="";
-  render();
-}
-function removeVariant(i) { formVariants.splice(i,1); render(); }
-function updateVariantQty(i,v) { formVariants[i].qty=parseInt(v)||0; }
-function setStockPower(pw,v) { formStock[pw]=parseInt(v)||0; }
-
-// Save functions
-async function saveFrame() {
-  const btn = document.getElementById("save-btn");
-  if (btn) { btn.disabled=true; btn.textContent="Saving..."; }
-  if (!formData.brand?.trim()) { alert("Brand is required"); if(btn){btn.disabled=false;btn.textContent=state.editing?"Update":"Save Frame";} return; }
-  if (!formData.sellingPrice) { alert("Selling price is required"); if(btn){btn.disabled=false;btn.textContent=state.editing?"Update":"Save Frame";} return; }
-  const total = formVariants.reduce((a,v)=>a+v.qty,0);
-  const prod = {...formData, id:formData.id||uid(), type:state.addType,
-    purchasePrice:parseFloat(formData.purchasePrice)||0, sellingPrice:parseFloat(formData.sellingPrice)||0,
-    mrp:parseFloat(formData.mrp)||0, currentStock:total, reorderLevel:parseInt(formData.reorderLevel)||5,
-    tags:formData.tags?formData.tags.split(",").map(t=>t.trim()).filter(Boolean):[],
-    variants:[...formVariants], updatedAt:new Date().toISOString(), createdAt:formData.createdAt||new Date().toISOString()
-  };
-  updateCustomsFromProduct(prod);
-  if (state.editing) state.products = state.products.map(p=>p.id===prod.id?prod:p);
-  else state.products.push(prod);
-  saveProducts();
-  state.editing=null; state.addType=null; state.flashMsg="";
-  goTab("inventory");
+function fileToBase64(file) {
+  return new Promise((res,rej)=>{
+    const r=new FileReader();
+    r.onload=()=>res(r.result.split(',')[1]);
+    r.onerror=()=>rej(new Error('File read failed'));
+    r.readAsDataURL(file);
+  });
 }
 
-async function savePower() {
-  if (!formData.brand?.trim()) { alert("Brand is required"); return; }
-  if (!formData.sellingPrice) { alert("Selling price is required"); return; }
-  const prod = {...formData, id:formData.id||uid(), type:state.addType,
-    purchasePrice:parseFloat(formData.purchasePrice)||0, sellingPrice:parseFloat(formData.sellingPrice)||0,
-    mrp:parseFloat(formData.mrp)||0, packSize:parseInt(formData.packSize)||1,
-    tags:formData.tags?formData.tags.split(",").map(t=>t.trim()).filter(Boolean):[],
-    stock:{...formStock}, updatedAt:new Date().toISOString(), createdAt:formData.createdAt||new Date().toISOString()
-  };
-  updateCustomsFromProduct(prod);
-  if (state.editing) state.products = state.products.map(p=>p.id===prod.id?prod:p);
-  else state.products.push(prod);
-  saveProducts();
-  state.editing=null; state.addType=null;
-  goTab("inventory");
+async function callGroqVision(b64) {
+  const key=getSettings().groqKey||'';
+  if(!key) throw new Error('Groq API key not set. Go to Settings → Groq API Key');
+  const resp=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+    method:'POST',
+    headers:{'Authorization':'Bearer '+key,'Content-Type':'application/json'},
+    body:JSON.stringify({
+      model:'meta-llama/llama-4-scout-17b-16e-instruct',
+      max_tokens:80,
+      messages:[{role:'user',content:[
+        {type:'image_url',image_url:{url:`data:image/jpeg;base64,${b64}`}},
+        {type:'text',text:'Look at this eyeglass/spectacle frame. Read the text printed on the temple arm (the side piece). Return ONLY the model code or SKU text visible. If nothing is readable, return exactly: UNCLEAR'}
+      ]}]
+    })
+  });
+  if(!resp.ok){const e=await resp.json();throw new Error(e.error?.message||'Groq API error');}
+  const data=await resp.json();
+  return (data.choices?.[0]?.message?.content||'UNCLEAR').trim().replace(/['"]/g,'');
 }
 
-async function saveColour() {
-  if (!formData.brand?.trim()) { alert("Brand is required"); return; }
-  if (!formData.lensColor?.trim()) { alert("Lens colour is required"); return; }
-  if (!formData.sellingPrice) { alert("Selling price is required"); return; }
-  if (formData.currentStock===""||formData.currentStock===null) { alert("Current stock is required"); return; }
-  const prod = {...formData, id:formData.id||uid(), type:"colour_lens",
-    name:formData.name||`${formData.brand} ${formData.lensColor}`,
-    purchasePrice:parseFloat(formData.purchasePrice)||0, sellingPrice:parseFloat(formData.sellingPrice)||0,
-    mrp:parseFloat(formData.mrp)||0, currentStock:parseInt(formData.currentStock)||0,
-    reorderLevel:parseInt(formData.reorderLevel)||5,
-    tags:formData.tags?formData.tags.split(",").map(t=>t.trim()).filter(Boolean):[],
-    updatedAt:new Date().toISOString(), createdAt:formData.createdAt||new Date().toISOString()
-  };
-  updateCustomsFromProduct(prod);
-  if (state.editing) state.products = state.products.map(p=>p.id===prod.id?prod:p);
-  else state.products.push(prod);
-  saveProducts();
-  state.editing=null; state.addType=null;
-  goTab("inventory");
-}
-
-async function saveAcc() {
-  if (!formData.name?.trim()) { alert("Name is required"); return; }
-  if (formData.currentStock===""||formData.currentStock===null) { alert("Current stock is required"); return; }
-  const prod = {...formData, id:formData.id||uid(), type:"accessory",
-    purchasePrice:parseFloat(formData.purchasePrice)||0, currentStock:parseInt(formData.currentStock)||0,
-    reorderLevel:parseInt(formData.reorderLevel)||0, leadTimeDays:parseInt(formData.leadTimeDays)||21,
-    updatedAt:new Date().toISOString(), createdAt:formData.createdAt||new Date().toISOString()
-  };
-  if (state.editing) state.products = state.products.map(p=>p.id===prod.id?prod:p);
-  else state.products.push(prod);
-  saveProducts();
-  state.editing=null; state.addType=null;
-  goTab("inventory");
-}
-
-function updateCustomsFromProduct(prod) {
-  const nc = {...state.customs};
-  if (prod.brand) {
-    const key=prod.type==="sunglasses"?"sunglass_brands":prod.type==="rx_lens"||prod.type==="colour_lens"||prod.type==="rg_lens"?"lens_brands":"frame_brands";
-    if (!nc[key]?.includes(prod.brand)) nc[key]=[...(nc[key]||[]),prod.brand];
+/* ═══════════════════════════════════════════════
+   PURCHASE ORDERS
+═══════════════════════════════════════════════ */
+function renderPOs() {
+  const pos=getPOs();
+  document.getElementById('poCount').textContent=pos.length+' orders';
+  const filtered=poFilterMode==='all'?pos:pos.filter(p=>p.status===poFilterMode);
+  const el=document.getElementById('poList');
+  if(!filtered.length){
+    el.innerHTML=`<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">No purchase orders</div><div class="empty-sub">Tap + to create a purchase order</div></div>`;
+    return;
   }
-  if (prod.supplier&&!nc.suppliers?.includes(prod.supplier)) nc.suppliers=[...(nc.suppliers||[]),prod.supplier];
-  if (prod.collection&&!nc.collections?.includes(prod.collection)) nc.collections=[...(nc.collections||[]),prod.collection];
-  state.customs = nc;
-  saveCustoms();
+  el.innerHTML=filtered.slice().reverse().map(po=>`
+    <div class="item-row" onclick="openPODetail('${po.id}')">
+      <div class="item-thumb" style="font-size:20px;background:rgba(59,130,246,.1)">📋</div>
+      <div class="item-info">
+        <div class="item-name">${po.poNumber} – ${po.supplier||'No Supplier'}</div>
+        <div class="item-sub">${fDate(po.date)} · ${(po.items||[]).length} item${po.items?.length!==1?'s':''}</div>
+      </div>
+      <div class="item-right">
+        <span class="badge ${po.status==='received'?'badge-green':po.status==='partial'?'badge-yellow':'badge-blue'}">${po.status==='received'?'Received':po.status==='partial'?'Partial':'Pending'}</span>
+        ${po.expectedDate?`<span class="xs muted">${fDate(po.expectedDate)}</span>`:''}
+      </div>
+    </div>`).join('');
 }
 
-// Edit / Delete
-function editProduct(id) {
-  const p = state.products.find(x=>x.id===id);
-  if (!p) return;
-  state.editing = p;
-  state.addType = p.type;
-  initForm(p, p.type);
-  state.tab = "add";
-  render();
+function setPOFilter(mode,el) {
+  poFilterMode=mode;
+  document.querySelectorAll('#poFilterChips .chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  renderPOs();
 }
 
-function requestDelete(id) {
-  const p = state.products.find(x=>x.id===id);
-  if (!p) return;
-  state.pinTarget = p;
-  state.pinVal = "";
-  state.pinErr = false;
-  render();
-}
-function setPinVal(v) { state.pinVal=v; }
-function cancelPin() { state.pinTarget=null; state.pinVal=""; state.pinErr=false; render(); }
-function checkPin() {
-  if (state.pinVal===PIN) {
-    state.pinTarget && (state.delTarget=state.pinTarget);
-    state.pinTarget=null; state.pinVal=""; state.pinErr=false;
-    state.delReason=""; state.showDelModal=true;
-    render();
-  } else {
-    state.pinErr=true; state.pinVal="";
-    render();
-    setTimeout(()=>{state.pinErr=false;render();},1500);
-  }
-}
-function cancelDel() { state.showDelModal=false; state.delTarget=null; state.delReason=""; render(); }
-function execDel() {
-  if (!state.delReason) return;
-  const p = state.delTarget;
-  if (!p) return;
-  const si = getStock(p);
-  const hasSale = state.sales.some(s=>s.productId===p.id);
-  const rec = {...p, deletedAt:new Date().toISOString(), reason:state.delReason, stockAtDeletion:si.total, saleExists:hasSale};
-  state.deleted.push(rec);
-  saveDeleted();
-  state.products = state.products.filter(x=>x.id!==p.id);
-  saveProducts();
-  state.showDelModal=false; state.delTarget=null; state.delReason="";
-  render();
+function openAddPO() {
+  showSub('pgAddPO','New Purchase Order');
+  populateSupplierSelect('poSupplier');
+  document.getElementById('poDate').value=todayISO();
+  document.getElementById('poExpected').value='';
+  document.getElementById('poNotes').value='';
+  document.getElementById('poItemsList').innerHTML='';
+  addPOItemRow();
 }
 
-// Sell
-function startSell(id) { sellState.selectedId=id; const p=state.products.find(x=>x.id===id); if(p) sellState.price=String(p.sellingPrice); state.tab="sell"; render(); }
-function setSellSearch(v) { sellState.search=v; render(); }
-function selectSellProduct(id) { const p=state.products.find(x=>x.id===id); sellState.selectedId=id; sellState.power=""; sellState.colour=""; if(p) sellState.price=String(p.sellingPrice); render(); }
-function clearSellSel() { sellState.selectedId=null; sellState.power=""; sellState.colour=""; render(); }
-function setSellField(k,v) { sellState[k]=v; }
-function setSellPower(pw) { sellState.power=pw; render(); }
-function setSellColour(c) { sellState.colour=c; render(); }
+function addPOItemRow() {
+  const inv=getInventory();
+  const options=inv.map(i=>`<option value="${i.id}" data-name="${i.name}" data-cost="${i.cost||0}">${i.name}${i.sku?' ('+i.sku+')':''}</option>`).join('');
+  const div=document.createElement('div');
+  div.className='row center gap-8 mb-8';
+  div.innerHTML=`
+    <select class="form-input grow" style="flex:2" onchange="this.closest('.row').querySelector('.po-cost').value=this.options[this.selectedIndex].dataset.cost">
+      <option value="">Select item</option>${options}
+    </select>
+    <input class="form-input po-qty" type="number" placeholder="Qty" min="1" style="width:60px" value="1">
+    <input class="form-input po-cost" type="number" placeholder="Cost" min="0" style="width:80px">
+    <button class="btn btn-red btn-sm" style="width:32px;height:44px;padding:0;flex-shrink:0" onclick="this.closest('.row').remove()">×</button>`;
+  document.getElementById('poItemsList').appendChild(div);
+}
 
-function recordSale() {
-  const sel = state.products.find(p=>p.id===sellState.selectedId);
-  if (!sel) return alert("Select a product");
-  if (!sellState.bill.trim()) return alert("Enter bill/slip number");
-  if ((sel.type==="rx_lens"||sel.type==="rg_lens")&&!sellState.power) return alert("Select a power");
-  const qty = parseInt(sellState.qty)||1;
-  const maxQty = ()=>{
-    if(sel.type==="rx_lens"||sel.type==="rg_lens") return sellState.power?(sel.stock?.[sellState.power]||0):0;
-    if(sel.type==="frame"||sel.type==="sunglasses") return sellState.colour?(sel.variants?.find(v=>v.color===sellState.colour)?.qty||0):(sel.variants||[]).reduce((a,v)=>a+v.qty,0);
-    return sel.currentStock||0;
+function savePO() {
+  const supplier=document.getElementById('poSupplier').value;
+  const rows=document.getElementById('poItemsList').querySelectorAll('.row');
+  const items=[];
+  rows.forEach(row=>{
+    const sel=row.querySelector('select'); const qty=row.querySelector('.po-qty'); const cost=row.querySelector('.po-cost');
+    if(sel?.value) items.push({
+      itemId:sel.value,
+      itemName:sel.options[sel.selectedIndex]?.text||'',
+      qty:parseInt(qty?.value)||1,
+      cost:parseFloat(cost?.value)||0
+    });
+  });
+  if(!items.length){showToast('Add at least one item');return;}
+  const po={
+    id:uid(), poNumber:nextPONo(), date:new Date().toISOString(),
+    supplier, expectedDate:document.getElementById('poExpected').value,
+    status:'pending', notes:document.getElementById('poNotes').value.trim(),
+    items
   };
-  if (qty>maxQty()) return alert(`Only ${maxQty()} in stock`);
-  const price = parseFloat(sellState.price)||sel.sellingPrice;
-  const sale = {id:uid(),productId:sel.id,billNumber:sellState.bill.trim(),qty,amount:price*qty,sellingPrice:price,date:sellState.date,notes:sellState.notes,type:sel.type,power:sellState.power||null,colour:sellState.colour||null};
-  state.sales.push(sale);
-  saveSales();
-  if (sel.type==="rx_lens"||sel.type==="rg_lens") {
-    state.products = state.products.map(p=>p.id===sel.id?{...p,stock:{...p.stock,[sellState.power]:(p.stock[sellState.power]||0)-qty}}:p);
-  } else if (sel.type==="frame"||sel.type==="sunglasses") {
-    const nv=(sel.variants||[]).map(v=>v.color===sellState.colour?{...v,qty:v.qty-qty}:v);
-    state.products = state.products.map(p=>p.id===sel.id?{...p,variants:nv,currentStock:nv.reduce((a,v)=>a+v.qty,0)}:p);
-  } else {
-    state.products = state.products.map(p=>p.id===sel.id?{...p,currentStock:p.currentStock-qty}:p);
-  }
-  saveProducts();
-  sellState = {search:"",selectedId:null,power:"",colour:"",bill:"",qty:"1",price:"",date:today(),notes:""};
-  goTab("inventory");
+  const pos=getPOs(); pos.push(po); savePOs(pos);
+  showToast('Purchase Order created!');
+  goBack();
+  renderPOs();
 }
 
-// Scan
-function startScan() { state.scanStep="intro"; state.scanResult=null; state.scanPreview=null; render(); }
-function closeScan() { state.scanStep=null; render(); }
-function retakeScan() { state.scanStep="intro"; state.scanResult=null; state.scanPreview=null; render(); }
+function openPODetail(id) {
+  const po=getPOs().find(p=>p.id===id);
+  if(!po)return;
+  viewPOId=id;
+  showSub('pgPODetail','PO '+po.poNumber);
+  const totalCost=(po.items||[]).reduce((a,i)=>a+i.cost*i.qty,0);
+  document.getElementById('poDetailContent').innerHTML=`
+    <div class="card mb-12">
+      <div class="row between center mb-8">
+        <div><div style="font-size:20px;font-weight:800">${po.poNumber}</div><div class="xs muted">${fDate(po.date)}</div></div>
+        <span class="badge ${po.status==='received'?'badge-green':'badge-blue'}" style="font-size:13px">${po.status==='received'?'Received':'Pending'}</span>
+      </div>
+      ${po.supplier?`<div class="xs muted">🏭 ${po.supplier}</div>`:''}
+      ${po.expectedDate?`<div class="xs muted">📅 Expected: ${fDate(po.expectedDate)}</div>`:''}
+    </div>
+    <div class="card mb-12">
+      <div class="sec-title" style="margin-top:0">Items Ordered</div>
+      ${(po.items||[]).map(it=>`
+        <div class="row between mb-8 center"><div class="grow sm bold">${it.itemName}</div><div class="xs muted">${it.qty} pcs</div>${it.cost?`<div class="xs muted ml-8" style="margin-left:8px">${fCur(it.cost*it.qty)}</div>`:''}</div>`).join('')}
+      <div class="divider"></div>
+      <div class="row between"><span class="muted">Total Cost</span><span class="bold">${fCur(totalCost)}</span></div>
+    </div>
+    ${po.notes?`<div class="card mb-12 muted sm">${po.notes}</div>`:''}
+    <div style="display:flex;flex-direction:column;gap:10px">
+      ${po.status!=='received'?`<button class="btn btn-green btn-full" onclick="receivePO('${po.id}')">✅ Mark as Received (Update Stock)</button>`:''}
+      ${po.status==='received'&&po.receivedDate?`<div class="card2 c-green sm">✅ Received on ${fDate(po.receivedDate)}</div>`:''}
+      <button class="btn btn-red btn-sm btn-full" onclick="confirmDeletePO('${po.id}')">🗑 Delete PO</button>
+    </div>`;
+}
 
-async function handleScanPhoto(e) {
-  const files = Array.from(e.target.files);
-  if (!files.length) return;
-  const file = files[0];
-  state.scanPreview = URL.createObjectURL(file);
-  state.scanStep = "scanning";
-  render();
+function receivePO(id) {
+  openModal(`
+    <div class="modal-title">Receive Stock?</div>
+    <div class="muted mb-16">This will add the ordered quantities to your inventory stock.</div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-outline grow" onclick="closeModalForce()">Cancel</button>
+      <button class="btn btn-green grow" onclick="doReceivePO('${id}')">✅ Confirm Receive</button>
+    </div>`);
+}
+function doReceivePO(id) {
+  const pos=getPOs(); const po=pos.find(p=>p.id===id); if(!po)return;
+  const inv=getInventory();
+  (po.items||[]).forEach(poi=>{
+    const item=inv.find(i=>i.id===poi.itemId);
+    if(item) item.stock=(parseInt(item.stock)||0)+parseInt(poi.qty);
+  });
+  saveInventory(inv);
+  po.status='received'; po.receivedDate=new Date().toISOString();
+  savePOs(pos);
+  closeModalForce(); showToast('Stock updated! ✅');
+  openPODetail(id);
+}
+function confirmDeletePO(id) {
+  openModal(`<div class="modal-title">Delete PO?</div><div class="muted mb-16">Cannot be undone.</div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-outline grow" onclick="closeModalForce()">Cancel</button>
+      <button class="btn btn-red grow" onclick="doDeletePO('${id}')">Delete</button>
+    </div>`);
+}
+function doDeletePO(id) {
+  const pos=getPOs().filter(p=>p.id!==id); savePOs(pos);
+  closeModalForce(); showToast('PO deleted'); goBack();
+}
+
+/* ═══════════════════════════════════════════════
+   SUPPLIERS
+═══════════════════════════════════════════════ */
+function renderSuppliers() {
+  const sups=getSuppliers();
+  document.getElementById('supplierCount').textContent=sups.length+' suppliers';
+  const el=document.getElementById('supplierList');
+  if(!sups.length){el.innerHTML=`<div class="muted sm mb-8">No suppliers yet</div>`;return;}
+  el.innerHTML=sups.map(s=>`
+    <div class="item-row">
+      <div class="item-thumb" style="font-size:22px">🏭</div>
+      <div class="item-info"><div class="item-name">${s.name}</div><div class="item-sub">${[s.company,s.phone].filter(Boolean).join(' · ')}</div></div>
+      <button class="btn btn-red btn-sm" style="padding:6px 10px" onclick="deleteSupplier('${s.id}')">×</button>
+    </div>`).join('');
+}
+function addSupplier() {
+  const name=document.getElementById('supName').value.trim();
+  if(!name){showToast('Supplier name required');return;}
+  const sups=getSuppliers();
+  sups.push({id:uid(),name,phone:document.getElementById('supPhone').value.trim(),company:document.getElementById('supCompany').value.trim()});
+  saveSuppliers(sups);
+  ['supName','supPhone','supCompany'].forEach(id=>document.getElementById(id).value='');
+  showToast('Supplier added'); renderSuppliers();
+  populateSupplierSelect('fSupplier');
+  populateSupplierSelect('poSupplier');
+}
+function deleteSupplier(id) {
+  const sups=getSuppliers().filter(s=>s.id!==id); saveSuppliers(sups);
+  showToast('Supplier removed'); renderSuppliers();
+}
+function populateSupplierSelect(selectId,selected='') {
+  const el=document.getElementById(selectId); if(!el)return;
+  const sups=getSuppliers();
+  el.innerHTML=`<option value="">None</option>`+sups.map(s=>`<option value="${s.name}" ${s.name===selected?'selected':''}>${s.name}</option>`).join('');
+}
+
+/* ═══════════════════════════════════════════════
+   SETTINGS
+═══════════════════════════════════════════════ */
+function renderSettings() {
+  const s=getSettings();
+  document.getElementById('stShopName').value=s.shopName||'';
+  document.getElementById('stShopPhone').value=s.shopPhone||'';
+  document.getElementById('stGST').value=s.gstNo||'';
+  document.getElementById('stAddress').value=s.shopAddress||'';
+  document.getElementById('stGroqKey').value=s.groqKey||'';
+  document.getElementById('stSheetUrl').value=s.sheetUrl||'';
+  document.getElementById('stPin1').value='';
+  document.getElementById('stPin2').value='';
+}
+function saveSettings() {
+  const updates={
+    shopName:document.getElementById('stShopName').value.trim(),
+    shopPhone:document.getElementById('stShopPhone').value.trim(),
+    gstNo:document.getElementById('stGST').value.trim(),
+    shopAddress:document.getElementById('stAddress').value.trim(),
+    groqKey:document.getElementById('stGroqKey').value.trim(),
+    sheetUrl:document.getElementById('stSheetUrl').value.trim()
+  };
+  const p1=document.getElementById('stPin1').value;
+  const p2=document.getElementById('stPin2').value;
+  if(p1||p2) {
+    if(p1.length!==4||!/^\d+$/.test(p1)){showToast('PIN must be 4 digits');return;}
+    if(p1!==p2){showToast('PINs do not match');return;}
+    updates.pin=p1;
+  }
+  saveSettingsObj(updates); showToast('Settings saved ✓');
+}
+async function testSheetUrl() {
+  const url=document.getElementById('stSheetUrl').value.trim();
+  if(!url){showToast('Enter a Google Sheets URL first');return;}
+  showToast('Testing connection…');
   try {
-    const result = await scanTemple(file);
-    state.scanResult = result;
-    state.scanStep = "result";
+    await fetch(url,{method:'GET',mode:'no-cors'});
+    showToast('Connection OK ✓ (check your sheet)');
+  } catch(e){showToast('Connection failed: '+e.message);}
+}
+
+/* ═══════════════════════════════════════════════
+   GOOGLE SHEETS BACKUP
+═══════════════════════════════════════════════ */
+const GS_SCRIPT=`// OptiStock Google Sheets Backup Script
+// Paste this in Google Apps Script (Extensions > Apps Script)
+
+function doPost(e) {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var data = JSON.parse(e.postData.contents);
+    
+    // === INVENTORY SHEET ===
+    var inv = ss.getSheetByName('Inventory') || ss.insertSheet('Inventory');
+    inv.clearContents();
+    inv.appendRow(['Name','SKU','Brand','Category','Frame','Color','Stock','Price','Cost','Barcode','Supplier','Updated']);
+    (data.inventory || []).forEach(function(i) {
+      inv.appendRow([i.name,i.sku||'',i.brand||'',i.category||'',i.frameType||'',i.color||'',i.stock||0,i.price||0,i.cost||0,i.barcode||'',i.supplier||'',new Date()]);
+    });
+    
+    // === SALES SHEET ===
+    var sal = ss.getSheetByName('Sales') || ss.insertSheet('Sales');
+    sal.clearContents();
+    sal.appendRow(['Bill No','Date','Customer','Phone','Item','Qty','Unit Price','Total','Grand Total','Discount']);
+    (data.sales || []).forEach(function(s) {
+      (s.items || []).forEach(function(it, idx) {
+        sal.appendRow([s.billNo||'',new Date(s.date),s.customerName||'',s.customerPhone||'',it.name,it.qty,it.price,it.total,idx===0?s.grandTotal:'',idx===0?s.discount||0:'']);
+      });
+    });
+    
+    // === PURCHASE ORDERS SHEET ===
+    var pos = ss.getSheetByName('PurchaseOrders') || ss.insertSheet('PurchaseOrders');
+    pos.clearContents();
+    pos.appendRow(['PO Number','Date','Supplier','Item','Qty','Cost','Status','Expected','Received']);
+    (data.pos || []).forEach(function(p) {
+      (p.items || []).forEach(function(it) {
+        pos.appendRow([p.poNumber||'',new Date(p.date),p.supplier||'',it.itemName,it.qty,it.cost||0,p.status||'',p.expectedDate?new Date(p.expectedDate):'',p.receivedDate?new Date(p.receivedDate):'']);
+      });
+    });
+    
+    return ContentService.createTextOutput(JSON.stringify({status:'ok'}))
+      .setMimeType(ContentService.MimeType.JSON);
   } catch(err) {
-    // Show exact error in notes for debugging
-    state.scanResult = {brand:"",sku:"",size:"",material:"",color:"",collection:"",notes:"ERROR: "+err.message,confidence:"low"};
-    state.scanStep = "result";
+    return ContentService.createTextOutput(JSON.stringify({status:'error',message:err.toString()}))
+      .setMimeType(ContentService.MimeType.JSON);
   }
-  render();
 }
 
-function applyScan() {
-  const r = state.scanResult;
-  if (!r) return;
-  if (r.brand) formData.brand=r.brand;
-  if (r.sku) formData.sku=r.sku;
-  if (r.size) formData.size=r.size;
-  if (r.material) formData.material=r.material;
-  if (r.collection) formData.collection=r.collection;
-  if (r.notes) formData.notes=r.notes;
-  state.scanStep=null;
-  state.flashMsg="✅ Scan complete! Fields pre-filled below.";
-  render();
-  setTimeout(()=>{state.flashMsg="";render();},4000);
+function doGet(e) {
+  return ContentService.createTextOutput('OptiStock Backup Active ✓')
+    .setMimeType(ContentService.MimeType.TEXT);
+}`;
+
+async function doBackup() {
+  const url=getSettings().sheetUrl;
+  if(!url){showToast('Set Sheets URL in Settings first');switchTab('more');setTimeout(()=>showSub('pgSheetSetup','Google Sheets Setup'),100);return;}
+  showToast('Syncing to Google Sheets…',3000);
+  try {
+    await fetch(url,{
+      method:'POST',
+      mode:'no-cors',
+      headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({inventory:getInventory(),sales:getSales(),pos:getPOs(),syncedAt:new Date().toISOString()})
+    });
+    showToast('✓ Synced to Google Sheets!');
+  } catch(e){showToast('Sync error: '+e.message);}
+}
+async function autoBackup() {
+  const url=getSettings().sheetUrl;
+  if(!url)return;
+  try {
+    await fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({inventory:getInventory(),sales:getSales(),pos:getPOs(),syncedAt:new Date().toISOString()})});
+  } catch(e){console.log('Auto backup failed silently',e);}
 }
 
-// Lists
-function setListActive(k) { state.listActive=k; state.listInput=""; render(); }
-function setListInput(v) { state.listInput=v; }
-function addListItem() {
-  const v = state.listInput.trim();
-  if (!v) return;
-  const cur = state.customs[state.listActive]||[];
-  if (cur.includes(v)) { state.listInput=""; render(); return; }
-  state.customs = {...state.customs,[state.listActive]:[...cur,v]};
-  saveCustoms();
-  state.listInput="";
-  render();
-}
-function removeListItem(item) {
-  const cur = state.customs[state.listActive]||[];
-  state.customs = {...state.customs,[state.listActive]:cur.filter(x=>x!==item)};
-  saveCustoms();
-  render();
+function copyScript() {
+  navigator.clipboard.writeText(GS_SCRIPT).then(()=>showToast('Script copied!')).catch(()=>{
+    // Fallback
+    const ta=document.createElement('textarea'); ta.value=GS_SCRIPT;
+    document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+    document.body.removeChild(ta); showToast('Script copied!');
+  });
 }
 
-// ═══════════════════════════════
-// INIT
-// ═══════════════════════════════
-render();
+/* ═══════════════════════════════════════════════
+   MORE TAB
+═══════════════════════════════════════════════ */
+function renderMore() {
+  const pos=getPOs(); const sups=getSuppliers();
+  document.getElementById('poCount').textContent=pos.length+' orders';
+  document.getElementById('supplierCount').textContent=sups.length+' suppliers';
+}
+
+/* ═══════════════════════════════════════════════
+   CSV EXPORT
+═══════════════════════════════════════════════ */
+function exportCSV() {
+  const inv=getInventory();
+  const rows=[['Name','SKU','Brand','Category','Frame','Color','Stock','Price','Cost','Barcode','Supplier','Location']];
+  inv.forEach(i=>rows.push([i.name,i.sku||'',i.brand||'',i.category||'',i.frameType||'',i.color||'',i.stock||0,i.price||0,i.cost||0,i.barcode||'',i.supplier||'',i.location||'']));
+  const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download='optistock_inventory_'+todayISO()+'.csv';
+  a.click(); showToast('CSV downloaded!');
+}
+
+/* ═══════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════ */
+function initApp() {
+  switchTab('home');
+  // Set script display
+  if(document.getElementById('scriptCode'))
+    document.getElementById('scriptCode').textContent=GS_SCRIPT;
+}
+
+// Init: check if already unlocked in same session
+window.onload=()=>{
+  if(sessionStorage.getItem('unlocked')==='1') {
+    document.getElementById('pinScreen').style.display='none';
+    document.getElementById('app').style.display='flex';
+    initApp();
+  }
+  // Set script on sheet setup page
+  if(document.getElementById('scriptCode'))
+    document.getElementById('scriptCode').textContent=GS_SCRIPT;
+};
+// Keep session alive
+const _origCheckPin=checkPin;
+window.checkPin=function(){
+  _origCheckPin();
+  sessionStorage.setItem('unlocked','1');
+};
+// Handle back gesture (Android)
+window.addEventListener('popstate',()=>{
+  if(subStack.length>0){goBack();}
+});
 </script>
 </body>
 </html>

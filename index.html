@@ -261,8 +261,8 @@ textarea.form-input{resize:vertical;min-height:80px}
           </div>
         </div>
         <div style="display:flex;gap:10px;margin-bottom:12px">
-          <button class="btn btn-primary grow" onclick="checkKeyThenScan(\"templeCamera\")">&#128248; Take Photo</button>
-          <button class="btn btn-outline grow" onclick="checkKeyThenScan(\"templeGallery\")">&#128444; Gallery</button>
+          <button class="btn btn-primary grow" onclick="checkKeyThenScan('templeCamera')">&#128248; Take Photo</button>
+          <button class="btn btn-outline grow" onclick="checkKeyThenScan('templeGallery')">&#128444; Gallery</button>
         </div>
         <input type="file" id="templeCamera" accept="image/*" capture="environment" style="display:none" onchange="handleTemplePhoto(this)">
         <input type="file" id="templeGallery" accept="image/*" style="display:none" onchange="handleTemplePhoto(this)">
@@ -1277,11 +1277,11 @@ function handleTemplePhoto(input){
   compressImage(f,function(dataUrl){
     callGroqVision(dataUrl,function(code,err){
       if(err){
-        resultEl.innerHTML='<div class="card"><div class="bold c-red mb-8">&#10060; Error: '+err+'</div><div class="muted xs mb-12">Check your Groq API key in Settings</div><button class="btn btn-outline btn-sm btn-full" onclick="checkKeyThenScan(\"templeCamera\")">&#128247; Try Again</button></div>';
+        resultEl.innerHTML='<div class="card"><div class="bold c-red mb-8">&#10060; Error: '+err+'</div><div class="muted xs mb-12">Check your Groq API key in Settings</div><button class="btn btn-outline btn-sm btn-full" onclick="checkKeyThenScan(\'templeCamera\')">&#128247; Try Again</button></div>';
         return;
       }
       if(!code||code==='UNCLEAR'||code.length<2||code.length>30){
-        resultEl.innerHTML='<div class="card"><div class="bold mb-8">&#9888; Could not read temple text</div><div class="muted sm mb-12" style="line-height:1.7">Tips for better results:<br>&#8226; Hold phone still, 10-15cm from temple<br>&#8226; Good lighting on the text<br>&#8226; Focus on just the temple arm<br>&#8226; Make sure text is clearly visible</div><button class="btn btn-primary btn-full" onclick="checkKeyThenScan(\"templeCamera\")">&#128247; Try Again</button></div>';
+        resultEl.innerHTML='<div class="card"><div class="bold mb-8">&#9888; Could not read temple text</div><div class="muted sm mb-12" style="line-height:1.7">Tips for better results:<br>&#8226; Hold phone still, 10-15cm from temple<br>&#8226; Good lighting on the text<br>&#8226; Focus on just the temple arm<br>&#8226; Make sure text is clearly visible</div><button class="btn btn-primary btn-full" onclick="checkKeyThenScan(\'templeCamera\')">&#128247; Try Again</button></div>';
         return;
       }
       window._lastTempleCode=code;
@@ -1311,7 +1311,7 @@ function handleTemplePhoto(input){
         h2+='<div style="display:flex;flex-direction:column;gap:8px">';
         h2+='<button class="btn btn-primary btn-full" onclick="openAddItem(window._lastTempleCode)" >&#10133; Add as New Item (Model: '+code+')</button>';
         h2+='<button class="btn btn-outline btn-full" onclick="templeSearch()">&#128269; Search Inventory</button>';
-        h2+='<button class="btn btn-outline btn-sm btn-full" onclick="checkKeyThenScan(\"templeCamera\")">&#128247; Scan Again</button></div>';
+        h2+='<button class="btn btn-outline btn-sm btn-full" onclick="checkKeyThenScan(\'templeCamera\')">&#128247; Scan Again</button></div>';
         resultEl.innerHTML=h2;
       }
     });

@@ -897,16 +897,38 @@ function previewItemPhoto(input){
   });
 }
 function compressImage(file,cb){
-  var img=new Image(),url=URL.createObjectURL(file);
-  img.onload=function(){
-    var r=Math.min(600/img.width,600/img.height,1);
-    var c=document.createElement('canvas');
-    c.width=img.width*r;c.height=img.height*r;
-    c.getContext('2d').drawImage(img,0,0,c.width,c.height);
-    cb(c.toDataURL('image/jpeg',0.78));
-    URL.revokeObjectURL(url);
-  };
-  img.src=url;
+  try{
+    var img=new Image();
+    var url=URL.createObjectURL(file);
+    img.onload=function(){
+      try{
+        var r=Math.min(600/img.width,600/img.height,1);
+        var c=document.createElement('canvas');
+        c.width=Math.round(img.width*r);c.height=Math.round(img.height*r);
+        c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+        var out=c.toDataURL('image/jpeg',0.78);
+        URL.revokeObjectURL(url);
+        cb(out);
+      }catch(e){
+        URL.revokeObjectURL(url);
+        // fallback: read original file directly
+        var rd=new FileReader();
+        rd.onload=function(){cb(rd.result)};
+        rd.readAsDataURL(file);
+      }
+    };
+    img.onerror=function(){
+      URL.revokeObjectURL(url);
+      var rd=new FileReader();
+      rd.onload=function(){cb(rd.result)};
+      rd.readAsDataURL(file);
+    };
+    img.src=url;
+  }catch(e){
+    var rd=new FileReader();
+    rd.onload=function(){cb(rd.result)};
+    rd.readAsDataURL(file);
+  }
 }
 function saveItem(){
   var name=document.getElementById('fName').value.trim();
@@ -1252,8 +1274,8 @@ function handleTemplePhoto(input){
   var f=input.files[0];if(!f)return;input.value='';
   var resultEl=document.getElementById('templeResult');
   resultEl.innerHTML='<div class="card" style="text-align:center;padding:28px"><div style="font-size:40px">&#128269;</div><div class="muted sm" style="margin-top:12px">AI reading temple arm...</div></div>';
-  compressImage(f,function(b64compressed){
-    callGroqVision(b64compressed,function(code,err){
+  compressImage(f,function(dataUrl){
+    callGroqVision(dataUrl,function(code,err){
       if(err){
         resultEl.innerHTML='<div class="card"><div class="bold c-red mb-8">&#10060; Error: '+err+'</div><div class="muted xs mb-12">Check your Groq API key in Settings</div><button class="btn btn-outline btn-sm btn-full" onclick="checkKeyThenScan(\"templeCamera\")">&#128247; Try Again</button></div>';
         return;
@@ -1296,7 +1318,7 @@ function handleTemplePhoto(input){
   });
 }
 
-function callGroqVision(b64,cb){
+function callGroqVision(dataUrl,cb){
   var key=getGroqKey();
   if(!key){cb(null,'No API key. Please add your Groq key in Settings.');return}
   var prompt='Read the model/SKU code from this eyeglass temple arm. Reply with ONLY the code (max 25 chars, e.g. RB3025, OX5346). No explanation. If unreadable: UNCLEAR';
@@ -1308,7 +1330,7 @@ function callGroqVision(b64,cb){
       max_tokens:30,
       temperature:0.1,
       messages:[{role:'user',content:[
-        {type:'image_url',image_url:{url:'data:image/jpeg;base64,'+b64}},
+        {type:'image_url',image_url:{url:dataUrl}},
         {type:'text',text:prompt}
       ]}]
     })

@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="OptiStock">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#030712">
-<title>OptiStock v4.2</title>
+<title>OptiStock v5.0</title>
 <script src="https://unpkg.com/@zxing/library@0.19.1/umd/index.min.js"></script>
 <style>
 :root{--bg:#030712;--bg2:#0f172a;--card:#0f172a;--card2:#1e293b;--bdr:#1e293b;--bdr2:#334155;--txt:#f1f5f9;--txt2:#94a3b8;--txt3:#64748b;--accent:#3b82f6;--accent2:#1d4ed8;--green:#22c55e;--red:#ef4444;--yellow:#f59e0b;--r:12px;--r2:16px}
@@ -27,18 +27,17 @@ body{display:flex;flex-direction:column}
 .pin-key{height:76px;border-radius:50%;background:var(--card2);border:none;color:var(--txt);font-size:24px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .pin-key:active{transform:scale(0.88);background:var(--bdr2)}
 .pin-key.del{background:transparent;color:var(--txt2)}
-.pin-err{color:var(--red);font-size:13px;min-height:18px}
+.pin-err{color:var(--red);font-size:13px;min-height:18px;text-align:center}
 #app{display:none;flex-direction:column;height:100%}
 .topbar{display:flex;align-items:center;gap:10px;padding:52px 16px 12px;background:var(--bg);border-bottom:1px solid var(--bdr);flex-shrink:0}
-#btnBack{width:36px;height:36px;border-radius:50%;background:var(--card2);border:none;color:var(--txt);font-size:22px;cursor:pointer;display:none;align-items:center;justify-content:center;flex-shrink:0}
+#btnBack{width:36px;height:36px;border-radius:50%;background:var(--card2);border:none;color:var(--txt);font-size:20px;cursor:pointer;display:none;align-items:center;justify-content:center;flex-shrink:0}
 #topTitle{font-size:18px;font-weight:700;flex:1}
 .topbar-acts{display:flex;gap:8px}
-.tbtn{width:36px;height:36px;border-radius:10px;background:var(--card2);border:none;color:var(--txt);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.tbtn{width:36px;height:36px;border-radius:10px;background:var(--card2);border:none;color:var(--txt);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .page{padding:16px;display:none;min-height:100%}
 .page.active{display:block}
-.subpage{display:none;padding:16px;min-height:100%;animation:fadein .2s}
-@keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.subpage{display:none;padding:16px;min-height:100%}
 .bottom-nav{display:flex;background:var(--bg2);border-top:1px solid var(--bdr);padding:8px 0 calc(8px + env(safe-area-inset-bottom));flex-shrink:0}
 .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 4px;cursor:pointer;border:none;background:transparent;color:var(--txt3);font-size:10px;font-weight:500}
 .nav-item.active{color:var(--accent)}
@@ -52,7 +51,6 @@ body{display:flex;flex-direction:column}
 .stat-sub{font-size:11px;color:var(--txt2);margin-top:4px}
 .btn{border:none;border-radius:var(--r);padding:13px 18px;font-size:14px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:7px;justify-content:center}
 .btn-primary{background:var(--accent);color:#fff}
-.btn-primary:disabled{background:var(--bdr2);cursor:not-allowed}
 .btn-green{background:var(--green);color:#fff}
 .btn-red{background:var(--red);color:#fff}
 .btn-outline{background:transparent;color:var(--txt);border:1px solid var(--bdr2)}
@@ -61,7 +59,7 @@ body{display:flex;flex-direction:column}
 .btn-full{width:100%}
 .form-group{margin-bottom:14px}
 .form-label{display:block;font-size:11px;font-weight:700;color:var(--txt2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
-.form-input{width:100%;background:var(--card2);border:1px solid var(--bdr2);border-radius:var(--r);color:var(--txt);padding:12px 14px;font-size:15px;outline:none;-webkit-appearance:none;font-family:inherit}
+.form-input{width:100%;background:var(--card2);border:1px solid var(--bdr2);border-radius:var(--r);color:var(--txt);padding:12px 14px;font-size:15px;outline:none;-webkit-appearance:none;font-family:inherit;transition:border-color .2s}
 .form-input:focus{border-color:var(--accent)}
 select.form-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%2364748b' viewBox='0 0 24 24'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;background-size:20px}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -72,14 +70,14 @@ select.form-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://
 .item-name{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .item-sub{font-size:12px;color:var(--txt2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .item-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
-.badge{font-size:11px;padding:3px 8px;border-radius:6px;font-weight:600}
+.badge{font-size:11px;padding:3px 8px;border-radius:6px;font-weight:600;white-space:nowrap}
 .badge-green{background:rgba(34,197,94,.15);color:var(--green)}
 .badge-red{background:rgba(239,68,68,.15);color:var(--red)}
 .badge-yellow{background:rgba(245,158,11,.15);color:var(--yellow)}
 .badge-blue{background:rgba(59,130,246,.15);color:var(--accent)}
 .chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
-.chip{flex-shrink:0;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:500;border:1px solid var(--bdr2);background:transparent;color:var(--txt2);cursor:pointer}
+.chip{flex-shrink:0;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:500;border:1px solid var(--bdr2);background:transparent;color:var(--txt2);cursor:pointer;white-space:nowrap}
 .chip.active{background:var(--accent);border-color:var(--accent);color:#fff}
 .search-wrap{position:relative;margin-bottom:12px}
 .search-input{width:100%;background:var(--card2);border:1px solid var(--bdr2);border-radius:var(--r);color:var(--txt);padding:12px 14px 12px 42px;font-size:15px;outline:none;-webkit-appearance:none}
@@ -88,19 +86,19 @@ select.form-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://
 .sec-title:first-child{margin-top:0}
 .menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
 .menu-card{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r2);padding:16px;cursor:pointer;display:flex;flex-direction:column;gap:5px}
+.menu-card:active{background:var(--card2)}
 .menu-icon{font-size:28px}
 .menu-label{font-size:14px;font-weight:600}
 .menu-sub{font-size:11px;color:var(--txt2)}
 .fab{position:fixed;bottom:calc(72px + env(safe-area-inset-bottom) + 16px);right:16px;width:56px;height:56px;border-radius:50%;background:var(--accent);border:none;color:#fff;font-size:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:100}
-.modal-wrap{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:600;display:none;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px)}
+.modal-wrap{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:600;display:none;align-items:flex-end;justify-content:center}
 .modal-wrap.open{display:flex}
-.modal{background:var(--card);border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:480px;max-height:85vh;overflow-y:auto;animation:slideUp .3s}
-@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal{background:var(--card);border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:480px;max-height:85vh;overflow-y:auto}
 .modal-handle{width:36px;height:4px;background:var(--bdr2);border-radius:2px;margin:0 auto 20px}
 .modal-title{font-size:18px;font-weight:700;margin-bottom:16px}
-#toast{position:fixed;bottom:calc(82px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:var(--card2);color:var(--txt);padding:12px 20px;border-radius:24px;font-size:14px;font-weight:500;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;border:1px solid var(--bdr2)}
+#toast{position:fixed;bottom:calc(82px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:var(--card2);color:var(--txt);padding:12px 20px;border-radius:24px;font-size:14px;font-weight:500;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;border:1px solid var(--bdr2);white-space:nowrap}
 #toast.show{opacity:1}
-#scanVideo{width:100%;border-radius:var(--r2);background:#000;display:block;max-height:280px;object-fit:cover}
+#scanVideo{width:100%;border-radius:var(--r2);background:#000;display:block;max-height:260px;object-fit:cover}
 .scan-box-wrap{position:relative;margin-bottom:14px;border-radius:var(--r2);overflow:hidden}
 .scan-aim{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
 .scan-aim-box{width:220px;height:100px;border:2.5px solid var(--accent);border-radius:12px;box-shadow:0 0 0 9999px rgba(0,0,0,.5)}
@@ -127,27 +125,30 @@ select.form-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://
 .c-green{color:var(--green)}
 .c-red{color:var(--red)}
 .c-blue{color:var(--accent)}
-.empty-state{display:flex;flex-direction:column;align-items:center;gap:12px;padding:60px 20px;color:var(--txt3)}
+.empty-state{display:flex;flex-direction:column;align-items:center;gap:12px;padding:60px 20px;color:var(--txt3);text-align:center}
 .empty-icon{font-size:48px;opacity:.5}
-.empty-text{font-size:15px;font-weight:500;text-align:center}
-.empty-sub{font-size:13px;text-align:center;max-width:240px}
+.empty-text{font-size:15px;font-weight:500}
+.empty-sub{font-size:13px;max-width:240px}
 ::-webkit-scrollbar{width:0;height:0}
 textarea.form-input{resize:vertical;min-height:80px}
-.bar-wrap{height:6px;background:var(--bdr2);border-radius:3px;margin-top:4px}
-.bar-fill{height:100%;border-radius:3px;background:var(--accent)}
+.color-row .form-input{padding:10px 8px;font-size:14px}
+.scan-status{background:var(--card2);border-radius:var(--r);padding:12px;text-align:center;margin-bottom:12px;font-size:13px;color:var(--txt2)}
 </style>
 </head>
 <body>
 
+<!-- PIN SCREEN -->
 <div id="pinScreen">
   <div class="pin-logo">&#128083;</div>
   <div class="pin-title">OptiStock</div>
-  <div class="pin-sub">Your Smart Optical Store Manager</div>
+  <div class="pin-sub">Smart Optical Store Manager</div>
   <div class="pin-dots">
-    <div class="pin-dot" id="d0"></div><div class="pin-dot" id="d1"></div>
-    <div class="pin-dot" id="d2"></div><div class="pin-dot" id="d3"></div>
+    <div class="pin-dot" id="d0"></div>
+    <div class="pin-dot" id="d1"></div>
+    <div class="pin-dot" id="d2"></div>
+    <div class="pin-dot" id="d3"></div>
   </div>
-  <div class="pin-err" id="pinErr"></div>
+  <div class="pin-err" id="pinErr">&nbsp;</div>
   <div class="pin-keypad">
     <button class="pin-key" onclick="pinPress('1')">1</button>
     <button class="pin-key" onclick="pinPress('2')">2</button>
@@ -164,193 +165,256 @@ textarea.form-input{resize:vertical;min-height:80px}
   </div>
 </div>
 
+<!-- APP -->
 <div id="app">
   <div class="topbar">
     <button id="btnBack" onclick="goBack()">&#8249;</button>
     <span id="topTitle">OptiStock</span>
     <div class="topbar-acts" id="topActs"></div>
   </div>
+
   <div class="content" id="mainContent">
 
+    <!-- HOME -->
     <div class="page active" id="pgHome">
       <div class="stats-grid" id="statsGrid"></div>
       <div class="sec-title">Quick Actions</div>
       <div class="menu-grid">
-        <div class="menu-card" onclick="openAddItem()"><div class="menu-icon">&#10133;</div><div class="menu-label">Add Item</div><div class="menu-sub">Add new stock</div></div>
-        <div class="menu-card" onclick="openSaleForm('')"><div class="menu-icon">&#128176;</div><div class="menu-label">New Sale</div><div class="menu-sub">Record a sale</div></div>
+        <div class="menu-card" onclick="openAddItem()"><div class="menu-icon">&#10133;</div><div class="menu-label">Add Item</div><div class="menu-sub">Add to stock</div></div>
+        <div class="menu-card" onclick="openSaleForm()"><div class="menu-icon">&#128176;</div><div class="menu-label">New Sale</div><div class="menu-sub">Record a sale</div></div>
         <div class="menu-card" onclick="switchTab('scan');setScanMode('barcode')"><div class="menu-icon">&#128247;</div><div class="menu-label">Scan Barcode</div><div class="menu-sub">Quick lookup</div></div>
-        <div class="menu-card" onclick="switchTab('scan');setScanMode('temple')"><div class="menu-icon">&#128083;</div><div class="menu-label">Temple Scan</div><div class="menu-sub">AI scan frames</div></div>
+        <div class="menu-card" onclick="switchTab('scan');setScanMode('temple')"><div class="menu-icon">&#128083;</div><div class="menu-label">Temple Scan</div><div class="menu-sub">AI frame scan</div></div>
       </div>
-      <div class="sec-title">Low Stock Alert</div><div id="lowStockList"></div>
-      <div class="sec-title">Recent Sales</div><div id="recentSales"></div>
+      <div class="sec-title">Low Stock Alerts</div>
+      <div id="lowStockList"></div>
+      <div class="sec-title">Recent Sales</div>
+      <div id="recentSales"></div>
     </div>
 
+    <!-- INVENTORY -->
     <div class="page" id="pgInventory">
-      <div class="search-wrap"><span class="search-icon">&#128269;</span><input class="search-input" id="invSearch" placeholder="Search name, SKU, brand..." oninput="renderInventory()"></div>
+      <div class="search-wrap">
+        <span class="search-icon">&#128269;</span>
+        <input class="search-input" id="invSearch" placeholder="Search name, model, brand, size..." oninput="renderInventory()">
+      </div>
       <div class="chips" id="catChips"></div>
       <div id="invList"></div>
     </div>
 
+    <!-- SALES -->
     <div class="page" id="pgSales">
       <div class="card mb-12" id="salesTodayCard"></div>
       <div class="sec-title">History</div>
       <div id="salesList"></div>
     </div>
 
+    <!-- SCAN -->
     <div class="page" id="pgScan">
       <div class="toggle-row">
         <button class="toggle-btn active" id="tgBarcode" onclick="setScanMode('barcode')">&#128247; Barcode</button>
         <button class="toggle-btn" id="tgTemple" onclick="setScanMode('temple')">&#128083; Temple Scan</button>
       </div>
+
+      <!-- BARCODE SECTION -->
       <div id="barcodeSect">
         <div class="scan-box-wrap">
           <video id="scanVideo" autoplay muted playsinline></video>
-          <div class="scan-aim"><div class="col" style="align-items:center"><div class="scan-aim-box"></div><div class="scan-line"></div></div></div>
+          <div class="scan-aim">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:0">
+              <div class="scan-aim-box"></div>
+              <div class="scan-line"></div>
+            </div>
+          </div>
         </div>
-        <div class="card" style="text-align:center;margin-bottom:12px"><div class="muted sm" id="barcodeStatus">Point camera at barcode</div></div>
-        <button class="btn btn-outline btn-full" id="btnStartScan" onclick="startBarcodeScanner()">&#9654; Start Scanner</button>
-        <button class="btn btn-red btn-full" id="btnStopScan" onclick="stopBarcodeScanner()" style="display:none;margin-top:8px">&#9632; Stop Scanner</button>
+        <div class="scan-status" id="barcodeStatus">Point camera at barcode</div>
+        <button class="btn btn-primary btn-full mb-8" id="btnStartScan" onclick="startBarcodeScanner()">&#9654; Start Scanner</button>
+        <button class="btn btn-red btn-full" id="btnStopScan" onclick="stopBarcodeScanner()" style="display:none">&#9632; Stop Scanner</button>
+        <div style="margin-top:12px">
+          <div class="sec-title" style="margin-top:0">Manual Search</div>
+          <div class="row gap-8">
+            <input class="form-input grow" id="manualBarcode" placeholder="Type barcode or model no...">
+            <button class="btn btn-outline btn-sm" onclick="manualSearch()">Search</button>
+          </div>
+        </div>
       </div>
+
+      <!-- TEMPLE SCAN SECTION -->
       <div id="templeSect" style="display:none">
-        <div id="templeKeyBanner" style="display:none" class="card mb-12">
+        <div id="templeKeyBanner" class="card mb-12" style="display:none">
           <div class="bold mb-8" style="color:var(--yellow)">&#9888; Groq API Key Required</div>
-          <div class="xs muted mb-12" style="line-height:1.6">Enter your Groq key to enable AI temple scanning.</div>
+          <div class="xs muted mb-12" style="line-height:1.6">Enter your free Groq API key to enable AI temple scanning. Get it at console.groq.com</div>
           <input class="form-input mb-12" id="inlineGroqKey" type="text" placeholder="gsk_..." autocomplete="off">
-          <button class="btn btn-primary btn-full btn-sm" onclick="saveInlineGroqKey()">&#10003; Save Key</button>
+          <button class="btn btn-primary btn-full" onclick="saveInlineGroqKey()">&#10003; Save Key &amp; Enable</button>
         </div>
-        <div id="templeKeyOk" style="display:none" class="card mb-12">
+        <div id="templeKeyOk" class="card mb-12" style="display:none">
           <div class="row between" style="align-items:center">
             <div class="xs c-green bold">&#9989; Groq AI Connected</div>
             <button class="btn btn-outline btn-sm" onclick="clearGroqKey()">Change Key</button>
           </div>
         </div>
         <div class="card mb-12">
-          <div class="sec-title" style="margin-top:0">How it works</div>
-          <div class="muted sm" style="line-height:1.7">&#128248; Take photo of temple arm &rarr; AI reads SKU &rarr; shows item details</div>
+          <div class="sec-title" style="margin-top:0">How Temple Scan Works</div>
+          <div class="muted sm" style="line-height:1.8">
+            1. Take a clear photo of the temple arm<br>
+            2. AI reads the model/SKU code printed on it<br>
+            3. App searches your inventory for that model
+          </div>
         </div>
-        <div style="display:flex;gap:10px;margin-bottom:14px">
-          <button class="btn btn-primary grow" onclick="checkKeyThenScan('templeFile')">&#128247; Take Photo</button>
-          <button class="btn btn-outline grow" onclick="checkKeyThenScan('templeGallery')">&#128444; Gallery</button>
+        <div style="display:flex;gap:10px;margin-bottom:12px">
+          <button class="btn btn-primary grow" onclick="checkKeyThenScan(\"templeCamera\")">&#128248; Take Photo</button>
+          <button class="btn btn-outline grow" onclick="checkKeyThenScan(\"templeGallery\")">&#128444; Gallery</button>
         </div>
-        <input type="file" id="templeFile" accept="image/*" capture="environment" style="display:none" onchange="handleTemplePhoto(this)">
+        <input type="file" id="templeCamera" accept="image/*" capture="environment" style="display:none" onchange="handleTemplePhoto(this)">
         <input type="file" id="templeGallery" accept="image/*" style="display:none" onchange="handleTemplePhoto(this)">
         <div id="templeResult"></div>
       </div>
     </div>
 
+    <!-- MORE -->
     <div class="page" id="pgMore">
       <div class="sec-title">Management</div>
       <div class="menu-grid">
         <div class="menu-card" onclick="showSub('pgPOs','Purchase Orders');renderPOs()"><div class="menu-icon">&#128203;</div><div class="menu-label">Purchase Orders</div><div class="menu-sub" id="poCount">0 orders</div></div>
         <div class="menu-card" onclick="showSub('pgSuppliers','Suppliers');renderSuppliers()"><div class="menu-icon">&#127981;</div><div class="menu-label">Suppliers</div><div class="menu-sub" id="supplierCount">0 suppliers</div></div>
-        <div class="menu-card" onclick="showSub('pgReports','Reports');renderReports()"><div class="menu-icon">&#128202;</div><div class="menu-label">Reports</div><div class="menu-sub">Sales insights</div></div>
         <div class="menu-card" onclick="exportCSV()"><div class="menu-icon">&#128228;</div><div class="menu-label">Export CSV</div><div class="menu-sub">Download data</div></div>
-      </div>
-      <div class="sec-title">Backup &amp; Restore</div>
-      <div class="menu-grid">
-        <div class="menu-card" onclick="doBackup()"><div class="menu-icon">&#9729;</div><div class="menu-label">Sync to Sheets</div><div class="menu-sub">Save all data</div></div>
-        <div class="menu-card" onclick="confirmRestore()"><div class="menu-icon">&#8635;</div><div class="menu-label">Restore</div><div class="menu-sub">Load from Sheets</div></div>
+        <div class="menu-card" onclick="doBackup()"><div class="menu-icon">&#9729;</div><div class="menu-label">Sync Sheets</div><div class="menu-sub">Google Backup</div></div>
       </div>
       <div class="sec-title">App</div>
       <div class="menu-grid">
-        <div class="menu-card" onclick="showSub('pgSettings','Settings');renderSettings()"><div class="menu-icon">&#9881;</div><div class="menu-label">Settings</div><div class="menu-sub">Configure app</div></div>
+        <div class="menu-card" onclick="showSub('pgSettings','Settings');renderSettings()"><div class="menu-icon">&#9881;</div><div class="menu-label">Settings</div><div class="menu-sub">Configure</div></div>
         <div class="menu-card" onclick="showSub('pgSheetSetup','Sheets Setup')"><div class="menu-icon">&#128202;</div><div class="menu-label">Sheets Setup</div><div class="menu-sub">Backup guide</div></div>
       </div>
-      <div class="card" style="font-size:12px;color:var(--txt2);line-height:1.9"><b style="color:var(--txt)">OptiStock v4.2</b><br>Temple Scan &middot; Barcode &middot; WhatsApp &middot; Purchase Orders &middot; Google Sheets &middot; Reports</div>
+      <div class="card" style="font-size:12px;color:var(--txt2);line-height:1.9">
+        <b style="color:var(--txt)">OptiStock v5.0</b><br>
+        Temple Scan &#183; Barcode &#183; WhatsApp Invoice &#183; Purchase Orders &#183; Google Sheets
+      </div>
     </div>
 
-    <!-- ADD / EDIT ITEM -->
+    <!-- ADD/EDIT ITEM -->
     <div class="subpage" id="pgAddItem">
-      <div class="sec-title">Photo</div>
+      <div class="sec-title">Frame Photo</div>
       <div class="row gap-8 mb-16">
-        <div class="photo-pick" id="itemThumbPick" onclick="document.getElementById('itemCameraFile').click()"><span id="itemThumbIcon">&#128230;</span></div>
+        <div class="photo-pick" id="itemThumbPick" onclick="document.getElementById('itemCameraFile').click()">
+          <span>&#128230;</span>
+        </div>
         <div class="col gap-8 grow">
           <button class="btn btn-primary btn-sm" onclick="document.getElementById('itemCameraFile').click()">&#128248; Take Photo</button>
-          <button class="btn btn-outline btn-sm" onclick="document.getElementById('itemPhotoFile').click()">&#128444; Gallery</button>
+          <button class="btn btn-outline btn-sm" onclick="document.getElementById('itemPhotoFile').click()">&#128444; Choose from Gallery</button>
           <button class="btn btn-outline btn-sm" onclick="openScanForItem()">&#128083; Temple Scan</button>
         </div>
         <input type="file" id="itemCameraFile" accept="image/*" capture="environment" style="display:none" onchange="previewItemPhoto(this)">
         <input type="file" id="itemPhotoFile" accept="image/*" style="display:none" onchange="previewItemPhoto(this)">
       </div>
+
       <div class="sec-title">Basic Info</div>
-      <div class="form-group"><label class="form-label">Item Name *</label><input class="form-input" id="fName" placeholder="e.g. Ray-Ban Aviator"></div>
+      <div class="form-group"><label class="form-label">Item Name *</label><input class="form-input" id="fName" placeholder="e.g. Ray-Ban Aviator Gold"></div>
+
       <div class="form-row mb-8">
-        <div class="form-group" style="margin:0"><label class="form-label">Model No *</label><div class="row gap-8"><input class="form-input" id="fSku" placeholder="e.g. RB3025"><button class="btn btn-outline btn-sm" onclick="scanForField('fSku')" style="padding:12px;flex-shrink:0">&#128247;</button></div></div>
-        <div class="form-group" style="margin:0"><label class="form-label">Brand</label><input class="form-input" id="fBrand" placeholder="Ray-Ban"></div>
+        <div class="form-group" style="margin:0">
+          <label class="form-label">Model No</label>
+          <div class="row gap-8">
+            <input class="form-input grow" id="fSku" placeholder="e.g. RB3025">
+            <button class="btn btn-outline btn-sm" onclick="scanForField('fSku')" style="padding:12px;flex-shrink:0">&#128247;</button>
+          </div>
+        </div>
+        <div class="form-group" style="margin:0"><label class="form-label">Size</label><input class="form-input" id="fSize" placeholder="e.g. 52-18-140"></div>
       </div>
+
       <div class="form-row mb-8">
-        <div class="form-group" style="margin:0"><label class="form-label">Size</label><input class="form-input" id="fSize" placeholder="e.g. 52-18-140 or 54mm"></div>
-        <div class="form-group" style="margin:0"><label class="form-label">Color</label><input class="form-input" id="fColor" placeholder="Black"></div>
+        <div class="form-group" style="margin:0"><label class="form-label">Brand</label><input class="form-input" id="fBrand" placeholder="Ray-Ban / Leo"></div>
+        <div class="form-group" style="margin:0"><label class="form-label">Material</label><input class="form-input" id="fMaterial" placeholder="Metal / Plastic"></div>
       </div>
+
       <div class="form-row mb-8">
-        <div class="form-group" style="margin:0"><label class="form-label">Category</label>
+        <div class="form-group" style="margin:0">
+          <label class="form-label">Category</label>
           <select class="form-input" id="fCategory">
-            <option value="">Select</option><option>Optical Frame</option><option>Sunglasses</option><option>Contact Lens</option><option>Reading Glass</option><option>Lens</option><option>Accessories</option><option>Other</option>
+            <option value="">Select</option>
+            <option>Optical Frame</option><option>Sunglasses</option><option>Contact Lens</option>
+            <option>Reading Glass</option><option>Lens</option><option>Accessories</option><option>Other</option>
           </select>
         </div>
-        <div class="form-group" style="margin:0"><label class="form-label">For</label>
+        <div class="form-group" style="margin:0">
+          <label class="form-label">For</label>
           <select class="form-input" id="fFor">
-            <option value="">Select</option><option>Men</option><option>Women</option><option>Kids</option><option>Unisex</option>
+            <option value="">Select</option>
+            <option>Men</option><option>Women</option><option>Kids</option><option>Unisex</option>
           </select>
         </div>
       </div>
+
       <div class="form-row mb-8">
-        <div class="form-group" style="margin:0"><label class="form-label">Frame Type</label>
+        <div class="form-group" style="margin:0">
+          <label class="form-label">Frame Type</label>
           <select class="form-input" id="fFrameType">
-            <option value="">Select</option><option>Full Rim</option><option>Half Rim</option><option>Rimless</option><option>Sheet</option><option>N/A</option>
+            <option value="">Select</option>
+            <option>Full Rim</option><option>Half Rim</option><option>Rimless</option><option>Sheet</option><option>N/A</option>
           </select>
         </div>
-        <div class="form-group" style="margin:0"><label class="form-label">Material</label><input class="form-input" id="fMaterial" placeholder="Metal"></div>
+        <div class="form-group" style="margin:0"><label class="form-label">Low Stock Alert (per colour)</label><input class="form-input" id="fLowAt" type="number" placeholder="2" min="0"></div>
       </div>
-      <div class="form-group mb-16">
-        <label class="form-label">Location</label><input class="form-input" id="fLocation" placeholder="Rack A-1">
-      </div>
-      <div class="sec-title">Stock &amp; Pricing</div>
-      <div class="form-row mb-8">
-        <div class="form-group" style="margin:0"><label class="form-label">Stock Qty *</label><input class="form-input" id="fStock" type="number" placeholder="10" min="0"></div>
-        <div class="form-group" style="margin:0"><label class="form-label">Low Stock Alert</label><input class="form-input" id="fLowAt" type="number" placeholder="3" min="0"></div>
-      </div>
+
+      <div class="sec-title">Pricing (same for all colours)</div>
       <div class="form-row mb-16">
-        <div class="form-group" style="margin:0"><label class="form-label">Selling Price (Rs) *</label><input class="form-input" id="fPrice" type="number" placeholder="2500" min="0"></div>
+        <div class="form-group" style="margin:0"><label class="form-label">Selling Price (Rs)*</label><input class="form-input" id="fPrice" type="number" placeholder="2500" min="0"></div>
         <div class="form-group" style="margin:0"><label class="form-label">Cost Price (Rs)</label><input class="form-input" id="fCost" type="number" placeholder="1200" min="0"></div>
       </div>
-      <div class="sec-title">More Details</div>
-      <div class="form-group"><label class="form-label">Barcode</label>
-        <div class="row gap-8"><input class="form-input grow" id="fBarcode" placeholder="Scan or type barcode"><button class="btn btn-outline btn-sm" onclick="scanForField('fBarcode')" style="padding:12px;flex-shrink:0">&#128247;</button></div>
+
+      <div class="sec-title">Colours &amp; Quantity</div>
+      <div class="muted xs mb-8" style="line-height:1.6">Add each colour with its quantity. Colour code is optional (for branded frames, useful when reordering).</div>
+      <div id="colorRows" class="mb-8"></div>
+      <button class="btn btn-outline btn-full mb-16" onclick="addColorRow('','',1)">&#10133; Add Colour</button>
+
+      <div class="sec-title">Other Details</div>
+      <div class="form-group">
+        <label class="form-label">Barcode</label>
+        <div class="row gap-8">
+          <input class="form-input grow" id="fBarcode" placeholder="Scan or type barcode">
+          <button class="btn btn-outline btn-sm" onclick="scanForField('fBarcode')" style="padding:12px;flex-shrink:0">&#128247;</button>
+        </div>
       </div>
-      <div class="form-group"><label class="form-label">Supplier</label><select class="form-input" id="fSupplier"><option value="">None</option></select></div>
-      <div class="form-group"><label class="form-label">Notes</label><textarea class="form-input" id="fNotes" placeholder="Any extra notes..."></textarea></div>
-      <div id="photoUploadStatus" style="display:none;padding:10px;background:var(--card2);border-radius:var(--r);margin-bottom:12px;font-size:13px;color:var(--txt2)">&#128247; Uploading photo...</div>
+      <div class="form-row mb-8">
+        <div class="form-group" style="margin:0"><label class="form-label">Supplier</label><select class="form-input" id="fSupplier"><option value="">None</option></select></div>
+        <div class="form-group" style="margin:0"><label class="form-label">Location</label><input class="form-input" id="fLocation" placeholder="Rack A-1"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Notes</label><textarea class="form-input" id="fNotes" placeholder="Extra notes..."></textarea></div>
+
       <div style="display:flex;gap:10px;margin-top:8px">
-        <button class="btn btn-primary grow" id="btnSaveItem" onclick="saveItem()">&#10003; Save Item</button>
+        <button class="btn btn-primary grow" onclick="saveItem()">&#10003; Save Item</button>
         <button class="btn btn-red btn-sm" id="btnDeleteItem" onclick="confirmDeleteItem()" style="display:none">&#128465;</button>
       </div>
     </div>
 
+    <!-- ITEM DETAIL -->
     <div class="subpage" id="pgItemDetail"><div id="itemDetailContent"></div></div>
 
+    <!-- SALE FORM -->
     <div class="subpage" id="pgSaleForm">
-      <div class="sec-title">Customer</div>
+      <div class="sec-title">Customer Info</div>
       <div class="form-row mb-8">
-        <div class="form-group" style="margin:0"><label class="form-label">Customer Name</label><input class="form-input" id="sCustName" placeholder="Optional"></div>
+        <div class="form-group" style="margin:0"><label class="form-label">Name</label><input class="form-input" id="sCustName" placeholder="Optional"></div>
         <div class="form-group" style="margin:0"><label class="form-label">Phone (WhatsApp)</label><input class="form-input" id="sCustPhone" type="tel" placeholder="9876543210"></div>
       </div>
       <div class="sec-title">Items</div>
       <div id="saleItemsList" class="mb-12"></div>
-      <button class="btn btn-outline btn-full mb-12" onclick="openAddSaleItem()">&#10133; Add Item</button>
+      <button class="btn btn-outline btn-full mb-12" onclick="openAddSaleItem()">&#10133; Add Item to Sale</button>
       <div class="card mb-12" id="saleSummaryCard" style="display:none">
         <div class="row between mb-8"><span class="muted">Subtotal</span><span id="sSubtotal" class="bold">Rs 0</span></div>
-        <div class="row between mb-8"><span class="muted">Discount (Rs)</span><input class="form-input" id="sDiscount" type="number" placeholder="0" min="0" style="width:100px;text-align:right" oninput="calcSaleSummary()"></div>
+        <div class="row between mb-8">
+          <span class="muted">Discount (Rs)</span>
+          <input class="form-input" id="sDiscount" type="number" placeholder="0" min="0" style="width:100px;text-align:right" oninput="calcSaleSummary()">
+        </div>
         <div class="divider"></div>
-        <div class="row between"><span class="bold" style="font-size:16px">Total</span><span class="bold c-green" id="sTotal" style="font-size:18px">Rs 0</span></div>
+        <div class="row between"><span class="bold" style="font-size:17px">Total</span><span class="bold c-green" id="sTotal" style="font-size:20px">Rs 0</span></div>
       </div>
       <div class="form-group"><label class="form-label">Notes</label><input class="form-input" id="sSaleNotes" placeholder="Optional"></div>
       <button class="btn btn-green btn-full" onclick="saveSale()">&#128176; Complete Sale</button>
     </div>
 
+    <!-- SALE DETAIL -->
     <div class="subpage" id="pgSaleDetail"><div id="saleDetailContent"></div></div>
-    <div class="subpage" id="pgReports"><div id="reportsContent"></div></div>
 
+    <!-- PURCHASE ORDERS -->
     <div class="subpage" id="pgPOs">
       <div class="chips" id="poFilterChips">
         <button class="chip active" onclick="setPOFilter('all',this)">All</button>
@@ -361,6 +425,7 @@ textarea.form-input{resize:vertical;min-height:80px}
       <button class="fab" onclick="openAddPO()">+</button>
     </div>
 
+    <!-- ADD PO -->
     <div class="subpage" id="pgAddPO">
       <div class="form-group"><label class="form-label">Supplier</label><select class="form-input" id="poSupplier"><option value="">Select</option></select></div>
       <div class="form-row mb-8">
@@ -370,34 +435,41 @@ textarea.form-input{resize:vertical;min-height:80px}
       <div class="sec-title">Items to Order</div>
       <div id="poItemsList" class="mb-12"></div>
       <button class="btn btn-outline btn-full mb-16" onclick="addPOItemRow()">&#10133; Add Item</button>
-      <div class="form-group"><label class="form-label">Notes</label><textarea class="form-input" id="poNotes" placeholder="Notes..."></textarea></div>
-      <button class="btn btn-primary btn-full" onclick="savePO()">&#128203; Create PO</button>
+      <div class="form-group"><label class="form-label">Notes</label><textarea class="form-input" id="poNotes"></textarea></div>
+      <button class="btn btn-primary btn-full" onclick="savePO()">&#128203; Create Purchase Order</button>
     </div>
 
+    <!-- PO DETAIL -->
     <div class="subpage" id="pgPODetail"><div id="poDetailContent"></div></div>
 
+    <!-- SUPPLIERS -->
     <div class="subpage" id="pgSuppliers">
       <div id="supplierList" class="mb-12"></div>
-      <div class="sec-title">Add Supplier</div>
+      <div class="sec-title">Add New Supplier</div>
       <div class="form-row mb-8">
         <div class="form-group" style="margin:0"><label class="form-label">Name *</label><input class="form-input" id="supName" placeholder="Supplier name"></div>
-        <div class="form-group" style="margin:0"><label class="form-label">Phone</label><input class="form-input" id="supPhone" type="tel" placeholder="Phone"></div>
+        <div class="form-group" style="margin:0"><label class="form-label">Phone</label><input class="form-input" id="supPhone" type="tel"></div>
       </div>
       <div class="form-group"><label class="form-label">Company</label><input class="form-input" id="supCompany" placeholder="Company name"></div>
       <button class="btn btn-primary btn-full" onclick="addSupplier()">&#10133; Add Supplier</button>
     </div>
 
+    <!-- SETTINGS -->
     <div class="subpage" id="pgSettings">
       <div class="sec-title">Shop Info</div>
       <div class="form-group"><label class="form-label">Shop Name</label><input class="form-input" id="stShopName" placeholder="My Optical Store"></div>
       <div class="form-row mb-8">
-        <div class="form-group" style="margin:0"><label class="form-label">Phone</label><input class="form-input" id="stShopPhone" type="tel" placeholder="9876543210"></div>
+        <div class="form-group" style="margin:0"><label class="form-label">Phone</label><input class="form-input" id="stShopPhone" type="tel"></div>
         <div class="form-group" style="margin:0"><label class="form-label">GST No.</label><input class="form-input" id="stGST" placeholder="27XXXXX"></div>
       </div>
-      <div class="form-group"><label class="form-label">Address</label><textarea class="form-input" id="stAddress" placeholder="Shop address..." style="min-height:60px"></textarea></div>
+      <div class="form-group"><label class="form-label">Address</label><textarea class="form-input" id="stAddress" style="min-height:60px"></textarea></div>
       <div class="sec-title">API Keys</div>
       <div class="form-group"><label class="form-label">Groq API Key (Temple Scan)</label><input class="form-input" id="stGroqKey" type="password" placeholder="gsk_..." autocomplete="off"></div>
-      <div class="form-group"><label class="form-label">Google Sheets Web App URL</label><input class="form-input" id="stSheetUrl" placeholder="https://script.google.com/..."></div>
+      <div class="form-group">
+        <label class="form-label">Google Sheets Web App URL</label>
+        <input class="form-input" id="stSheetUrl" placeholder="https://script.google.com/...">
+        <div class="xs muted" style="margin-top:6px">Get URL from Sheets Setup guide in More tab</div>
+      </div>
       <div class="sec-title">Change PIN</div>
       <div class="form-row mb-16">
         <div class="form-group" style="margin:0"><label class="form-label">New PIN</label><input class="form-input" id="stPin1" type="password" maxlength="4" placeholder="4 digits" inputmode="numeric"></div>
@@ -409,20 +481,32 @@ textarea.form-input{resize:vertical;min-height:80px}
       </div>
     </div>
 
+    <!-- SHEETS SETUP -->
     <div class="subpage" id="pgSheetSetup">
       <div class="card mb-16" style="background:rgba(59,130,246,.1);border-color:rgba(59,130,246,.3)">
         <div class="bold mb-8">&#128274; 100% Free &amp; Private</div>
-        <div class="xs muted" style="line-height:1.7">Data goes to YOUR Google Sheet. No third-party. Free forever.</div>
+        <div class="xs muted" style="line-height:1.7">Data saved directly to YOUR Google Sheet. No third party. Free forever.</div>
       </div>
       <div class="sec-title">Setup Steps</div>
-      <div class="card mb-12"><div class="bold mb-8">1. Create Google Sheet</div><div class="xs muted">Go to sheets.google.com &rarr; New sheet &rarr; Name it "OptiStock Backup"</div></div>
-      <div class="card mb-12"><div class="bold mb-8">2. Open Apps Script</div><div class="xs muted">Click Extensions &rarr; Apps Script &rarr; Delete all code</div></div>
-      <div class="card mb-12"><div class="bold mb-8">3. Paste Script</div><button class="btn btn-outline btn-sm btn-full mb-8" onclick="copyScript()">&#128203; Copy Script</button><div id="scriptPreview" class="xs muted" style="line-height:1.6">Script handles: inventory backup, photo upload to Drive, restore, sales history</div></div>
-      <div class="card mb-12"><div class="bold mb-8">4. Deploy as Web App</div><div class="xs muted" style="line-height:1.8">Deploy &rarr; New Deployment &rarr; Type: Web app &rarr; Execute as: Me &rarr; Access: Anyone &rarr; Deploy &rarr; Copy URL</div></div>
-      <div class="card mb-16"><div class="bold mb-8">5. Paste URL in Settings</div><button class="btn btn-primary btn-full" onclick="showSub('pgSettings','Settings');renderSettings()">Open Settings &rarr;</button></div>
+      <div class="card mb-12"><div class="bold mb-8">Step 1: Create Google Sheet</div><div class="xs muted" style="line-height:1.7">Go to sheets.google.com &#8594; Click + (New) &#8594; Name it "OptiStock Backup"</div></div>
+      <div class="card mb-12"><div class="bold mb-8">Step 2: Open Apps Script</div><div class="xs muted">Click Extensions &#8594; Apps Script &#8594; Delete all existing code</div></div>
+      <div class="card mb-12">
+        <div class="bold mb-8">Step 3: Paste Script</div>
+        <button class="btn btn-outline btn-sm btn-full mb-8" onclick="copyScript()">&#128203; Copy Script to Clipboard</button>
+        <div id="scriptPreview" class="xs muted" style="line-height:1.6">Saves inventory, sales &amp; purchase orders to your Sheet automatically after each sale.</div>
+      </div>
+      <div class="card mb-12"><div class="bold mb-8">Step 4: Deploy</div><div class="xs muted" style="line-height:1.8">Click Deploy &#8594; New Deployment &#8594; Type: Web app &#8594; Execute as: Me &#8594; Who has access: Anyone &#8594; Deploy &#8594; Authorize &#8594; Copy the Web App URL</div></div>
+      <div class="card mb-16">
+        <div class="bold mb-8">Step 5: Save URL in Settings</div>
+        <button class="btn btn-primary btn-full" onclick="showSub('pgSettings','Settings');renderSettings()">Go to Settings &#8594;</button>
+      </div>
+      <div class="card" style="background:rgba(34,197,94,.08);border-color:rgba(34,197,94,.2)">
+        <div class="bold mb-4 c-green">&#10003; After setup, every sale auto-syncs!</div>
+        <div class="xs muted">You can also manually sync anytime from More &#8594; Sync Sheets</div>
+      </div>
     </div>
 
-  </div>
+  </div><!-- /content -->
 
   <div class="bottom-nav">
     <button class="nav-item active" data-tab="home" onclick="switchTab('home')"><span class="nav-icon">&#127968;</span><span>Home</span></button>
@@ -431,18 +515,37 @@ textarea.form-input{resize:vertical;min-height:80px}
     <button class="nav-item" data-tab="scan" onclick="switchTab('scan')"><span class="nav-icon">&#128247;</span><span>Scan</span></button>
     <button class="nav-item" data-tab="more" onclick="switchTab('more')"><span class="nav-icon">&#9776;</span><span>More</span></button>
   </div>
-</div>
+</div><!-- /app -->
 
 <div class="modal-wrap" id="modalWrap" onclick="closeModal(event)"><div class="modal"><div class="modal-handle"></div><div id="modalBody"></div></div></div>
 <div id="toast"></div>
 
 <script>
-// ============================================================
-// DATA
-// ============================================================
-var DB_KEY = 'optistock_v4';
-function loadDB(){try{return JSON.parse(localStorage.getItem(DB_KEY)||'{}')}catch(e){return{}}}
-function saveDB(d){localStorage.setItem(DB_KEY,JSON.stringify(d))}
+/* ==============================================
+   DATA LAYER
+============================================== */
+
+function oc(id){window._ocId=id}
+function confirmDelPO(){openModal('<div class="modal-title">Delete PO?</div><div class="muted mb-16">This cannot be undone.</div><div style="display:flex;gap:10px"><button class="btn btn-outline grow" onclick="closeModalForce()">Cancel</button><button class="btn btn-red grow" onclick="ocDeletePO()">Delete</button></div>')}
+function confirmDelSale(){openModal('<div class="modal-title">Delete Sale?</div><div class="muted mb-16">Stock will NOT be restored.</div><div style="display:flex;gap:10px"><button class="btn btn-outline grow" onclick="closeModalForce()">Cancel</button><button class="btn btn-red grow" onclick="ocDeleteSale()">Delete</button></div>')}
+function setCatFilter(c){invCatFilter=c;renderInventory()}
+function ocItemDetail(){openItemDetail(window._ocId)}
+function templeSearch(){switchTab('inventory');setTimeout(function(){var el=document.getElementById('invSearch');if(el)el.value=window._lastTempleCode||'';
+renderInventory()},100)}
+function ocEditItem(){openEditItem(window._ocId)}
+function ocSaleDetail(){openSaleDetail(window._ocId)}
+function ocDeleteSale(){doDeleteSale(window._ocId)}
+function ocPODetail(){openPODetail(window._ocId)}
+function ocReceivePO(){receivePO(window._ocId)}
+function ocDeletePO(){doDeletePO(window._ocId)}
+function ocSaleForm(){openSaleForm(window._ocId)}
+function ocAddSaleItem(){addSpecificSaleItem(window._ocId)}
+function ocDeleteSupplier(){deleteSupplier(window._ocId)}
+function ocAdjustStock(){}
+
+var DB = 'optistock_v4';
+function loadDB(){try{return JSON.parse(localStorage.getItem(DB)||'{}')}catch(e){return{}}}
+function saveDB(d){localStorage.setItem(DB,JSON.stringify(d))}
 function getInventory(){return loadDB().inventory||[]}
 function getSales(){return loadDB().sales||[]}
 function getPOs(){return loadDB().pos||[]}
@@ -452,25 +555,33 @@ function saveInventory(v){var d=loadDB();d.inventory=v;saveDB(d)}
 function saveSales(v){var d=loadDB();d.sales=v;saveDB(d)}
 function savePOs(v){var d=loadDB();d.pos=v;saveDB(d)}
 function saveSuppliers(v){var d=loadDB();d.suppliers=v;saveDB(d)}
-function saveSetting(k,v){var d=loadDB();d.settings=d.settings||{};d.settings[k]=v;saveDB(d)}
 function saveSettingsObj(s){var d=loadDB();d.settings=Object.assign(d.settings||{},s);saveDB(d)}
+function saveSetting(k,v){var d=loadDB();d.settings=d.settings||{};d.settings[k]=v;saveDB(d)}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
 function fDate(ts){if(!ts)return'';return new Date(ts).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}
 function fTime(ts){if(!ts)return'';return new Date(ts).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}
 function fCur(n){return 'Rs '+(parseFloat(n)||0).toLocaleString('en-IN')}
 function todayISO(){return new Date().toISOString().split('T')[0]}
 function cap(s){return s.charAt(0).toUpperCase()+s.slice(1)}
-function thumb(photo){return photo?'<img src="'+photo+'">':'&#128230;'}
-function nextBillNo(){var s=getSales();var nums=s.map(function(x){return parseInt((x.billNo||'').replace(/\D/g,'')||0)}).filter(function(n){return n});return 'B-'+String(Math.max.apply(null,[0].concat(nums))+1).padStart(4,'0')}
-function nextPONo(){var p=getPOs();var nums=p.map(function(x){return parseInt((x.poNumber||'').replace(/\D/g,'')||0)}).filter(function(n){return n});return 'PO-'+String(Math.max.apply(null,[0].concat(nums))+1).padStart(3,'0')}
+function nextBillNo(){var s=getSales();var n=s.map(function(x){return parseInt((x.billNo||'').replace(/\D/g,'')||0)}).filter(Boolean);return 'B-'+String(Math.max.apply(null,[0].concat(n))+1).padStart(4,'0')}
+function nextPONo(){var p=getPOs();var n=p.map(function(x){return parseInt((x.poNumber||'').replace(/\D/g,'')||0)}).filter(Boolean);return 'PO-'+String(Math.max.apply(null,[0].concat(n))+1).padStart(3,'0')}
 
-// ============================================================
-// PIN
-// ============================================================
-var pinEntry='';
-function pinPress(d){if(d===''||pinEntry.length>=4)return;pinEntry+=d;updateDots();if(pinEntry.length===4)setTimeout(checkPin,100)}
-function pinDel(){if(pinEntry.length>0){pinEntry=pinEntry.slice(0,-1);updateDots()}}
-function updateDots(){for(var i=0;i<4;i++)document.getElementById('d'+i).classList.toggle('filled',i<pinEntry.length)}
+/* ==============================================
+   PIN
+============================================== */
+var pinEntry = '';
+function pinPress(d){
+  if(d===''||pinEntry.length>=4)return;
+  pinEntry+=d;
+  updateDots();
+  if(pinEntry.length===4)setTimeout(checkPin,120);
+}
+function pinDel(){
+  if(pinEntry.length>0){pinEntry=pinEntry.slice(0,-1);updateDots()}
+}
+function updateDots(){
+  for(var i=0;i<4;i++)document.getElementById('d'+i).classList.toggle('filled',i<pinEntry.length);
+}
 function checkPin(){
   var correct=getSettings().pin||'1122';
   if(pinEntry===correct){
@@ -479,16 +590,18 @@ function checkPin(){
     sessionStorage.setItem('unlocked','1');
     initApp();
   }else{
-    document.getElementById('pinErr').textContent='Incorrect PIN. Try again.';
-    pinEntry='';updateDots();
-    setTimeout(function(){document.getElementById('pinErr').textContent=''},2000);
+    document.getElementById('pinErr').textContent='Wrong PIN. Try again.';
+    pinEntry='';
+    updateDots();
+    setTimeout(function(){document.getElementById('pinErr').textContent=' '},2000);
   }
 }
 
-// ============================================================
-// NAV
-// ============================================================
+/* ==============================================
+   NAVIGATION
+============================================== */
 var curTab='home', subStack=[], editId=null, scanFieldTarget=null, poFilterMode='all';
+
 function switchTab(tab){
   if(curTab==='scan')stopBarcodeScanner();
   curTab=tab;subStack=[];
@@ -500,19 +613,22 @@ function switchTab(tab){
   var titles={home:'OptiStock',inventory:'Inventory',sales:'Sales',scan:'Scan',more:'More'};
   document.getElementById('topTitle').textContent=titles[tab]||tab;
   if(tab==='home')renderHome();
-  if(tab==='inventory'){renderInventory();document.getElementById('topActs').innerHTML='<button class="tbtn" onclick="openAddItem()">+</button>'}
+  if(tab==='inventory'){renderInventory();document.getElementById('topActs').innerHTML='<button class="tbtn" onclick="openAddItem(\'\')">+</button>'}
   if(tab==='sales'){renderSales();document.getElementById('topActs').innerHTML='<button class="tbtn" onclick="openSaleForm(\'\')">+</button>'}
   if(tab==='more')renderMore();
 }
+
 function showSub(id,title){
   subStack.push({id:id,title:title});
   document.querySelectorAll('.page,.subpage').forEach(function(p){p.style.display='none'});
-  var el=document.getElementById(id);if(el){el.style.display='block';el.scrollTop=0}
+  var el=document.getElementById(id);
+  if(el){el.style.display='block';el.scrollTop=0}
   document.getElementById('btnBack').style.display='flex';
   document.getElementById('topTitle').textContent=title||'';
   document.getElementById('topActs').innerHTML='';
   document.getElementById('mainContent').scrollTop=0;
 }
+
 function goBack(){
   subStack.pop();
   if(subStack.length===0){switchTab(curTab)}
@@ -526,139 +642,210 @@ function goBack(){
   }
 }
 
-// ============================================================
-// TOAST & MODAL
-// ============================================================
+/* ==============================================
+   TOAST & MODAL
+============================================== */
 var toastTimer;
 function showToast(msg,dur){
   dur=dur||2500;
-  var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
-  clearTimeout(toastTimer);toastTimer=setTimeout(function(){t.classList.remove('show')},dur);
+  var t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(function(){t.classList.remove('show')},dur);
 }
 function openModal(html){document.getElementById('modalBody').innerHTML=html;document.getElementById('modalWrap').classList.add('open')}
 function closeModal(e){if(!e||e.target===document.getElementById('modalWrap'))document.getElementById('modalWrap').classList.remove('open')}
 function closeModalForce(){document.getElementById('modalWrap').classList.remove('open')}
 
-// ============================================================
-// HOME
-// ============================================================
+/* ==============================================
+   HOME
+============================================== */
 function renderHome(){
   var inv=getInventory(),sales=getSales(),today=todayISO();
-  var todaySales=sales.filter(function(s){return s.date&&s.date.startsWith(today)});
-  var todayRev=todaySales.reduce(function(a,s){return a+(s.grandTotal||0)},0);
-  var outOfStock=inv.filter(function(i){return parseInt(i.stock)===0});
+  var ts=sales.filter(function(s){return s.date&&s.date.startsWith(today)});
+  var tr=ts.reduce(function(a,s){return a+(s.grandTotal||0)},0);
+  var out=inv.filter(function(i){return parseInt(i.stock)===0});
+  var low=inv.filter(function(i){return (parseInt(i.stock)||0)<=(parseInt(i.lowAt)||3)&&parseInt(i.stock)>0});
+  var monthRev=sales.filter(function(s){return s.date&&s.date.startsWith(today.slice(0,7))}).reduce(function(a,s){return a+(s.grandTotal||0)},0);
   document.getElementById('statsGrid').innerHTML=
-    '<div class="stat-card"><div class="stat-label">Total Items</div><div class="stat-val">'+inv.length+'</div><div class="stat-sub">'+outOfStock.length+' out of stock</div></div>'+
-    '<div class="stat-card"><div class="stat-label">Today Sales</div><div class="stat-val">'+todaySales.length+'</div><div class="stat-sub">'+fCur(todayRev)+'</div></div>'+
-    '<div class="stat-card"><div class="stat-label">Total Stock</div><div class="stat-val">'+inv.reduce(function(a,i){return a+(parseInt(i.stock)||0)},0)+'</div><div class="stat-sub">units</div></div>'+
-    '<div class="stat-card"><div class="stat-label">This Month</div><div class="stat-val" style="font-size:18px">'+fCur(sales.filter(function(s){return s.date&&s.date.startsWith(today.slice(0,7))}).reduce(function(a,s){return a+(s.grandTotal||0)},0))+'</div><div class="stat-sub">revenue</div></div>';
-  var lowStock=inv.filter(function(i){return (parseInt(i.stock)||0)<=(parseInt(i.lowAt)||3)&&parseInt(i.stock)>0});
+    '<div class="stat-card"><div class="stat-label">Total Items</div><div class="stat-val">'+inv.length+'</div><div class="stat-sub">'+out.length+' out of stock</div></div>'+
+    '<div class="stat-card"><div class="stat-label">Today Sales</div><div class="stat-val">'+ts.length+'</div><div class="stat-sub">'+fCur(tr)+'</div></div>'+
+    '<div class="stat-card"><div class="stat-label">Total Stock</div><div class="stat-val">'+inv.reduce(function(a,i){return a+(parseInt(i.stock)||0)},0)+'</div><div class="stat-sub">units in store</div></div>'+
+    '<div class="stat-card"><div class="stat-label">This Month</div><div class="stat-val" style="font-size:18px">'+fCur(monthRev)+'</div><div class="stat-sub">revenue</div></div>';
+  // Backup reminder
+  var s=getSettings();
+  if(s.sheetUrl){
+    var last=s.lastSync||0;
+    var days=Math.floor((Date.now()-last)/(1000*60*60*24));
+    if(!last||days>=3){
+      var msg=last?('Last backup '+days+' days ago'):'No backup yet';
+      var banner='<div class="card mb-16" style="background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.3);cursor:pointer" onclick="doBackup()"><div class="row between" style="align-items:center"><div><div class="bold" style="color:var(--yellow)">&#9888; Backup Reminder</div><div class="xs muted" style="margin-top:4px">'+msg+' &middot; Tap to sync now</div></div><div style="font-size:24px">&#9729;</div></div></div>';
+      var sg=document.getElementById('statsGrid');
+      sg.insertAdjacentHTML('afterend',banner);
+    }
+  }
   var lsEl=document.getElementById('lowStockList');
-  if(!lowStock.length&&!outOfStock.length){lsEl.innerHTML='<div class="card" style="color:var(--green);font-size:13px">&#9989; All items adequately stocked</div>'}
-  else{
-    var items=outOfStock.slice(0,3).concat(lowStock.slice(0,3));
-    var html='';
-    items.forEach(function(i){
-      html+='<div class="item-row" onclick="openItemDetail(\''+i.id+'\')">';
-      html+='<div class="item-thumb">'+thumb(i.photo)+'</div>';
-      html+='<div class="item-info"><div class="item-name">'+i.name+'</div><div class="item-sub">'+(i.sku||'')+' '+(i.brand||'')+'</div></div>';
-      html+='<span class="badge '+(parseInt(i.stock)===0?'badge-red':'badge-yellow')+'">'+(parseInt(i.stock)===0?'OUT':'Low: '+i.stock)+'</span>';
-      html+='</div>';
+  // Build per-colour low/out alerts
+  var alerts=[];
+  inv.forEach(function(i){
+    var la=parseInt(i.lowAt)||2;
+    var cols=i.colors&&i.colors.length?i.colors:[{name:'',code:'',qty:i.stock||0}];
+    cols.forEach(function(c){
+      var q=parseInt(c.qty)||0;
+      if(q<=la){alerts.push({id:i.id,name:i.name,sku:i.sku,colorName:c.name,qty:q,photo:i.photo})}
     });
-    lsEl.innerHTML=html;
+  });
+  if(!alerts.length){
+    lsEl.innerHTML='<div class="card" style="color:var(--green);font-size:13px">&#9989; All colours adequately stocked</div>';
+  }else{
+    var h='';
+    alerts.slice(0,8).forEach(function(a){
+      h+='<div class="item-row" onclick="oc(\''+a.id+'\');ocItemDetail()">';
+      h+=a.photo?'<div class="item-thumb"><img src="'+a.photo+'"></div>':'<div class="item-thumb">&#128230;</div>';
+      h+='<div class="item-info"><div class="item-name">'+a.name+(a.colorName?' &middot; '+a.colorName:'')+'</div><div class="item-sub">'+(a.sku||'')+'</div></div>';
+      h+='<span class="badge '+(a.qty===0?'badge-red':'badge-yellow')+'">'+(a.qty===0?'OUT':'Low: '+a.qty)+'</span></div>';
+    });
+    lsEl.innerHTML=h;
   }
   var reEl=document.getElementById('recentSales');
   var recent=sales.slice().reverse().slice(0,5);
-  if(!recent.length){reEl.innerHTML='<div class="card muted sm">No sales yet</div>';return}
-  var html2='';
+  if(!recent.length){reEl.innerHTML='<div class="card muted sm">No sales yet. Tap New Sale to get started.</div>';return}
+  var h2='';
   recent.forEach(function(s){
-    html2+='<div class="item-row" onclick="openSaleDetail(\''+s.id+'\')">';
-    html2+='<div class="item-thumb" style="font-size:18px">&#128230;</div>';
-    html2+='<div class="item-info"><div class="item-name">'+(s.billNo||'')+' '+(s.customerName?'- '+s.customerName:'')+'</div><div class="item-sub">'+fDate(s.date)+' '+fTime(s.date)+'</div></div>';
-    html2+='<span class="bold c-green" style="font-size:15px">'+fCur(s.grandTotal)+'</span>';
-    html2+='</div>';
+    h2+='<div class="item-row" onclick="oc(s.id);ocSaleDetail()">';
+    h2+='<div class="item-thumb" style="background:rgba(34,197,94,.1);font-size:18px">&#128176;</div>';
+    h2+='<div class="item-info"><div class="item-name">'+(s.billNo||'-')+' '+(s.customerName?'&#8211; '+s.customerName:'')+'</div><div class="item-sub">'+fDate(s.date)+' '+fTime(s.date)+' &middot; '+(s.items||[]).length+' item(s)</div></div>';
+    h2+='<span class="bold c-green" style="font-size:15px">'+fCur(s.grandTotal)+'</span></div>';
   });
-  reEl.innerHTML=html2;
+  reEl.innerHTML=h2;
 }
 
-// ============================================================
-// INVENTORY
-// ============================================================
+/* ==============================================
+   INVENTORY
+============================================== */
 var invCatFilter='All';
 function renderInventory(){
   var inv=getInventory();
   var cats=['All'];
   inv.forEach(function(i){if(i.category&&cats.indexOf(i.category)===-1)cats.push(i.category)});
-  var chipsHtml='';
-  cats.forEach(function(c){chipsHtml+='<button class="chip '+(c===invCatFilter?'active':'')+'" onclick="invCatFilter=\''+c+'\';renderInventory()">'+c+'</button>'});
-  document.getElementById('catChips').innerHTML=chipsHtml;
-  var q=(document.getElementById('invSearch')?document.getElementById('invSearch').value:'').toLowerCase();
+  document.getElementById('catChips').innerHTML=cats.map(function(c){
+    return '<button class="chip '+(c===invCatFilter?'active':'')+'" onclick="setCatFilter(\'' + c + '\')">'+c+'</button>';
+  }).join('');
+  var q=(document.getElementById('invSearch')?document.getElementById('invSearch').value:'').toLowerCase().trim();
   var list=inv;
   if(invCatFilter!=='All')list=list.filter(function(i){return i.category===invCatFilter});
-  if(q)list=list.filter(function(i){return (i.name+i.sku+i.brand+i.barcode+'').toLowerCase().indexOf(q)!==-1});
-  var el=document.getElementById('invList');
-  if(!list.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">&#128230;</div><div class="empty-text">'+(inv.length?'No results':'No items yet')+'</div><div class="empty-sub">'+(inv.length?'Try a different search':'Tap + to add your first item')+'</div></div>';return}
-  var html='';
-  list.forEach(function(i){
-    var st=parseInt(i.stock)||0,lowAt=parseInt(i.lowAt)||3;
-    var badge=st===0?'<span class="badge badge-red">OUT</span>':st<=lowAt?'<span class="badge badge-yellow">Low: '+st+'</span>':'<span class="badge badge-green">'+st+' pcs</span>';
-    html+='<div class="item-row" onclick="openItemDetail(\''+i.id+'\')">';
-    html+='<div class="item-thumb">'+thumb(i.photo)+'</div>';
-    html+='<div class="item-info"><div class="item-name">'+i.name+'</div><div class="item-sub">'+[i.brand,i.sku,i.size,i.fFor,i.color].filter(Boolean).join(' - ')+'</div></div>';
-    html+='<div class="item-right">'+badge+'<span class="muted xs">'+fCur(i.price)+'</span></div>';
-    html+='</div>';
+  if(q)list=list.filter(function(i){
+    var colorText=(i.colors||[]).map(function(c){return c.name+' '+c.code}).join(' ');
+    return(i.name+i.sku+i.brand+i.barcode+i.size+colorText+'').toLowerCase().indexOf(q)!==-1;
   });
-  el.innerHTML=html;
+  var el=document.getElementById('invList');
+  if(!list.length){
+    el.innerHTML='<div class="empty-state"><div class="empty-icon">&#128230;</div><div class="empty-text">'+(inv.length?'No results found':'No items yet')+'</div><div class="empty-sub">'+(inv.length?'Try a different search term':'Tap + to add your first item')+'</div></div>';
+    return;
+  }
+  var h='';
+  list.forEach(function(i){
+    var st=parseInt(i.stock)||0,la=parseInt(i.lowAt)||2;
+    var nColors=(i.colors||[]).length;
+    var badge=st===0?'<span class="badge badge-red">OUT</span>':'<span class="badge badge-green">'+st+' pcs</span>';
+    h+='<div class="item-row" onclick="oc(i.id);ocItemDetail()">';
+    h+=i.photo?'<div class="item-thumb"><img src="'+i.photo+'"></div>':'<div class="item-thumb">&#128230;</div>';
+    h+='<div class="item-info"><div class="item-name">'+i.name+'</div>';
+    h+='<div class="item-sub">'+[i.brand,i.sku,i.size,(nColors?nColors+' colour'+(nColors>1?'s':''):'')].filter(Boolean).join(' &middot; ')+'</div></div>';
+    h+='<div class="item-right">'+badge+'<span class="muted xs">'+fCur(i.price)+'</span></div></div>';
+  });
+  el.innerHTML=h;
 }
 
-// ============================================================
-// ITEM DETAIL
-// ============================================================
+/* ==============================================
+   ITEM DETAIL
+============================================== */
 function openItemDetail(id){
-  var item=getInventory().find(function(i){return i.id===id});if(!item)return;
+  var item=getInventory().find(function(i){return i.id===id});
+  if(!item)return;
+  window._detailId=id;
   showSub('pgItemDetail',item.name);
-  document.getElementById('topActs').innerHTML='<button class="tbtn" onclick="openEditItem(\''+id+'\')">&#9999;</button>';
+  document.getElementById('topActs').innerHTML='<button class="tbtn" onclick="oc(window._detailId);ocEditItem()">&#9999;</button>';
   var st=parseInt(item.stock)||0;
-  var badge=st===0?'badge-red':st<=(parseInt(item.lowAt)||3)?'badge-yellow':'badge-green';
-  var html='';
-  if(item.photo)html+='<img src="'+item.photo+'" style="width:100%;max-height:220px;object-fit:cover;border-radius:var(--r2);margin-bottom:16px">';
-  html+='<div class="row between mb-16" style="align-items:center">';
-  html+='<div><div style="font-size:22px;font-weight:800">'+item.name+'</div><div class="muted sm">'+[item.brand,item.sku].filter(Boolean).join(' - ')+'</div></div>';
-  html+='<span class="badge '+badge+'" style="font-size:13px">'+(st===0?'OUT':st+' in stock')+'</span></div>';
-  html+='<div class="card mb-12"><div class="sec-title" style="margin-top:0">Pricing</div>';
-  html+='<div class="row between mb-8"><span class="muted">Selling Price</span><span class="bold c-green" style="font-size:17px">'+fCur(item.price)+'</span></div>';
-  if(item.cost)html+='<div class="row between mb-8"><span class="muted">Cost Price</span><span>'+fCur(item.cost)+'</span></div>';
-  if(item.cost&&item.price)html+='<div class="row between"><span class="muted">Margin</span><span class="c-green bold">'+Math.round(((item.price-item.cost)/item.price)*100)+'%</span></div>';
-  html+='</div><div class="card mb-12"><div class="sec-title" style="margin-top:0">Details</div>';
-  function dr(l,v){return v?'<div class="row between mb-8"><span class="muted">'+l+'</span><span class="bold">'+v+'</span></div>':''}
-  html+=dr('Category',item.category)+dr('For',item.fFor)+dr('Frame Type',item.frameType)+dr('Model No',item.sku)+dr('Size',item.size)+dr('Color',item.color)+dr('Material',item.material)+dr('Location',item.location)+dr('Supplier',item.supplier)+dr('Barcode',item.barcode);
-  if(item.notes)html+='<div class="divider"></div><div class="muted xs" style="line-height:1.6">'+item.notes+'</div>';
-  html+='</div><div style="display:flex;gap:10px">';
-  html+='<button class="btn btn-primary grow" onclick="openEditItem(\''+item.id+'\')">&#9999; Edit</button>';
-  html+='<button class="btn btn-green btn-sm" onclick="openSaleForm(\''+item.id+'\')">&#128176; Sell</button>';
-  html+='<button class="btn btn-outline btn-sm" onclick="adjustStock(\''+item.id+'\')">+/-</button></div>';
-  document.getElementById('itemDetailContent').innerHTML=html;
+  var la=parseInt(item.lowAt)||2;
+  var badgeClass=st===0?'badge-red':st<=la?'badge-yellow':'badge-green';
+  function dr(label,val){return val?'<div class="row between mb-8"><span class="muted">'+label+'</span><span class="bold">'+val+'</span></div>':''}
+  var h='';
+  if(item.photo)h+='<img src="'+item.photo+'" style="width:100%;max-height:240px;object-fit:cover;border-radius:var(--r2);margin-bottom:16px">';
+  h+='<div class="row between mb-16" style="align-items:center">';
+  h+='<div><div style="font-size:22px;font-weight:800">'+item.name+'</div>';
+  h+='<div class="muted sm">'+[item.brand,item.sku,item.size].filter(Boolean).join(' &middot; ')+'</div></div>';
+  h+='<span class="badge '+badgeClass+'" style="font-size:13px">'+(st===0?'OUT OF STOCK':'Total: '+st)+'</span></div>';
+  // COLOURS with -/+ buttons
+  h+='<div class="card mb-12"><div class="sec-title" style="margin-top:0">Colours &amp; Stock</div>';
+  var colors=item.colors&&item.colors.length?item.colors:[{name:item.color||'(no colour)',code:'',qty:item.stock||0}];
+  colors.forEach(function(c,ci){
+    var cq=parseInt(c.qty)||0;
+    var qColor=cq===0?'c-red':cq<=la?'':'';
+    h+='<div class="row between mb-8" style="align-items:center;gap:8px">';
+    h+='<div class="grow"><div class="bold sm">'+c.name+(c.code?' <span class="muted xs">('+c.code+')</span>':'')+'</div>';
+    if(cq===0)h+='<div class="xs c-red">Out of stock</div>';
+    else if(cq<=la)h+='<div class="xs" style="color:var(--yellow)">Low stock</div>';
+    h+='</div>';
+    h+='<div class="row" style="gap:6px;align-items:center">';
+    h+='<button class="btn btn-outline btn-sm" style="width:34px;height:34px;padding:0" onclick="adjColor('+ci+',-1)">&#8722;</button>';
+    h+='<span class="bold" style="min-width:28px;text-align:center;font-size:16px">'+cq+'</span>';
+    h+='<button class="btn btn-outline btn-sm" style="width:34px;height:34px;padding:0" onclick="adjColor('+ci+',1)">+</button>';
+    h+='</div></div>';
+  });
+  h+='</div>';
+  h+='<div class="card mb-12"><div class="sec-title" style="margin-top:0">Pricing</div>';
+  h+=dr('Selling Price','<span class="c-green" style="font-size:17px">'+fCur(item.price)+'</span>');
+  if(item.cost)h+=dr('Cost Price',fCur(item.cost));
+  if(item.cost&&item.price)h+=dr('Margin','<span class="c-green">'+Math.round(((item.price-item.cost)/item.price)*100)+'%</span>');
+  h+='</div><div class="card mb-12"><div class="sec-title" style="margin-top:0">Details</div>';
+  h+=dr('Category',item.category)+dr('For',item.fFor)+dr('Frame Type',item.frameType);
+  h+=dr('Model No',item.sku)+dr('Size',item.size)+dr('Material',item.material);
+  h+=dr('Location',item.location)+dr('Supplier',item.supplier)+dr('Barcode',item.barcode);
+  if(item.notes)h+='<div class="divider"></div><div class="muted xs" style="line-height:1.6">'+item.notes+'</div>';
+  h+='</div><div style="display:flex;gap:10px">';
+  h+='<button class="btn btn-primary grow" onclick="oc(window._detailId);ocEditItem()">&#9999; Edit Item</button></div>';
+  document.getElementById('itemDetailContent').innerHTML=h;
 }
-function adjustStock(id){openModal('<div class="modal-title">Adjust Stock</div><div class="form-group"><label class="form-label">Add or Remove Qty (use - to reduce)</label><input class="form-input" id="adjQty" type="number" placeholder="e.g. 5 or -2"></div><button class="btn btn-primary btn-full" onclick="doAdjustStock(\''+id+'\')">&#10003; Adjust</button>')}
-function doAdjustStock(id){var qty=parseInt(document.getElementById('adjQty').value||0);if(!qty){showToast('Enter a quantity');return}var inv=getInventory();var item=inv.find(function(i){return i.id===id});if(!item)return;item.stock=Math.max(0,(parseInt(item.stock)||0)+qty);saveInventory(inv);closeModalForce();showToast('Stock updated');openItemDetail(id)}
 
-// ============================================================
-// ADD / EDIT ITEM
-// ============================================================
-function openAddItem(prefillSku){editId=null;showSub('pgAddItem','Add Item');clearItemForm();if(prefillSku)document.getElementById('fSku').value=prefillSku;document.getElementById('btnDeleteItem').style.display='none';populateSupplierSelect('fSupplier','')}
+function adjColor(colorIndex,delta){
+  var id=window._detailId;
+  var inv=getInventory();
+  var item=inv.find(function(i){return i.id===id});
+  if(!item||!item.colors||!item.colors[colorIndex])return;
+  var c=item.colors[colorIndex];
+  c.qty=Math.max(0,(parseInt(c.qty)||0)+delta);
+  item.stock=item.colors.reduce(function(a,x){return a+(parseInt(x.qty)||0)},0);
+  item.updatedAt=Date.now();
+  saveInventory(inv);
+  autoBackup();
+  openItemDetail(id);
+  showToast(delta<0?(c.name+' sold (-1)'):(c.name+' added (+1)'));
+}
+
+/* ==============================================
+   ADD / EDIT ITEM
+============================================== */
+function openAddItem(prefillSku){
+  editId=null;showSub('pgAddItem','Add Item');clearItemForm();
+  if(prefillSku)document.getElementById('fSku').value=prefillSku;
+  document.getElementById('btnDeleteItem').style.display='none';
+  populateSupplierSelect('fSupplier','');
+}
+
 function openEditItem(id){
-  editId=id;var item=getInventory().find(function(i){return i.id===id});if(!item)return;
+  editId=id;
+  var item=getInventory().find(function(i){return i.id===id});
+  if(!item)return;
   showSub('pgAddItem','Edit Item');
   document.getElementById('fName').value=item.name||'';
   document.getElementById('fSku').value=item.sku||'';
+  document.getElementById('fSize').value=item.size||'';
   document.getElementById('fBrand').value=item.brand||'';
   document.getElementById('fCategory').value=item.category||'';
   document.getElementById('fFor').value=item.fFor||'';
   document.getElementById('fFrameType').value=item.frameType||'';
-  document.getElementById('fSize').value=item.size||'';
-  document.getElementById('fColor').value=item.color||'';
   document.getElementById('fMaterial').value=item.material||'';
-  document.getElementById('fStock').value=item.stock||'';
   document.getElementById('fLowAt').value=item.lowAt||'';
   document.getElementById('fPrice').value=item.price||'';
   document.getElementById('fCost').value=item.cost||'';
@@ -667,43 +854,79 @@ function openEditItem(id){
   document.getElementById('fNotes').value=item.notes||'';
   populateSupplierSelect('fSupplier',item.supplier||'');
   if(item.photo)document.getElementById('itemThumbPick').innerHTML='<img src="'+item.photo+'">';
+  document.getElementById('colorRows').innerHTML='';
+  var colors=item.colors&&item.colors.length?item.colors:[{name:item.color||'',code:'',qty:item.stock||0}];
+  colors.forEach(function(c){addColorRow(c.name,c.code,c.qty)});
   document.getElementById('btnDeleteItem').style.display='flex';
 }
 function clearItemForm(){
-  ['fName','fSku','fBrand','fSize','fColor','fMaterial','fStock','fLowAt','fPrice','fCost','fBarcode','fLocation','fNotes'].forEach(function(id){var el=document.getElementById(id);if(el)el.value=''});
-  ['fCategory','fFrameType','fFor'].forEach(function(id){var el=document.getElementById(id);if(el)el.value=''});
+  ['fName','fSku','fSize','fBrand','fMaterial','fLowAt','fPrice','fCost','fBarcode','fLocation','fNotes'].forEach(function(id){
+    var el=document.getElementById(id);if(el)el.value='';
+  });
+  ['fCategory','fFor','fFrameType'].forEach(function(id){
+    var el=document.getElementById(id);if(el)el.value='';
+  });
   document.getElementById('itemThumbPick').innerHTML='<span>&#128230;</span>';
+  document.getElementById('colorRows').innerHTML='';
+  addColorRow('','',1);
   window._pendingPhoto=null;
+}
+function addColorRow(name,code,qty){
+  var div=document.createElement('div');
+  div.className='color-row row gap-8 mb-8';
+  div.style.cssText='align-items:center';
+  div.innerHTML='<input class="form-input cr-name" placeholder="Colour" value="'+(name||'').replace(/"/g,'&quot;')+'" style="flex:2"><input class="form-input cr-code" placeholder="Code" value="'+(code||'').replace(/"/g,'&quot;')+'" style="flex:1.2"><input class="form-input cr-qty" type="number" min="0" placeholder="Qty" value="'+(qty===0||qty?qty:1)+'" style="width:64px"><button class="btn btn-red btn-sm" style="width:34px;height:44px;padding:0;flex-shrink:0" onclick="this.parentNode.remove()">&#10005;</button>';
+  document.getElementById('colorRows').appendChild(div);
+}
+function readColorRows(){
+  var rows=document.getElementById('colorRows').querySelectorAll('.color-row');
+  var colors=[];
+  rows.forEach(function(r){
+    var nm=r.querySelector('.cr-name').value.trim();
+    var cd=r.querySelector('.cr-code').value.trim();
+    var q=parseInt(r.querySelector('.cr-qty').value)||0;
+    if(nm)colors.push({name:nm,code:cd,qty:q});
+  });
+  return colors;
 }
 function previewItemPhoto(input){
   var f=input.files[0];if(!f)return;
-  compressImage(f,function(b64){window._pendingPhoto=b64;document.getElementById('itemThumbPick').innerHTML='<img src="'+b64+'">'});
+  compressImage(f,function(b64){
+    window._pendingPhoto=b64;
+    document.getElementById('itemThumbPick').innerHTML='<img src="'+b64+'">';
+  });
 }
 function compressImage(file,cb){
   var img=new Image(),url=URL.createObjectURL(file);
   img.onload=function(){
     var r=Math.min(600/img.width,600/img.height,1);
-    var c=document.createElement('canvas');c.width=img.width*r;c.height=img.height*r;
+    var c=document.createElement('canvas');
+    c.width=img.width*r;c.height=img.height*r;
     c.getContext('2d').drawImage(img,0,0,c.width,c.height);
-    cb(c.toDataURL('image/jpeg',0.78));URL.revokeObjectURL(url);
-  };img.src=url;
+    cb(c.toDataURL('image/jpeg',0.78));
+    URL.revokeObjectURL(url);
+  };
+  img.src=url;
 }
 function saveItem(){
-  var name=document.getElementById('fName').value.trim();if(!name){showToast('Item name is required');return}
-  var btn=document.getElementById('btnSaveItem');btn.disabled=true;btn.textContent='Saving...';
+  var name=document.getElementById('fName').value.trim();
+  if(!name){showToast('Item name is required');return}
+  var colors=readColorRows();
+  if(!colors.length){showToast('Add at least one colour with quantity');return}
+  var totalStock=colors.reduce(function(a,c){return a+(parseInt(c.qty)||0)},0);
   var inv=getInventory();
-  var itemId=editId||uid();
-  var item={id:itemId,name:name,
+  var item={
+    id:editId||uid(),name:name,
     sku:document.getElementById('fSku').value.trim(),
-    brand:document.getElementById('fBrand').value.trim(),
     size:document.getElementById('fSize').value.trim(),
+    brand:document.getElementById('fBrand').value.trim(),
+    colors:colors,
     category:document.getElementById('fCategory').value,
     fFor:document.getElementById('fFor').value,
     frameType:document.getElementById('fFrameType').value,
-    color:document.getElementById('fColor').value.trim(),
     material:document.getElementById('fMaterial').value.trim(),
-    stock:parseInt(document.getElementById('fStock').value)||0,
-    lowAt:parseInt(document.getElementById('fLowAt').value)||3,
+    stock:totalStock,
+    lowAt:parseInt(document.getElementById('fLowAt').value)||2,
     price:parseFloat(document.getElementById('fPrice').value)||0,
     cost:parseFloat(document.getElementById('fCost').value)||0,
     barcode:document.getElementById('fBarcode').value.trim(),
@@ -712,59 +935,44 @@ function saveItem(){
     notes:document.getElementById('fNotes').value.trim(),
     updatedAt:Date.now()
   };
-  function finish(photoUrl){
-    if(photoUrl)item.photo=photoUrl;
-    else if(editId){var old=inv.find(function(i){return i.id===editId});if(old&&old.photo)item.photo=old.photo}
-    window._pendingPhoto=null;
-    if(editId){var idx=inv.findIndex(function(i){return i.id===editId});if(idx>=0)inv[idx]=item}
-    else{item.createdAt=Date.now();inv.push(item)}
-    saveInventory(inv);
-    btn.disabled=false;btn.textContent='Save Item';
-    showToast(editId?'Item updated!':'Item added!');
-    goBack();setTimeout(function(){if(curTab==='inventory')renderInventory()},100);
-  }
-  if(window._pendingPhoto){
-    uploadPhotoToDrive(window._pendingPhoto,itemId,function(url){finish(url)});
-  }else{finish(null)}
+  if(window._pendingPhoto){item.photo=window._pendingPhoto}
+  else if(editId){var old=inv.find(function(i){return i.id===editId});if(old&&old.photo)item.photo=old.photo}
+  window._pendingPhoto=null;
+  if(editId){var idx=inv.findIndex(function(i){return i.id===editId});if(idx>=0)inv[idx]=item}
+  else{item.createdAt=Date.now();inv.push(item)}
+  saveInventory(inv);
+  showToast(editId?'Item updated!':'Item added!');
+  goBack();
+  setTimeout(function(){if(curTab==='inventory')renderInventory()},100);
 }
-function confirmDeleteItem(){openModal('<div class="modal-title">Delete Item?</div><div class="muted mb-16">Cannot be undone.</div><div style="display:flex;gap:10px"><button class="btn btn-outline grow" onclick="closeModalForce()">Cancel</button><button class="btn btn-red grow" onclick="deleteItem(\''+editId+'\')">Delete</button></div>')}
-function deleteItem(id){saveInventory(getInventory().filter(function(i){return i.id!==id}));closeModalForce();showToast('Item deleted');goBack();goBack()}
-
-// ============================================================
-// PHOTO UPLOAD TO GOOGLE DRIVE
-// ============================================================
-function uploadPhotoToDrive(base64,itemId,cb){
-  var url=getSettings().sheetUrl;
-  if(!url){cb(base64);return}
-  document.getElementById('photoUploadStatus').style.display='block';
-  fetch(url,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'uploadPhoto',filename:'photo_'+itemId+'.jpg',data:base64})})
-    .then(function(r){return r.json()})
-    .then(function(result){
-      document.getElementById('photoUploadStatus').style.display='none';
-      if(result.status==='ok'&&result.url){showToast('Photo saved to Drive');cb(result.url)}
-      else cb(base64);
-    })
-    .catch(function(){document.getElementById('photoUploadStatus').style.display='none';cb(base64)});
+function confirmDeleteItem(){
+  openModal('<div class="modal-title">Delete Item?</div><div class="muted mb-16">This cannot be undone.</div><div style="display:flex;gap:10px"><button class="btn btn-outline grow" onclick="closeModalForce()">Cancel</button><button class="btn btn-red grow" onclick="deleteItem(editId)">Delete</button></div>');
+}
+function deleteItem(id){
+  saveInventory(getInventory().filter(function(i){return i.id!==id}));
+  closeModalForce();showToast('Item deleted');goBack();goBack();
 }
 
-// ============================================================
-// SALES
-// ============================================================
+/* ==============================================
+   SALES
+============================================== */
 function renderSales(){
   var sales=getSales(),today=todayISO();
   var ts=sales.filter(function(s){return s.date&&s.date.startsWith(today)});
-  var trev=ts.reduce(function(a,s){return a+(s.grandTotal||0)},0);
-  document.getElementById('salesTodayCard').innerHTML='<div class="row between" style="align-items:center"><div><div class="xs muted mb-8">Today Revenue</div><div style="font-size:24px;font-weight:800;color:var(--green)">'+fCur(trev)+'</div></div><div style="text-align:right"><div class="xs muted mb-8">Sales</div><div style="font-size:24px;font-weight:800">'+ts.length+'</div></div></div>';
+  var tr=ts.reduce(function(a,s){return a+(s.grandTotal||0)},0);
+  document.getElementById('salesTodayCard').innerHTML=
+    '<div class="row between" style="align-items:center"><div><div class="xs muted mb-8">Today Revenue</div><div style="font-size:26px;font-weight:800;color:var(--green)">'+fCur(tr)+'</div></div><div style="text-align:right"><div class="xs muted mb-8">Sales Count</div><div style="font-size:26px;font-weight:800">'+ts.length+'</div></div></div>';
   var el=document.getElementById('salesList');
-  if(!sales.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">&#128230;</div><div class="empty-text">No sales recorded</div></div>';return}
-  var html='';
+  if(!sales.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">&#128176;</div><div class="empty-text">No sales recorded yet</div><div class="empty-sub">Tap + to record your first sale</div></div>';return}
+  var h='';
   sales.slice().reverse().forEach(function(s){
-    html+='<div class="item-row" onclick="openSaleDetail(\''+s.id+'\')">';
-    html+='<div class="item-thumb" style="font-size:18px;background:rgba(34,197,94,.1)">&#128230;</div>';
-    html+='<div class="item-info"><div class="item-name">'+(s.billNo||'-')+' '+(s.customerName?'- '+s.customerName:'')+'</div><div class="item-sub">'+fDate(s.date)+' '+fTime(s.date)+'</div></div>';
-    html+='<span class="bold c-green" style="font-size:15px">'+fCur(s.grandTotal)+'</span></div>';
+    h+='<div class="item-row" onclick="oc(s.id);ocSaleDetail()">';
+    h+='<div class="item-thumb" style="background:rgba(34,197,94,.1);font-size:18px">&#128176;</div>';
+    h+='<div class="item-info"><div class="item-name">'+(s.billNo||'-')+' '+(s.customerName?'&#8211; '+s.customerName:'')+'</div>';
+    h+='<div class="item-sub">'+fDate(s.date)+' '+fTime(s.date)+' &middot; '+(s.items||[]).length+' item(s)</div></div>';
+    h+='<span class="bold c-green" style="font-size:15px">'+fCur(s.grandTotal)+'</span></div>';
   });
-  el.innerHTML=html;
+  el.innerHTML=h;
 }
 
 var saleItems=[];
@@ -776,24 +984,25 @@ function openSaleForm(prefillItemId){
 }
 function openAddSaleItem(){
   var inv=getInventory().filter(function(i){return parseInt(i.stock)>0});
-  if(!inv.length){showToast('No items with stock');return}
-  var html='<div class="modal-title">Select Item</div><div class="search-wrap mb-12"><span class="search-icon">&#128269;</span><input class="search-input" id="saleItemSearch" placeholder="Search..." oninput="filterSaleItems()"></div><div id="saleItemModal">';
-  html+=renderSaleItemOptions(inv)+'</div>';
-  openModal(html);
+  if(!inv.length){showToast('No items with stock available');return}
+  var h='<div class="modal-title">Select Item</div>';
+  h+='<div class="search-wrap mb-12"><span class="search-icon">&#128269;</span><input class="search-input" id="saleItemSearch" placeholder="Search..." oninput="filterSaleItems()"></div>';
+  h+='<div id="saleItemModal">'+renderSaleItemOptions(inv)+'</div>';
+  openModal(h);
 }
 function renderSaleItemOptions(list){
-  var html='';
+  var h='';
   list.forEach(function(i){
-    html+='<div class="item-row" onclick="addSpecificSaleItem(\''+i.id+'\')">';
-    html+='<div class="item-thumb">'+thumb(i.photo)+'</div>';
-    html+='<div class="item-info"><div class="item-name">'+i.name+'</div><div class="item-sub">'+(i.sku||'')+' - Stock: '+i.stock+'</div></div>';
-    html+='<span class="bold">'+fCur(i.price)+'</span></div>';
+    h+='<div class="item-row" onclick="oc(i.id);ocAddSaleItem()">';
+    h+=i.photo?'<div class="item-thumb"><img src="'+i.photo+'"></div>':'<div class="item-thumb">&#128230;</div>';
+    h+='<div class="item-info"><div class="item-name">'+i.name+'</div><div class="item-sub">'+(i.sku||'')+' '+(i.size||'')+' Stock: '+i.stock+'</div></div>';
+    h+='<span class="bold">'+fCur(i.price)+'</span></div>';
   });
-  return html;
+  return h;
 }
 function filterSaleItems(){
   var q=document.getElementById('saleItemSearch').value.toLowerCase();
-  var inv=getInventory().filter(function(i){return parseInt(i.stock)>0&&(i.name+i.sku+i.brand+'').toLowerCase().indexOf(q)!==-1});
+  var inv=getInventory().filter(function(i){return parseInt(i.stock)>0&&(i.name+i.sku+i.brand+i.size+'').toLowerCase().indexOf(q)!==-1});
   document.getElementById('saleItemModal').innerHTML=renderSaleItemOptions(inv);
 }
 function addSpecificSaleItem(itemId){
@@ -805,19 +1014,22 @@ function addSpecificSaleItem(itemId){
 }
 function renderSaleItems(){
   var el=document.getElementById('saleItemsList');
-  if(!saleItems.length){el.innerHTML='<div class="muted sm" style="padding:12px 0">No items added yet</div>';document.getElementById('saleSummaryCard').style.display='none';return}
-  var html='';
+  if(!saleItems.length){
+    el.innerHTML='<div class="muted sm" style="padding:12px 0">No items added yet</div>';
+    document.getElementById('saleSummaryCard').style.display='none';
+    return;
+  }
+  var h='';
   saleItems.forEach(function(s,i){
-    html+='<div class="card2 row mb-8" style="align-items:center;gap:8px">';
-    html+='<div class="grow"><div class="bold sm">'+s.name+'</div><div class="xs muted">'+fCur(s.price)+' x '+s.qty+' = '+fCur(s.price*s.qty)+'</div></div>';
-    html+='<div class="row" style="gap:8px;align-items:center">';
-    html+='<button class="btn btn-outline btn-sm" style="width:32px;height:32px;padding:0" onclick="changeSaleQty('+i+',-1)">-</button>';
-    html+='<span class="bold" style="min-width:24px;text-align:center">'+s.qty+'</span>';
-    html+='<button class="btn btn-outline btn-sm" style="width:32px;height:32px;padding:0" onclick="changeSaleQty('+i+',1)">+</button>';
-    html+='<button class="btn btn-red btn-sm" style="width:32px;height:32px;padding:0" onclick="removeSaleItem('+i+')">x</button>';
-    html+='</div></div>';
+    h+='<div class="card2 row mb-8" style="align-items:center;gap:8px">';
+    h+='<div class="grow"><div class="bold sm">'+s.name+'</div><div class="xs muted">'+fCur(s.price)+' x '+s.qty+' = '+fCur(s.price*s.qty)+'</div></div>';
+    h+='<div class="row" style="gap:6px;align-items:center">';
+    h+='<button class="btn btn-outline btn-sm" style="width:32px;height:32px;padding:0" onclick="changeSaleQty('+i+',-1)">&#8722;</button>';
+    h+='<span class="bold" style="min-width:24px;text-align:center">'+s.qty+'</span>';
+    h+='<button class="btn btn-outline btn-sm" style="width:32px;height:32px;padding:0" onclick="changeSaleQty('+i+',1)">+</button>';
+    h+='<button class="btn btn-red btn-sm" style="width:32px;height:32px;padding:0" onclick="removeSaleItem('+i+')">&#10005;</button></div></div>';
   });
-  el.innerHTML=html;
+  el.innerHTML=h;
   document.getElementById('saleSummaryCard').style.display='block';
   calcSaleSummary();
 }
@@ -833,76 +1045,517 @@ function saveSale(){
   if(!saleItems.length){showToast('Add at least one item');return}
   var sub=saleItems.reduce(function(a,s){return a+s.price*s.qty},0);
   var disc=parseFloat(document.getElementById('sDiscount').value||0)||0;
-  var sale={id:uid(),billNo:nextBillNo(),date:new Date().toISOString(),
+  var sale={
+    id:uid(),billNo:nextBillNo(),date:new Date().toISOString(),
     customerName:document.getElementById('sCustName').value.trim(),
     customerPhone:document.getElementById('sCustPhone').value.trim(),
     items:saleItems.map(function(s){return{itemId:s.itemId,name:s.name,qty:s.qty,price:s.price,total:s.price*s.qty}}),
     subtotal:sub,discount:disc,grandTotal:Math.max(0,sub-disc),
-    notes:document.getElementById('sSaleNotes').value.trim()};
-  var inv=getInventory();
-  saleItems.forEach(function(s){var item=inv.find(function(i){return i.id===s.itemId});if(item)item.stock=Math.max(0,(parseInt(item.stock)||0)-s.qty)});
-  saveInventory(inv);
+    notes:document.getElementById('sSaleNotes').value.trim()
+  };
   var sales=getSales();sales.push(sale);saveSales(sales);
-  autoBackup();goBack();showToast('Sale recorded!');
+  autoBackup();goBack();showToast('Sale recorded! (Adjust colour stock from item screen)');
   setTimeout(function(){openSaleDetail(sale.id)},300);
 }
 
 function openSaleDetail(id){
   var sale=getSales().find(function(s){return s.id===id});if(!sale)return;
   showSub('pgSaleDetail','Invoice '+sale.billNo);
-  var s=getSettings();var shop=s.shopName||'OptiStock';
-  var html='<div class="card mb-12" style="background:rgba(34,197,94,.06);border-color:rgba(34,197,94,.2)">';
-  html+='<div class="row between mb-8" style="align-items:center">';
-  html+='<div><div style="font-size:22px;font-weight:800">'+sale.billNo+'</div><div class="xs muted">'+fDate(sale.date)+' '+fTime(sale.date)+'</div></div>';
-  html+='<div style="text-align:right"><div style="font-size:22px;font-weight:800;color:var(--green)">'+fCur(sale.grandTotal)+'</div>';
-  if(sale.discount)html+='<div class="xs muted">Disc: '+fCur(sale.discount)+'</div>';
-  html+='</div></div>';
-  if(sale.customerName)html+='<div class="xs muted">'+sale.customerName+(sale.customerPhone?' - '+sale.customerPhone:'')+'</div>';
-  html+='</div><div class="card mb-12"><div class="sec-title" style="margin-top:0">Items</div>';
-  (sale.items||[]).forEach(function(it){html+='<div class="row between mb-8" style="align-items:center"><div class="grow sm">'+it.name+'</div><div class="muted xs">'+it.qty+'x'+fCur(it.price)+'</div><div class="bold sm" style="margin-left:12px">'+fCur(it.total)+'</div></div>'});
-  if(sale.discount)html+='<div class="row between muted sm"><span>Discount</span><span>- '+fCur(sale.discount)+'</span></div>';
-  html+='<div class="divider"></div><div class="row between"><span class="bold">Total</span><span class="bold c-green" style="font-size:18px">'+fCur(sale.grandTotal)+'</span></div></div>';
-  if(sale.notes)html+='<div class="card mb-12 muted sm">'+sale.notes+'</div>';
-  html+='<div style="display:flex;flex-direction:column;gap:10px">';
-  html+='<button class="btn btn-wa btn-full" onclick="sendWhatsAppInvoice(\''+sale.id+'\')">&#128242; Send WhatsApp Invoice</button>';
-  html+='<button class="btn btn-outline btn-full" onclick="printInvoice(\''+sale.id+'\')">&#128424; Print / PDF</button>';
-  html+='<button class="btn btn-red btn-sm btn-full" onclick="confirmDeleteSale(\''+sale.id+'\')">&#128465; Delete Sale</button></div>';
-  document.getElementById('saleDetailContent').innerHTML=html;
+  var st=getSettings();var shop=st.shopName||'OptiStock';
+  var h='<div class="card mb-12" style="background:rgba(34,197,94,.06);border-color:rgba(34,197,94,.2)">';
+  h+='<div class="row between mb-8" style="align-items:center">';
+  h+='<div><div style="font-size:22px;font-weight:800">'+sale.billNo+'</div><div class="xs muted">'+fDate(sale.date)+' '+fTime(sale.date)+'</div></div>';
+  h+='<div style="text-align:right"><div style="font-size:22px;font-weight:800;color:var(--green)">'+fCur(sale.grandTotal)+'</div>';
+  if(sale.discount)h+='<div class="xs muted">Disc: '+fCur(sale.discount)+'</div>';
+  h+='</div></div>';
+  if(sale.customerName)h+='<div class="xs muted">'+sale.customerName+(sale.customerPhone?' &middot; '+sale.customerPhone:'')+'</div>';
+  h+='</div>';
+  h+='<div class="card mb-12"><div class="sec-title" style="margin-top:0">Items</div>';
+  (sale.items||[]).forEach(function(it){h+='<div class="row between mb-8" style="align-items:center"><div class="grow sm">'+it.name+'</div><div class="muted xs">'+it.qty+' x '+fCur(it.price)+'</div><div class="bold sm" style="margin-left:12px">'+fCur(it.total)+'</div></div>'});
+  if(sale.discount)h+='<div class="row between muted sm"><span>Discount</span><span>&#8722; '+fCur(sale.discount)+'</span></div>';
+  h+='<div class="divider"></div><div class="row between"><span class="bold">Total</span><span class="bold c-green" style="font-size:18px">'+fCur(sale.grandTotal)+'</span></div></div>';
+  if(sale.notes)h+='<div class="card mb-12 muted sm">'+sale.notes+'</div>';
+  h+='<div style="display:flex;flex-direction:column;gap:10px">';
+  h+='<button class="btn btn-wa btn-full" onclick="sendWhatsAppInvoice(sale.id)">&#128242; Send WhatsApp Invoice</button>';
+  h+='<button class="btn btn-outline btn-full" onclick="printInvoice(sale.id)">&#128424; Print / PDF</button>';
+  h+='<button class="btn btn-red btn-sm btn-full" onclick="oc(sale.id);confirmDelSale()">&#128465; Delete Sale</button></div>';
+  document.getElementById('saleDetailContent').innerHTML=h;
 }
-
 function sendWhatsAppInvoice(saleId){
   var sale=getSales().find(function(s){return s.id===saleId});if(!sale)return;
-  var s=getSettings();var shop=s.shopName||'OptiStock';
-  var msg='*'+shop+'*\n';
-  if(s.shopAddress)msg+=s.shopAddress+'\n';
-  if(s.gstNo)msg+='GST: '+s.gstNo+'\n';
-  msg+='\nInvoice '+sale.billNo+'\nDate: '+fDate(sale.date)+' '+fTime(sale.date)+'\n';
-  if(sale.customerName)msg+='Customer: '+sale.customerName+'\n';
-  msg+='\nItems:\n';
-  (sale.items||[]).forEach(function(it){msg+='- '+it.name+' x'+it.qty+' @ '+fCur(it.price)+' = '+fCur(it.total)+'\n'});
-  if(sale.discount)msg+='\nDiscount: '+fCur(sale.discount);
-  msg+='\n*Total: '+fCur(sale.grandTotal)+'*\n\nThank you!';
+  var st=getSettings();var shop=st.shopName||'OptiStock';
+  var nl=String.fromCharCode(10);
+  var msg='*'+shop+'*'+nl;
+  if(st.shopAddress)msg+=st.shopAddress+nl;
+  if(st.gstNo)msg+='GST: '+st.gstNo+nl;
+  msg+=nl+'Invoice: *'+sale.billNo+'*'+nl+'Date: '+fDate(sale.date)+nl;
+  if(sale.customerName)msg+=nl+'Customer: '+sale.customerName+(sale.customerPhone?' | '+sale.customerPhone:'')+nl;
+  msg+=nl+'*Items:*'+nl;
+  (sale.items||[]).forEach(function(it){msg+='- '+it.name+' x'+it.qty+' @ '+fCur(it.price)+' = '+fCur(it.total)+nl});
+  if(sale.discount)msg+=nl+'Discount: -'+fCur(sale.discount);
+  msg+=nl+nl+'*Total: '+fCur(sale.grandTotal)+'*';
+  msg+=nl+nl+'Thank you for shopping with us!';
   var phone=(sale.customerPhone||'').replace(/\D/g,'');
   window.open(phone?'https://wa.me/91'+phone+'?text='+encodeURIComponent(msg):'https://wa.me/?text='+encodeURIComponent(msg),'_blank');
 }
 function printInvoice(saleId){
   var sale=getSales().find(function(s){return s.id===saleId});if(!sale)return;
-  var s=getSettings();var shop=s.shopName||'OptiStock';
+  var st=getSettings();var shop=st.shopName||'OptiStock';
   var win=window.open('','_blank');
-  var html='<!DOCTYPE html><html><head><title>Invoice '+sale.billNo+'</title>';
-  html+='<style>body{font-family:sans-serif;padding:24px;max-width:400px;margin:auto}table{width:100%;border-collapse:collapse;margin:16px 0}th,td{padding:8px;border:1px solid #ddd;text-align:left}th{background:#f5f5f5}.total{font-size:18px;font-weight:bold}</style></head><body>';
-  html+='<h2>'+shop+'</h2>';
-  if(s.shopAddress)html+='<p>'+s.shopAddress+'</p>';
-  if(s.gstNo)html+='<p>GST: '+s.gstNo+'</p>';
-  html+='<hr><h3>Invoice '+sale.billNo+'</h3><p>Date: '+fDate(sale.date)+' '+fTime(sale.date)+'</p>';
-  if(sale.customerName)html+='<p>Customer: '+sale.customerName+(sale.customerPhone?' | '+sale.customerPhone:'')+'</p>';
-  html+='<table><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr>';
-  (sale.items||[]).forEach(function(it){html+='<tr><td>'+it.name+'</td><td>'+it.qty+'</td><td>'+it.price+'</td><td>'+it.total+'</td></tr>'});
-  html+='</table>';
-  if(sale.discount)html+='<p>Discount: '+sale.discount+'</p>';
-  html+='<p class="total">Total: '+sale.grandTotal+'</p><hr><p style="text-align:center">Thank you!</p>';
-  html+='<script>window.print();<\/script></body></html>';
-  win.document.write(html);win.document.close();
+  var h='<!DOCTYPE html><html><head><title>Invoice '+sale.billNo+'</title>';
+  h+='<style>body{font-family:Arial,sans-serif;padding:24px;max-width:400px;margin:auto}h2{margin:0}table{width:100%;border-collapse:collapse;margin:16px 0}th,td{padding:8px;border:1px solid #ddd;text-align:left}th{background:#f5f5f5}.total{font-size:18px;font-weight:bold}hr{margin:16px 0}</style></head><body>';
+  h+='<h2>'+shop+'</h2>';
+  if(st.shopAddress)h+='<p>'+st.shopAddress+'</p>';
+  if(st.gstNo)h+='<p>GST No: '+st.gstNo+'</p>';
+  h+='<hr><h3>Invoice '+sale.billNo+'</h3><p>Date: '+fDate(sale.date)+' '+fTime(sale.date)+'</p>';
+  if(sale.customerName)h+='<p>Customer: '+sale.customerName+(sale.customerPhone?' | Ph: '+sale.customerPhone:'')+'</p>';
+  h+='<table><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr>';
+  (sale.items||[]).forEach(function(it){h+='<tr><td>'+it.name+'</td><td>'+it.qty+'</td><td>'+it.price+'</td><td>'+it.total+'</td></tr>'});
+  h+='</table>';
+  if(sale.discount)h+='<p>Discount: Rs '+sale.discount+'</p>';
+  h+='<p class="total">Grand Total: Rs '+sale.grandTotal+'</p><hr><p style="text-align:center">Thank you!</p>';
+  h+='<script>window.print();<\/script></body></html>';
+  win.document.write(h);win.document.close();
 }
-function confirmDeleteSale(id){openModal('<div class="modal-title">Delete Sale?</div><div class="muted mb-16">Stock will NOT be restored.</div><div style="display:flex;gap:10px"><button class="btn btn-outline grow" onclick="closeModalForce()">Cancel</button><button class="btn btn-red grow" onclick="doDeleteSale(\''+id+'\')">Delete</button></div>')}
-function doDeleteSale(id){saveSales(getSales().filte
+function confirmDeleteSale(id){
+  openModal('<div class="modal-title">Delete Sale?</div><div class="muted mb-16">This action cannot be undone. Stock will NOT be restored.</div><div style="display:flex;gap:10px"><button class="btn btn-outline grow" onclick="closeModalForce()">Cancel</button><button class="btn btn-red grow" onclick="oc(id);ocDeleteSale()">Delete</button></div>');
+}
+function doDeleteSale(id){saveSales(getSales().filter(function(s){return s.id!==id}));closeModalForce();showToast('Sale deleted');goBack()}
+
+/* ==============================================
+   BARCODE SCANNER
+============================================== */
+var zxReader=null, scanActive=false, scanMode='barcode';
+
+function setScanMode(mode){
+  scanMode=mode;
+  document.getElementById('tgBarcode').classList.toggle('active',mode==='barcode');
+  document.getElementById('tgTemple').classList.toggle('active',mode==='temple');
+  document.getElementById('barcodeSect').style.display=mode==='barcode'?'block':'none';
+  document.getElementById('templeSect').style.display=mode==='temple'?'block':'none';
+  if(mode!=='barcode')stopBarcodeScanner();
+  if(mode==='temple'){document.getElementById('templeResult').innerHTML='';updateTempleKeyUI()}
+}
+
+function startBarcodeScanner(){
+  if(scanActive)return;
+  if(typeof ZXing==='undefined'){showToast('Scanner library not loaded');return}
+  setBarcodeStatus('Starting camera...');
+  document.getElementById('btnStartScan').style.display='none';
+  document.getElementById('btnStopScan').style.display='block';
+  zxReader=new ZXing.BrowserMultiFormatReader();
+  scanActive=true;
+  var hints=new Map();
+  hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS,[
+    ZXing.BarcodeFormat.EAN_13,ZXing.BarcodeFormat.EAN_8,
+    ZXing.BarcodeFormat.CODE_128,ZXing.BarcodeFormat.CODE_39,
+    ZXing.BarcodeFormat.QR_CODE,ZXing.BarcodeFormat.DATA_MATRIX,
+    ZXing.BarcodeFormat.UPC_A,ZXing.BarcodeFormat.UPC_E
+  ]);
+  hints.set(ZXing.DecodeHintType.TRY_HARDER,true);
+  zxReader.hints=hints;
+  zxReader.decodeFromConstraints(
+    {video:{facingMode:'environment',width:{ideal:1920},height:{ideal:1080}}},
+    'scanVideo',
+    function(result,err){
+      if(result&&scanActive){
+        stopBarcodeScanner();
+        handleBarcodeResult(result.getText());
+      }else if(err&&typeof ZXing!=='undefined'&&!(err instanceof ZXing.NotFoundException)){
+        console.warn('Scan error:',err);
+      }
+    }
+  ).then(function(){
+    setBarcodeStatus('Scanning... hold steady');
+  }).catch(function(e){
+    stopBarcodeScanner();
+    setBarcodeStatus('Camera error: '+e.message);
+    showToast('Allow camera permission & try again');
+  });
+}
+
+function stopBarcodeScanner(){
+  scanActive=false;
+  if(zxReader){try{zxReader.reset()}catch(e){}zxReader=null}
+  var v=document.getElementById('scanVideo');
+  if(v&&v.srcObject){v.srcObject.getTracks().forEach(function(t){t.stop()});v.srcObject=null}
+  document.getElementById('btnStartScan').style.display='block';
+  document.getElementById('btnStopScan').style.display='none';
+  setBarcodeStatus('Point camera at barcode');
+}
+
+function setBarcodeStatus(msg){
+  var el=document.getElementById('barcodeStatus');if(el)el.textContent=msg;
+}
+
+function handleBarcodeResult(code){
+  code=code.trim();
+  if(!code)return;
+  showToast('Scanned: '+code);
+  if(scanFieldTarget){
+    var el=document.getElementById(scanFieldTarget);
+    if(el)el.value=code;
+    scanFieldTarget=null;goBack();return;
+  }
+  var inv=getInventory();
+  var item=inv.find(function(i){return i.barcode===code||i.sku===code||i.sku===code.replace(/^0+/,'')});
+  if(item){
+    showToast('Found: '+item.name);
+    setTimeout(function(){switchTab('inventory');setTimeout(function(){openItemDetail(item.id)},100)},500);
+  }else{
+    openModal('<div class="modal-title">Barcode Scanned</div><div class="card2 mb-12 bold" style="font-size:16px;text-align:center;letter-spacing:1px">'+code+'</div><div class="muted sm mb-16">This barcode is not in your inventory.</div><div style="display:flex;flex-direction:column;gap:8px"><button class="btn btn-primary btn-full" onclick="closeModalForce();window._bcode=code;openAddItem(window._bcode)">&#10133; Add as New Item</button><button class="btn btn-outline btn-full" onclick="closeModalForce()">Close</button></div>');
+  }
+}
+
+function manualSearch(){
+  var q=(document.getElementById('manualBarcode').value||'').trim();
+  if(!q){showToast('Enter a barcode or model number');return}
+  handleBarcodeResult(q);
+}
+
+function scanForField(fieldId){
+  scanFieldTarget=fieldId;switchTab('scan');setScanMode('barcode');
+  showToast('Scan barcode - will fill automatically');
+}
+
+/* ==============================================
+   TEMPLE SCAN (GROQ AI)
+============================================== */
+function openScanForItem(){switchTab('scan');setScanMode('temple')}
+
+function getGroqKey(){return localStorage.getItem('optistock_groq')||getSettings().groqKey||''}
+function storeGroqKey(key){localStorage.setItem('optistock_groq',key);saveSetting('groqKey',key)}
+function clearGroqKey(){localStorage.removeItem('optistock_groq');saveSetting('groqKey','');updateTempleKeyUI()}
+
+function updateTempleKeyUI(){
+  var key=getGroqKey();
+  var b=document.getElementById('templeKeyBanner');
+  var o=document.getElementById('templeKeyOk');
+  if(!b||!o)return;
+  b.style.display=key?'none':'block';
+  o.style.display=key?'block':'none';
+}
+function saveInlineGroqKey(){
+  var val=(document.getElementById('inlineGroqKey').value||'').trim();
+  if(!val||!val.startsWith('gsk_')){showToast('Invalid key - must start with gsk_');return}
+  storeGroqKey(val);
+  document.getElementById('inlineGroqKey').value='';
+  showToast('Groq key saved!');
+  updateTempleKeyUI();
+}
+function checkKeyThenScan(inputId){
+  if(!getGroqKey()){showToast('Please enter your Groq API key first');return}
+  document.getElementById(inputId).click();
+}
+
+function handleTemplePhoto(input){
+  var f=input.files[0];if(!f)return;input.value='';
+  var resultEl=document.getElementById('templeResult');
+  resultEl.innerHTML='<div class="card" style="text-align:center;padding:28px"><div style="font-size:40px">&#128269;</div><div class="muted sm" style="margin-top:12px">AI reading temple arm...</div></div>';
+  compressImage(f,function(b64compressed){
+    callGroqVision(b64compressed,function(code,err){
+      if(err){
+        resultEl.innerHTML='<div class="card"><div class="bold c-red mb-8">&#10060; Error: '+err+'</div><div class="muted xs mb-12">Check your Groq API key in Settings</div><button class="btn btn-outline btn-sm btn-full" onclick="checkKeyThenScan(\"templeCamera\")">&#128247; Try Again</button></div>';
+        return;
+      }
+      if(!code||code==='UNCLEAR'||code.length<2||code.length>30){
+        resultEl.innerHTML='<div class="card"><div class="bold mb-8">&#9888; Could not read temple text</div><div class="muted sm mb-12" style="line-height:1.7">Tips for better results:<br>&#8226; Hold phone still, 10-15cm from temple<br>&#8226; Good lighting on the text<br>&#8226; Focus on just the temple arm<br>&#8226; Make sure text is clearly visible</div><button class="btn btn-primary btn-full" onclick="checkKeyThenScan(\"templeCamera\")">&#128247; Try Again</button></div>';
+        return;
+      }
+      window._lastTempleCode=code;
+      var inv=getInventory();
+      var found=inv.find(function(i){
+        var c=code.toLowerCase();
+        return (i.sku&&i.sku.toLowerCase()===c)||
+               (i.sku&&i.sku.toLowerCase().replace(/[-\s]/g,'')=== c.replace(/[-\s]/g,''))||
+               (i.barcode&&i.barcode===code)||
+               (i.name&&i.name.toLowerCase().indexOf(c)!==-1);
+      });
+      if(found){
+        var h='<div class="card mb-12" style="background:rgba(34,197,94,.08);border-color:rgba(34,197,94,.2)">';
+        h+='<div class="bold mb-4 c-green">&#9989; Match Found in Inventory!</div>';
+        h+='<div class="xs muted">Model read from frame: <b>'+code+'</b></div></div>';
+        h+='<div class="item-row" onclick="oc(found.id);ocItemDetail()">';
+        h+=found.photo?'<div class="item-thumb"><img src="'+found.photo+'"></div>':'<div class="item-thumb">&#128230;</div>';
+        h+='<div class="item-info"><div class="item-name">'+found.name+'</div>';
+        h+='<div class="item-sub">Stock: '+found.stock+' &middot; '+fCur(found.price)+'</div></div>';
+        h+='<span class="badge '+(parseInt(found.stock)>0?'badge-green':'badge-red')+'">'+(parseInt(found.stock)>0?found.stock+' pcs':'OUT')+'</span></div>';
+        resultEl.innerHTML=h;
+      }else{
+        var h2='<div class="card mb-12">';
+        h2+='<div class="bold mb-4">Text Read from Frame:</div>';
+        h2+='<div class="c-blue bold" style="font-size:18px;letter-spacing:1px">'+code+'</div>';
+        h2+='<div class="muted xs" style="margin-top:8px">No matching item found in inventory</div></div>';
+        h2+='<div style="display:flex;flex-direction:column;gap:8px">';
+        h2+='<button class="btn btn-primary btn-full" onclick="openAddItem(window._lastTempleCode)" >&#10133; Add as New Item (Model: '+code+')</button>';
+        h2+='<button class="btn btn-outline btn-full" onclick="templeSearch()">&#128269; Search Inventory</button>';
+        h2+='<button class="btn btn-outline btn-sm btn-full" onclick="checkKeyThenScan(\"templeCamera\")">&#128247; Scan Again</button></div>';
+        resultEl.innerHTML=h2;
+      }
+    });
+  });
+}
+
+function callGroqVision(b64,cb){
+  var key=getGroqKey();
+  if(!key){cb(null,'No API key. Please add your Groq key in Settings.');return}
+  var prompt='Read the model/SKU code from this eyeglass temple arm. Reply with ONLY the code (max 25 chars, e.g. RB3025, OX5346). No explanation. If unreadable: UNCLEAR';
+  fetch('https://api.groq.com/openai/v1/chat/completions',{
+    method:'POST',
+    headers:{'Authorization':'Bearer '+key,'Content-Type':'application/json'},
+    body:JSON.stringify({
+      model:'meta-llama/llama-4-scout-17b-16e-instruct',
+      max_tokens:30,
+      temperature:0.1,
+      messages:[{role:'user',content:[
+        {type:'image_url',image_url:{url:'data:image/jpeg;base64,'+b64}},
+        {type:'text',text:prompt}
+      ]}]
+    })
+  }).then(function(r){
+    if(!r.ok){r.json().then(function(e){cb(null,(e.error&&e.error.message)||'API error '+r.status)}).catch(function(){cb(null,'API error '+r.status)});return}
+    return r.json();
+  }).then(function(data){
+    if(!data)return;
+    var raw=((data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content)||'UNCLEAR').trim();
+    var code=raw.split(String.fromCharCode(10))[0].trim().replace(/['".,\s]/g,'').slice(0,25);
+    cb(code,null);
+  }).catch(function(e){cb(null,e.message||'Network error')});
+}
+
+/* ==============================================
+   PURCHASE ORDERS
+============================================== */
+function renderPOs(){
+  var pos=getPOs();
+  document.getElementById('poCount').textContent=pos.length+' orders';
+  var filtered=poFilterMode==='all'?pos:pos.filter(function(p){return p.status===poFilterMode});
+  var el=document.getElementById('poList');
+  if(!filtered.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">&#128203;</div><div class="empty-text">No purchase orders</div><div class="empty-sub">Tap + to create a purchase order</div></div>';return}
+  var h='';
+  filtered.slice().reverse().forEach(function(po){
+    h+='<div class="item-row" onclick="oc(po.id);ocPODetail()">';
+    h+='<div class="item-thumb" style="font-size:20px;background:rgba(59,130,246,.1)">&#128203;</div>';
+    h+='<div class="item-info"><div class="item-name">'+po.poNumber+' &ndash; '+(po.supplier||'No Supplier')+'</div>';
+    h+='<div class="item-sub">'+fDate(po.date)+' &middot; '+(po.items||[]).length+' item(s)</div></div>';
+    h+='<span class="badge '+(po.status==='received'?'badge-green':'badge-blue')+'">'+(po.status==='received'?'Received':'Pending')+'</span></div>';
+  });
+  el.innerHTML=h;
+}
+function setPOFilter(mode,el){poFilterMode=mode;document.querySelectorAll('#poFilterChips .chip').forEach(function(c){c.classList.remove('active')});el.classList.add('active');renderPOs()}
+function openAddPO(){
+  showSub('pgAddPO','New Purchase Order');
+  populateSupplierSelect('poSupplier','');
+  document.getElementById('poDate').value=todayISO();
+  document.getElementById('poExpected').value='';
+  document.getElementById('poNotes').value='';
+  document.getElementById('poItemsList').innerHTML='';
+  addPOItemRow();
+}
+function addPOItemRow(){
+  var inv=getInventory();
+  var opts='<option value="">Select item</option>';
+  inv.forEach(function(i){opts+='<option value="'+i.id+'" data-cost="'+(i.cost||0)+'">'+i.name+(i.sku?' ('+i.sku+')':'')+'</option>'});
+  var div=document.createElement('div');
+  div.className='row mb-8';div.style.cssText='gap:8px;align-items:center';
+  div.innerHTML='<select class="form-input grow" style="flex:2" onchange="var r=this.parentNode;r.querySelector(\'.po-cost\').value=this.options[this.selectedIndex].dataset.cost">'+opts+'</select><input class="form-input po-qty" type="number" placeholder="Qty" min="1" style="width:60px" value="1"><input class="form-input po-cost" type="number" placeholder="Cost" min="0" style="width:80px"><button class="btn btn-red btn-sm" style="width:34px;height:44px;padding:0;flex-shrink:0" onclick="this.parentNode.remove()">&#10005;</button>';
+  document.getElementById('poItemsList').appendChild(div);
+}
+function savePO(){
+  var supplier=document.getElementById('poSupplier').value;
+  var rows=document.getElementById('poItemsList').querySelectorAll('.row');
+  var items=[];
+  rows.forEach(function(row){
+    var sel=row.querySelector('select');var qty=row.querySelector('.po-qty');var cost=row.querySelector('.po-cost');
+    if(sel&&sel.value)items.push({itemId:sel.value,itemName:sel.options[sel.selectedIndex]?sel.options[sel.selectedIndex].text:'',qty:parseInt(qty?qty.value:1)||1,cost:parseFloat(cost?cost.value:0)||0});
+  });
+  if(!items.length){showToast('Add at least one item');return}
+  var po={id:uid(),poNumber:nextPONo(),date:new Date().toISOString(),supplier:supplier,expectedDate:document.getElementById('poExpected').value,status:'pending',notes:document.getElementById('poNotes').value.trim(),items:items};
+  var pos=getPOs();pos.push(po);savePOs(pos);
+  showToast('Purchase Order created!');goBack();renderPOs();
+}
+function openPODetail(id){
+  var po=getPOs().find(function(p){return p.id===id});if(!po)return;
+  showSub('pgPODetail','PO '+po.poNumber);
+  var tc=(po.items||[]).reduce(function(a,i){return a+i.cost*i.qty},0);
+  var h='<div class="card mb-12"><div class="row between mb-8" style="align-items:center">';
+  h+='<div><div style="font-size:20px;font-weight:800">'+po.poNumber+'</div><div class="xs muted">'+fDate(po.date)+'</div></div>';
+  h+='<span class="badge '+(po.status==='received'?'badge-green':'badge-blue')+'">'+(po.status==='received'?'Received':'Pending')+'</span></div>';
+  if(po.supplier)h+='<div class="xs muted">Supplier: '+po.supplier+'</div>';
+  if(po.expectedDate)h+='<div class="xs muted">Expected: '+fDate(po.expectedDate)+'</div>';
+  h+='</div><div class="card mb-12"><div class="sec-title" style="margin-top:0">Items Ordered</div>';
+  (po.items||[]).forEach(function(it){h+='<div class="row between mb-8" style="align-items:center"><div class="grow sm bold">'+it.itemName+'</div><div class="xs muted">'+it.qty+' pcs</div>'+(it.cost?'<div class="xs muted" style="margin-left:8px">'+fCur(it.cost*it.qty)+'</div>':'')+'</div>'});
+  h+='<div class="divider"></div><div class="row between"><span class="muted">Total Cost</span><span class="bold">'+fCur(tc)+'</span></div></div>';
+  h+='<div style="display:flex;flex-direction:column;gap:10px">';
+  if(po.status!=='received')h+='<button class="btn btn-green btn-full" onclick="oc(po.id);ocReceivePO()">&#9989; Mark as Received (Update Stock)</button>';
+  else h+='<div class="card" style="color:var(--green);font-size:13px">&#9989; Stock was received and added to inventory</div>';
+  h+='<button class="btn btn-red btn-sm btn-full" onclick="oc(po.id);confirmDelPO()">&#128465; Delete PO</button></div>';
+  document.getElementById('poDetailContent').innerHTML=h;
+}
+function receivePO(id){
+  openModal('<div class="modal-title">Receive Stock?</div><div class="muted mb-16">This will add all ordered quantities to your inventory.</div><div style="display:flex;gap:10px"><button class="btn btn-outline grow" onclick="closeModalForce()">Cancel</button><button class="btn btn-green grow" onclick="doReceivePO(id)">&#9989; Confirm Receive</button></div>');
+}
+function doReceivePO(id){
+  var pos=getPOs();var po=pos.find(function(p){return p.id===id});if(!po)return;
+  var inv=getInventory();
+  (po.items||[]).forEach(function(poi){var item=inv.find(function(i){return i.id===poi.itemId});if(item)item.stock=(parseInt(item.stock)||0)+parseInt(poi.qty)});
+  saveInventory(inv);po.status='received';po.receivedDate=new Date().toISOString();savePOs(pos);
+  closeModalForce();showToast('Stock updated! Items added to inventory');openPODetail(id);
+}
+function confirmDeletePO(id){
+  openModal('<div class="modal-title">Delete PO?</div><div class="muted mb-16">This cannot be undone.</div><div style="display:flex;gap:10px"><button class="btn btn-outline grow" onclick="closeModalForce()">Cancel</button><button class="btn btn-red grow" onclick="oc(id);ocDeletePO()">Delete</button></div>');
+}
+function doDeletePO(id){savePOs(getPOs().filter(function(p){return p.id!==id}));closeModalForce();showToast('PO deleted');goBack()}
+
+/* ==============================================
+   SUPPLIERS
+============================================== */
+function renderSuppliers(){
+  var sups=getSuppliers();
+  document.getElementById('supplierCount').textContent=sups.length+' suppliers';
+  var el=document.getElementById('supplierList');
+  if(!sups.length){el.innerHTML='<div class="muted sm mb-8">No suppliers added yet</div>';return}
+  var h='';
+  sups.forEach(function(s){
+    h+='<div class="item-row"><div class="item-thumb" style="font-size:22px">&#127981;</div>';
+    h+='<div class="item-info"><div class="item-name">'+s.name+'</div><div class="item-sub">'+[s.company,s.phone].filter(Boolean).join(' &middot; ')+'</div></div>';
+    h+='<button class="btn btn-red btn-sm" style="padding:6px 10px" onclick="oc(s.id);ocDeleteSupplier()">&#10005;</button></div>';
+  });
+  el.innerHTML=h;
+}
+function addSupplier(){
+  var name=document.getElementById('supName').value.trim();
+  if(!name){showToast('Supplier name is required');return}
+  var sups=getSuppliers();
+  sups.push({id:uid(),name:name,phone:document.getElementById('supPhone').value.trim(),company:document.getElementById('supCompany').value.trim()});
+  saveSuppliers(sups);
+  ['supName','supPhone','supCompany'].forEach(function(id){document.getElementById(id).value=''});
+  showToast('Supplier added');renderSuppliers();
+  populateSupplierSelect('fSupplier','');populateSupplierSelect('poSupplier','');
+}
+function deleteSupplier(id){
+  saveSuppliers(getSuppliers().filter(function(s){return s.id!==id}));
+  showToast('Supplier removed');renderSuppliers();
+}
+function populateSupplierSelect(selectId,selected){
+  var el=document.getElementById(selectId);if(!el)return;
+  var h='<option value="">None</option>';
+  getSuppliers().forEach(function(s){h+='<option value="'+s.name+'"'+(s.name===selected?' selected':'')+'>'+s.name+'</option>'});
+  el.innerHTML=h;
+}
+
+/* ==============================================
+   SETTINGS
+============================================== */
+function renderSettings(){
+  var s=getSettings();
+  document.getElementById('stShopName').value=s.shopName||'';
+  document.getElementById('stShopPhone').value=s.shopPhone||'';
+  document.getElementById('stGST').value=s.gstNo||'';
+  document.getElementById('stAddress').value=s.shopAddress||'';
+  document.getElementById('stGroqKey').value=getGroqKey()||'';
+  document.getElementById('stSheetUrl').value=s.sheetUrl||'';
+  document.getElementById('stPin1').value='';
+  document.getElementById('stPin2').value='';
+}
+function saveSettings(){
+  var updates={
+    shopName:document.getElementById('stShopName').value.trim(),
+    shopPhone:document.getElementById('stShopPhone').value.trim(),
+    gstNo:document.getElementById('stGST').value.trim(),
+    shopAddress:document.getElementById('stAddress').value.trim(),
+    groqKey:document.getElementById('stGroqKey').value.trim(),
+    sheetUrl:document.getElementById('stSheetUrl').value.trim()
+  };
+  var p1=document.getElementById('stPin1').value;
+  var p2=document.getElementById('stPin2').value;
+  if(p1||p2){
+    if(p1.length!==4||!/^\d+$/.test(p1)){showToast('PIN must be exactly 4 digits');return}
+    if(p1!==p2){showToast('PINs do not match');return}
+    updates.pin=p1;
+  }
+  saveSettingsObj(updates);
+  if(updates.groqKey)storeGroqKey(updates.groqKey);
+  showToast('Settings saved successfully');
+  updateTempleKeyUI();
+}
+function testSheetUrl(){
+  var url=document.getElementById('stSheetUrl').value.trim();
+  if(!url){showToast('Please enter a Google Sheets URL first');return}
+  showToast('Testing connection...',3000);
+  fetch(url,{method:'GET',mode:'no-cors'}).then(function(){showToast('Connection OK &#10003;')}).catch(function(e){showToast('Connection failed: '+e.message)});
+}
+
+/* ==============================================
+   GOOGLE SHEETS BACKUP
+============================================== */
+var GS_SCRIPT = "// OptiStock v5.0 - Google Apps Script\n// Extensions > Apps Script > Paste > Save > Deploy as Web App\n// Execute as: Me | Who has access: Anyone\n\nfunction doPost(e){\n  try{\n    var ss=SpreadsheetApp.getActiveSpreadsheet();\n    var data=JSON.parse(e.postData.contents);\n    var inv=ss.getSheetByName(\"Inventory\")||ss.insertSheet(\"Inventory\");\n    inv.clearContents();\n    inv.appendRow([\"Name\",\"Model No\",\"Size\",\"Brand\",\"Category\",\"For\",\"Frame Type\",\"Colour\",\"Colour Code\",\"Colour Qty\",\"Total Stock\",\"Selling Price\",\"Cost Price\",\"Material\",\"Barcode\",\"Supplier\",\"Location\",\"Updated\"]);\n    (data.inventory||[]).forEach(function(i){\n      var cols=(i.colors&&i.colors.length)?i.colors:[{name:i.color||\"\",code:\"\",qty:i.stock||0}];\n      cols.forEach(function(c){\n        inv.appendRow([i.name,i.sku||\"\",i.size||\"\",i.brand||\"\",i.category||\"\",i.fFor||\"\",i.frameType||\"\",c.name||\"\",c.code||\"\",c.qty||0,i.stock||0,i.price||0,i.cost||0,i.material||\"\",i.barcode||\"\",i.supplier||\"\",i.location||\"\",new Date()]);\n      });\n    });\n    var sal=ss.getSheetByName(\"Sales\")||ss.insertSheet(\"Sales\");\n    sal.clearContents();\n    sal.appendRow([\"Bill No\",\"Date\",\"Customer\",\"Phone\",\"Item\",\"Qty\",\"Price\",\"Total\",\"Grand Total\",\"Discount\"]);\n    (data.sales||[]).forEach(function(s){(s.items||[]).forEach(function(it,idx){sal.appendRow([s.billNo||\"\",new Date(s.date),s.customerName||\"\",s.customerPhone||\"\",it.name,it.qty,it.price,it.total,idx===0?s.grandTotal:\"\",idx===0?s.discount||0:\"\"])})});\n    var pos=ss.getSheetByName(\"PurchaseOrders\")||ss.insertSheet(\"PurchaseOrders\");\n    pos.clearContents();\n    pos.appendRow([\"PO Number\",\"Date\",\"Supplier\",\"Item\",\"Qty\",\"Cost\",\"Status\"]);\n    (data.pos||[]).forEach(function(p){(p.items||[]).forEach(function(it){pos.appendRow([p.poNumber||\"\",new Date(p.date),p.supplier||\"\",it.itemName,it.qty,it.cost||0,p.status||\"\"])})});\n    return ContentService.createTextOutput(JSON.stringify({status:\"ok\"})).setMimeType(ContentService.MimeType.JSON);\n  }catch(err){return ContentService.createTextOutput(JSON.stringify({status:\"error\",message:err.toString()})).setMimeType(ContentService.MimeType.JSON)}\n}\n\nfunction doGet(e){return ContentService.createTextOutput(\"OptiStock Backup Active\").setMimeType(ContentService.MimeType.TEXT)}"
+
+function doBackup(){
+  var url=getSettings().sheetUrl;
+  if(!url){
+    showToast('Set Google Sheets URL in Settings first');
+    switchTab('more');
+    setTimeout(function(){showSub('pgSheetSetup','Sheets Setup')},100);
+    return;
+  }
+  showToast('Syncing to Google Sheets...',4000);
+  fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({inventory:getInventory(),sales:getSales(),pos:getPOs(),syncedAt:new Date().toISOString()})})
+    .then(function(){saveSetting('lastSync',Date.now());showToast('Synced to Google Sheets!')})
+    .catch(function(e){showToast('Sync error: '+e.message)});
+}
+function autoBackup(){
+  var url=getSettings().sheetUrl;if(!url)return;
+  fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({inventory:getInventory(),sales:getSales(),pos:getPOs(),syncedAt:new Date().toISOString()})}).then(function(){saveSetting('lastSync',Date.now())}).catch(function(){});
+}
+function copyScript(){
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(GS_SCRIPT).then(function(){showToast('Script copied to clipboard!')}).catch(fallbackCopy);
+  }else{fallbackCopy()}
+}
+function fallbackCopy(){
+  var ta=document.createElement('textarea');ta.value=GS_SCRIPT;ta.style.position='fixed';ta.style.opacity='0';
+  document.body.appendChild(ta);ta.focus();ta.select();
+  try{document.execCommand('copy');showToast('Script copied!')}catch(e){showToast('Copy failed - please copy manually')}
+  document.body.removeChild(ta);
+}
+function exportCSV(){
+  var inv=getInventory();
+  var rows=[['Name','Model No','Size','Brand','Category','For','Frame Type','Colour','Colour Code','Colour Qty','Total Stock','Selling Price','Cost Price','Material','Barcode','Supplier','Location']];
+  inv.forEach(function(i){
+    var cols=i.colors&&i.colors.length?i.colors:[{name:'',code:'',qty:i.stock||0}];
+    cols.forEach(function(c){
+      rows.push([i.name,i.sku||'',i.size||'',i.brand||'',i.category||'',i.fFor||'',i.frameType||'',c.name||'',c.code||'',c.qty||0,i.stock||0,i.price||0,i.cost||0,i.material||'',i.barcode||'',i.supplier||'',i.location||'']);
+    });
+  });
+  var csv=rows.map(function(r){return r.map(function(c){return'"'+String(c).replace(/"/g,'""')+'"'}).join(',')}).join(String.fromCharCode(10));
+  var a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download='optistock_inventory_'+todayISO()+'.csv';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  showToast('CSV downloaded!');
+}
+
+function renderMore(){
+  document.getElementById('poCount').textContent=getPOs().length+' orders';
+  document.getElementById('supplierCount').textContent=getSuppliers().length+' suppliers';
+}
+
+/* ==============================================
+   INIT
+============================================== */
+function initApp(){
+  switchTab('home');
+}
+
+window.onload=function(){
+  if(sessionStorage.getItem('unlocked')==='1'){
+    document.getElementById('pinScreen').style.display='none';
+    document.getElementById('app').style.display='flex';
+    initApp();
+  }
+};
+window.addEventListener('popstate',function(){if(subStack.length>0)goBack()});
+</script>
+</body>
+</html>

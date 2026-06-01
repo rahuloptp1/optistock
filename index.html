@@ -532,6 +532,9 @@ function setCatFilter(c){invCatFilter=c;renderInventory()}
 function ocItemDetail(){openItemDetail(window._ocId)}
 function templeSearch(){switchTab('inventory');setTimeout(function(){var el=document.getElementById('invSearch');if(el)el.value=window._lastTempleCode||'';
 renderInventory()},100)}
+function getTempleEditCode(){var el=document.getElementById('templeEditCode');return el&&el.value.trim()?el.value.trim():(window._lastTempleCode||'')}
+function templeRecheck(){var code=getTempleEditCode();window._lastTempleCode=code;switchTab('inventory');setTimeout(function(){var el=document.getElementById('invSearch');if(el)el.value=code;renderInventory()},100)}
+function templeAddCorrected(){var code=getTempleEditCode();openAddItem(code)}
 function ocEditItem(){openEditItem(window._ocId)}
 function ocSaleDetail(){openSaleDetail(window._ocId)}
 function ocDeleteSale(){doDeleteSale(window._ocId)}
@@ -1306,11 +1309,13 @@ function handleTemplePhoto(input){
       }else{
         var h2='<div class="card mb-12">';
         h2+='<div class="bold mb-4">Text Read from Frame:</div>';
-        h2+='<div class="c-blue bold" style="font-size:18px;letter-spacing:1px">'+code+'</div>';
-        h2+='<div class="muted xs" style="margin-top:8px">No matching item found in inventory</div></div>';
+        h2+='<div class="c-blue bold" style="font-size:22px;letter-spacing:1px">'+code+'</div>';
+        h2+='<div class="muted xs" style="margin-top:8px">No match found. If wrong, correct it below:</div>';
+        h2+='<input class="form-input" id="templeEditCode" value="'+code.replace(/"/g,'&quot;')+'" style="margin-top:10px;font-size:16px;font-weight:700;text-align:center">';
+        h2+='</div>';
         h2+='<div style="display:flex;flex-direction:column;gap:8px">';
-        h2+='<button class="btn btn-primary btn-full" onclick="openAddItem(window._lastTempleCode)" >&#10133; Add as New Item (Model: '+code+')</button>';
-        h2+='<button class="btn btn-outline btn-full" onclick="templeSearch()">&#128269; Search Inventory</button>';
+        h2+='<button class="btn btn-outline btn-full" onclick="templeRecheck()">&#128269; Search This Model</button>';
+        h2+='<button class="btn btn-primary btn-full" onclick="templeAddCorrected()">&#10133; Add as New Item</button>';
         h2+='<button class="btn btn-outline btn-sm btn-full" onclick="checkKeyThenScan(\'templeCamera\')">&#128247; Scan Again</button></div>';
         resultEl.innerHTML=h2;
       }
@@ -1321,7 +1326,7 @@ function handleTemplePhoto(input){
 function callGroqVision(dataUrl,cb){
   var key=getGroqKey();
   if(!key){cb(null,'No API key. Please add your Groq key in Settings.');return}
-  var prompt='Read the model/SKU code from this eyeglass temple arm. Reply with ONLY the code (max 25 chars, e.g. RB3025, OX5346). No explanation. If unreadable: UNCLEAR';
+  var prompt='This is a close-up photo of an eyeglass temple arm (the side stem). It has tiny engraved or printed markings, usually in this format: MODEL SIZE COLOUR, for example "52294 50-16-140 C4" where 52294 is the model number, 50-16-140 is the size, and C4 is the colour code.\n\nYour job: read the MODEL NUMBER only (the first standalone number or code, before the size measurements). Look very carefully at the engraved text. The model is usually 4 to 6 digits or letters+digits (like 52294, RB3025, OX5346).\n\nReply with ONLY the model number. No size, no colour code, no explanation. If you truly cannot read it, reply: UNCLEAR';
   fetch('https://api.groq.com/openai/v1/chat/completions',{
     method:'POST',
     headers:{'Authorization':'Bearer '+key,'Content-Type':'application/json'},

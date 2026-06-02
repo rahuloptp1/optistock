@@ -1363,13 +1363,13 @@ function handleTemplePhoto(input){
 function callGroqVision(dataUrl,cb){
   var key=getGroqKey();
   if(!key){cb(null,'No API key. Please add your Groq key in Settings.');return}
-  var prompt='You are an expert OCR reader looking at a high-contrast black-and-white close-up of an eyeglass temple arm (the side stem). It has tiny engraved markings in this typical format: MODEL  SIZE  COLOUR. Example: "52294 50\u25a116-140 C4" means model=52294, size=50-16-140, colour=C4. The size always has the pattern: two digits, a box or dash, two digits, a dash, two or three digits (like 50-16-140).\n\nSTEP 1: Silently transcribe ALL characters you can see on the arm, left to right. Bright white dots or blurry patches are LIGHT REFLECTIONS (glare) - ignore them, do not read them as characters.\n\nSTEP 2: The MODEL NUMBER is the standalone group that comes BEFORE the size pattern. It is usually 4 to 6 characters (digits, or letters+digits like RB3025).\n\nSTEP 3: Output ONLY the model number. Nothing else - no size, no colour, no words, no label, no punctuation. Just the model. If genuinely unreadable, output: UNCLEAR';
+  var prompt='You are an expert OCR reader. The image is a high-contrast black-and-white close-up of an eyeglass temple arm with tiny engraved text on it.\n\nTranscribe the engraved text EXACTLY as you see it, left to right, as a single line. Keep all spaces, dashes, letters and digits in their original order. Ignore bright white dots or blurry spots - those are light reflections, not characters.\n\nThe text usually looks like: MODEL  SIZE-A[]SIZE-B-SIZE-C  COLOUR  (for example "L110 50\u25a119-145" or "52294 50\u25a116-140 C4").\n\nOutput ONLY the transcribed line, nothing else. No explanation, no labels. If you can read nothing, output: UNCLEAR';
   fetch('https://api.groq.com/openai/v1/chat/completions',{
     method:'POST',
     headers:{'Authorization':'Bearer '+key,'Content-Type':'application/json'},
     body:JSON.stringify({
       model:'meta-llama/llama-4-scout-17b-16e-instruct',
-      max_tokens:30,
+      max_tokens:40,
       temperature:0.1,
       messages:[{role:'user',content:[
         {type:'image_url',image_url:{url:dataUrl}},
@@ -1390,18 +1390,22 @@ function callGroqVision(dataUrl,cb){
 function extractModelCode(text){
   if(!text)return 'UNCLEAR';
   if(/unclear/i.test(text))return 'UNCLEAR';
-  // if there is a colon (e.g. "The model number is: 8071"), take what comes after the last colon
+  // if a label with colon precedes the value, take what comes after the last colon
   if(text.indexOf(':')>=0){text=text.split(':').pop();}
-  // find alphanumeric tokens (allow letters+digits, like RB3025 or 52294)
-  var tokens=text.match(/[A-Za-z]*\d[A-Za-z0-9]*/g);
-  if(tokens&&tokens.length){
-    // prefer the longest token (model numbers are usually the longest standalone code)
-    tokens.sort(function(a,b){return b.length-a.length});
-    return tokens[0].slice(0,25);
-  }
-  // fallback: strip junk
-  var c=text.replace(/['".,\s]/g,'').slice(0,25);
-  return c||'UNCLEAR';
+  // normalise: treat the box symbol and various dashes as a single dash separator
+  var t=' '+text.replace(/[\u25a1\u25fb\u25fc\u2610\u2b1c]/g,'-').replace(/[\u2012\u2013\u2014\u2015]/g,'-')+' ';
+  // remove the SIZE pattern: NN-NN-NNN (eye-bridge-temple), e.g. 50-19-145 or 50 19 145
+  // accept optional spaces around the dashes
+  t=t.replace(/\b\d{2}\s*-\s*\d{2}\s*-\s*\d{2,3}\b/g,' ');
+  // also remove a lone temple length like 140/145 if it slipped through with a leading dash
+  t=t.replace(/-\s*\d{2,3}\b/g,' ');
+  // now collect candidate tokens (letters+digits or pure digits), order preserved
+  var tokens=t.match(/[A-Za-z]*\d[A-Za-z0-9]*/g)||[];
+  // drop pure 2-digit leftovers (likely stray size fragments)
+  var good=tokens.filter(function(x){return !/^\d{2}$/.test(x)});
+  var pick=good.length?good[0]:(tokens.length?tokens[0]:'');
+  pick=pick.replace(/[^A-Za-z0-9]/g,'').slice(0,25);
+  return pick||'UNCLEAR';
 }
 
 /* ==============================================

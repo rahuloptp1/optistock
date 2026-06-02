@@ -933,6 +933,43 @@ function compressImage(file,cb){
     rd.readAsDataURL(file);
   }
 }
+function enhanceTempleImage(file,cb){
+  try{
+    var img=new Image();
+    var url=URL.createObjectURL(file);
+    img.onload=function(){
+      try{
+        var maxDim=1280;
+        var r=Math.min(maxDim/img.width,maxDim/img.height,1);
+        var w=Math.round(img.width*r),h=Math.round(img.height*r);
+        var c=document.createElement('canvas');
+        c.width=w;c.height=h;
+        var ctx=c.getContext('2d');
+        ctx.drawImage(img,0,0,w,h);
+        var imgd=ctx.getImageData(0,0,w,h);
+        var d=imgd.data;
+        var i,gray;
+        var contrast=1.9;
+        var intercept=128*(1-contrast);
+        for(i=0;i<d.length;i+=4){
+          gray=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];
+          gray=contrast*gray+intercept;
+          if(gray<0)gray=0;if(gray>255)gray=255;
+          d[i]=d[i+1]=d[i+2]=gray;
+        }
+        ctx.putImageData(imgd,0,0);
+        var out=c.toDataURL('image/jpeg',0.92);
+        URL.revokeObjectURL(url);
+        cb(out);
+      }catch(e){
+        URL.revokeObjectURL(url);
+        compressImage(file,cb);
+      }
+    };
+    img.onerror=function(){URL.revokeObjectURL(url);compressImage(file,cb)};
+    img.src=url;
+  }catch(e){compressImage(file,cb)}
+}
 function saveItem(){
   var name=document.getElementById('fName').value.trim();
   if(!name){showToast('Item name is required');return}
@@ -1277,7 +1314,7 @@ function handleTemplePhoto(input){
   var f=input.files[0];if(!f)return;input.value='';
   var resultEl=document.getElementById('templeResult');
   resultEl.innerHTML='<div class="card" style="text-align:center;padding:28px"><div style="font-size:40px">&#128269;</div><div class="muted sm" style="margin-top:12px">AI reading temple arm...</div></div>';
-  compressImage(f,function(dataUrl){
+  enhanceTempleImage(f,function(dataUrl){
     callGroqVision(dataUrl,function(code,err){
       if(err){
         resultEl.innerHTML='<div class="card"><div class="bold c-red mb-8">&#10060; Error: '+err+'</div><div class="muted xs mb-12">Check your Groq API key in Settings</div><button class="btn btn-outline btn-sm btn-full" onclick="checkKeyThenScan(\'templeCamera\')">&#128247; Try Again</button></div>';
@@ -1326,7 +1363,7 @@ function handleTemplePhoto(input){
 function callGroqVision(dataUrl,cb){
   var key=getGroqKey();
   if(!key){cb(null,'No API key. Please add your Groq key in Settings.');return}
-  var prompt='This is a close-up photo of an eyeglass temple arm (the side stem). It has tiny engraved or printed markings, usually in this format: MODEL SIZE COLOUR, for example "52294 50-16-140 C4" where 52294 is the model number, 50-16-140 is the size, and C4 is the colour code.\n\nYour job: read the MODEL NUMBER only (the first standalone number or code, before the size measurements). Look very carefully at the engraved text. The model is usually 4 to 6 digits or letters+digits (like 52294, RB3025, OX5346).\n\nReply with ONLY the model number. No size, no colour code, no explanation. If you truly cannot read it, reply: UNCLEAR';
+  var prompt='You are an expert OCR reader looking at a high-contrast black-and-white close-up of an eyeglass temple arm (the side stem). It has tiny engraved markings in this typical format: MODEL  SIZE  COLOUR. Example: "52294 50\u25a116-140 C4" means model=52294, size=50-16-140, colour=C4. The size always has the pattern: two digits, a box or dash, two digits, a dash, two or three digits (like 50-16-140).\n\nSTEP 1: Silently transcribe ALL characters you can see on the arm, left to right. Bright white dots or blurry patches are LIGHT REFLECTIONS (glare) - ignore them, do not read them as characters.\n\nSTEP 2: The MODEL NUMBER is the standalone group that comes BEFORE the size pattern. It is usually 4 to 6 characters (digits, or letters+digits like RB3025).\n\nSTEP 3: Output ONLY the model number. Nothing else - no size, no colour, no words, no label, no punctuation. Just the model. If genuinely unreadable, output: UNCLEAR';
   fetch('https://api.groq.com/openai/v1/chat/completions',{
     method:'POST',
     headers:{'Authorization':'Bearer '+key,'Content-Type':'application/json'},
@@ -1345,9 +1382,26 @@ function callGroqVision(dataUrl,cb){
   }).then(function(data){
     if(!data)return;
     var raw=((data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content)||'UNCLEAR').trim();
-    var code=raw.split(String.fromCharCode(10))[0].trim().replace(/['".,\s]/g,'').slice(0,25);
+    var firstLine=raw.split(String.fromCharCode(10))[0].trim();
+    var code=extractModelCode(firstLine);
     cb(code,null);
   }).catch(function(e){cb(null,e.message||'Network error')});
+}
+function extractModelCode(text){
+  if(!text)return 'UNCLEAR';
+  if(/unclear/i.test(text))return 'UNCLEAR';
+  // if there is a colon (e.g. "The model number is: 8071"), take what comes after the last colon
+  if(text.indexOf(':')>=0){text=text.split(':').pop();}
+  // find alphanumeric tokens (allow letters+digits, like RB3025 or 52294)
+  var tokens=text.match(/[A-Za-z]*\d[A-Za-z0-9]*/g);
+  if(tokens&&tokens.length){
+    // prefer the longest token (model numbers are usually the longest standalone code)
+    tokens.sort(function(a,b){return b.length-a.length});
+    return tokens[0].slice(0,25);
+  }
+  // fallback: strip junk
+  var c=text.replace(/['".,\s]/g,'').slice(0,25);
+  return c||'UNCLEAR';
 }
 
 /* ==============================================

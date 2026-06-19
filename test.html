@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>OptiStock</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; background: #f2f2f2; color: #222; }
+  .hidden { display: none !important; }
+
+  /* PIN screen */
+  #pinScreen { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #1a1a2e; }
+  #pinScreen h1 { color: #fff; margin-bottom: 20px; font-size: 24px; }
+  #pinInput { font-size: 28px; letter-spacing: 8px; text-align: center; width: 220px; padding: 12px; border-radius: 8px; border: none; margin-bottom: 16px; }
+  #pinSubmit { font-size: 18px; padding: 12px 30px; border-radius: 8px; border: none; background: #4cafef; color: #fff; }
+  #pinError { color: #ff6b6b; margin-top: 10px; height: 20px; }
+
+  /* Top bar */
+  #topBar { background: #1a1a2e; color: #fff; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; }
+  #topBar .title { font-size: 18px; font-weight: bold; }
+  #syncStatus { font-size: 12px; color: #aaa; }
+
+  /* Business switch */
+  #bizSwitch { display: flex; background: #fff; border-bottom: 1px solid #ddd; }
+  #bizSwitch button { flex: 1; padding: 12px 4px; border: none; background: #fff; font-size: 14px; color: #555; border-bottom: 3px solid transparent; }
+  #bizSwitch button.active { color: #1a1a2e; font-weight: bold; border-bottom: 3px solid #4cafef; }
+
+  #sectionTabs { display: flex; background: #2c2c44; }
+  #sectionTabs button { flex: 1; padding: 10px 4px; border: none; background: #2c2c44; color: #bbb; font-size: 13px; }
+  #sectionTabs button.active { background: #1a1a2e; color: #fff; font-weight: bold; }
+
+  #settingsModal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: flex-end; z-index: 80; }
+  #settingsModal .sheet { background: #fff; width: 100%; border-radius: 16px 16px 0 0; padding: 18px; }
+  #settingsModal label { display: block; font-size: 13px; color: #555; margin-top: 10px; margin-bottom: 4px; }
+  #settingsModal input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; }
+  #settingsModal .modalButtons { display: flex; gap: 10px; margin-top: 18px; }
+  #settingsModal .modalButtons button { flex: 1; padding: 12px; border-radius: 8px; border: none; font-size: 15px; }
+  #btnCloseSettings { background: #eee; color: #333; }
+  #btnSaveSettings { background: #4cafef; color: #fff; }
+
+  /* Purchase Orders */
+  .poCard { background: #fff; border-radius: 8px; padding: 12px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+  .poCard .poSupplier { font-weight: bold; font-size: 15px; }
+  .poCard .poMeta { font-size: 13px; color: #666; margin-top: 2px; }
+  .poStatus { font-size: 11px; padding: 2px 8px; border-radius: 10px; display: inline-block; margin-top: 6px; }
+  .poStatus.pending { background: #fff3cd; color: #856404; }
+  .poStatus.received { background: #d4edda; color: #155724; }
+
+  #addPoBtn { position: fixed; bottom: 20px; right: 20px; width: 56px; height: 56px; border-radius: 50%; background: #e67e22; color: #fff; font-size: 28px; border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+  #poModal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: flex-end; z-index: 60; }
+  #poModal .sheet { background: #fff; width: 100%; max-height: 90vh; overflow-y: auto; border-radius: 16px 16px 0 0; padding: 18px; }
+  #poModal label { display: block; font-size: 13px; color: #555; margin-top: 10px; margin-bottom: 4px; }
+  #poModal input, #poModal textarea, #poModal select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; }
+  #poModal textarea { min-height: 80px; }
+  #poModal .modalButtons { display: flex; gap: 10px; margin-top: 18px; }
+  #poModal .modalButtons button { flex: 1; padding: 12px; border-radius: 8px; border: none; font-size: 15px; }
+  #btnCancelPo { background: #eee; color: #333; }
+  #btnSavePo { background: #e67e22; color: #fff; }
+
+  #mainContent { padding: 14px; padding-bottom: 80px; }
+
+  #addItemBtn { position: fixed; bottom: 20px; right: 20px; width: 56px; height: 56px; border-radius: 50%; background: #4cafef; color: #fff; font-size: 28px; border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+
+  .itemCard { background: #fff; border-radius: 8px; padding: 10px; margin-bottom: 10px; display: flex; gap: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+  .itemCard img { width: 64px; height: 64px; object-fit: cover; border-radius: 6px; background: #eee; }
+  .itemCard .itemInfo { flex: 1; }
+  .itemCard .itemModel { font-weight: bold; font-size: 15px; }
+  .itemCard .itemMeta { font-size: 13px; color: #666; }
+  .itemCard .itemBizTag { font-size: 11px; padding: 2px 6px; border-radius: 4px; background: #e0f0ff; color: #1a1a2e; display: inline-block; margin-top: 4px; }
+
+  /* Add item modal */
+  #addItemModal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: flex-end; z-index: 50; }
+  #addItemModal .sheet { background: #fff; width: 100%; max-height: 90vh; overflow-y: auto; border-radius: 16px 16px 0 0; padding: 18px; }
+  #addItemModal h2 { margin-bottom: 14px; }
+  #addItemModal label { display: block; font-size: 13px; color: #555; margin-top: 10px; margin-bottom: 4px; }
+  #addItemModal input, #addItemModal select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; }
+  #addItemModal .modalButtons { display: flex; gap: 10px; margin-top: 18px; }
+  #addItemModal .modalButtons button { flex: 1; padding: 12px; border-radius: 8px; border: none; font-size: 15px; }
+  #btnCancelAdd { background: #eee; color: #333; }
+  #btnSaveItem { background: #4cafef; color: #fff; }
+  #uploadStatus { font-size: 12px; color: #888; margin-top: 4px; }
+  #photoPreview { width: 80px; height: 80px; object-fit: cover; border-radius: 6px; margin-top: 6px; display: none; background: #eee; }
+
+  .itemCard .itemActions { display: flex; gap: 6px; margin-top: 6px; }
+  .btnSell { background: #2ecc71; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; font-size: 13px; }
+  .btnEdit { background: #4cafef; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; font-size: 13px; }
+  .btnDelete { background: #e74c3c; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; font-size: 13px; }
+
+  #sellModal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: flex-end; z-index: 60; }
+  #sellModal .sheet { background: #fff; width: 100%; max-height: 90vh; overflow-y: auto; border-radius: 16px 16px 0 0; padding: 18px; }
+  #sellModal label { display: block; font-size: 13px; color: #555; margin-top: 10px; margin-bottom: 4px; }
+  #sellModal input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; }
+  #sellModal .modalButtons { display: flex; gap: 10px; margin-top: 18px; }
+  #sellModal .modalButtons button { flex: 1; padding: 12px; border-radius: 8px; border: none; font-size: 15px; }
+  #btnCancelSell { background: #eee; color: #333; }
+  #btnConfirmSell { background: #2ecc71; color: #fff; }
+
+  .scanButtons { display: flex; gap: 8px; margin-top: 10px; }
+  .scanButtons button { flex: 1; padding: 10px; border-radius: 6px; border: none; font-size: 13px; color: #fff; }
+  #btnScanTemple { background: #9b59b6; }
+  #btnScanBarcode { background: #e67e22; }
+
+  #cameraModal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #000; z-index: 70; display: flex; flex-direction: column; }
+  #cameraModal video { flex: 1; width: 100%; object-fit: cover; background: #000; }
+  #cameraModal .camBar { background: #111; padding: 14px; display: flex; gap: 10px; }
+  #cameraModal .camBar button { flex: 1; padding: 12px; border-radius: 8px; border: none; font-size: 15px; }
+  #btnCaptureShot { background: #4cafef; color: #fff; }
+  #btnCloseCamera { background: #555; color: #fff; }
+  #scanLabel { color: #fff; text-align: center; padding: 8px; font-size: 13px; }
+</style>
+</head>
+<body>
+
+<div id="pinScreen">
+  <h1>OptiStock</h1>
+  <input type="password" id="pinInput" maxlength="4" inputmode="numeric" placeholder="----">
+  <button id="pinSubmit">Unlock</button>
+  <div id="pinError"></div>
+</div>
+
+<div id="appScreen" class="hidden">
+  <div id="topBar">
+    <div class="title">OptiStock</div>
+    <div id="syncStatus">Connecting...</div>
+    <button id="btnSettings" style="background:none;border:none;color:#fff;font-size:20px;">&#9881;</button>
+  </div>
+  <div id="bizSwitch">
+    <button id="bizEyeland" data-biz="Eyeland">Eyeland</button>
+    <button id="bizICrops" data-biz="iCrops">iCrops</button>
+    <button id="bizBoth" data-biz="Both">Both</button>
+    <button id="bizAll" data-biz="All">All</button>
+  </div>
+  <div id="sectionTabs">
+    <button id="tabInventory" data-section="inventory">Inventory</button>
+    <button id="tabPO" data-section="po">Purchase Orders</button>
+    <button id="tabSales" data-section="sales">Sales</button>
+  </div>
+  <div id="mainContent">
+    <p>Loading...</p>
+  </div>
+  <button id="addItemBtn">+</button>
+  <button id="addPoBtn" class="hidden">+</button>
+</div>
+
+<div id="addItemModal" class="hidden">
+  <div class="sheet">
+    <h2 id="addItemModalTitle">Add Item</h2>
+
+    <label>Business</label>
+    <select id="formBusiness">
+      <option value="Eyeland">Eyeland</option>
+      <option value="iCrops">iCrops</option>
+    </select>
+
+    <label>Model Code</label>
+    <input type="text" id="formModel" placeholder="e.g. RB2140">
+
+    <div class="scanButtons">
+      <button type="button" id="btnScanTemple">Scan Temple</button>
+      <button type="button" id="btnScanBarcode">Scan Barcode</button>
+    </div>
+
+    <label>Colour</label>
+    <input type="text" id="formColour" placeholder="e.g. Black">
+
+    <label>Size</label>
+    <input type="text" id="formSize" placeholder="e.g. 52">
+
+    <label>Quantity</label>
+    <input type="number" id="formQty" value="1" min="0">
+
+    <label>Price</label>
+    <input type="number" id="formPrice" placeholder="e.g. 1500">
+
+    <label>Photo</label>
+    <input type="file" id="formPhoto" accept="image/*" capture="environment">
+    <div id="uploadStatus"></div>
+    <img id="photoPreview">
+
+    <div class="modalButtons">
+      <button id="btnCancelAdd">Cancel</button>
+      <button id="btnSaveItem">Save Item</button>
+    </div>
+  </div>
+</div>
+
+<div id="sellModal" class="hidden">
+  <div class="sheet">
+    <h2>Sell Item</h2>
+    <p id="sellItemLabel" style="color:#555;margin-top:6px;"></p>
+
+    <label>Order No.</label>
+    <input type="text" id="sellOrderNo" placeholder="e.g. 101">
+
+    <label>Customer Name</label>
+    <input type="text" id="sellCustName" placeholder="Customer name">
+
+    <label>Customer WhatsApp Number</label>
+    <input type="text" id="sellCustPhone" placeholder="10-digit number" inputmode="numeric">
+
+    <label>Quantity Sold</label>
+    <input type="number" id="sellQty" value="1" min="1">
+
+    <label>Sale Price</label>
+    <input type="number" id="sellPrice" placeholder="e.g. 1500">
+
+    <div class="modalButtons">
+      <button id="btnCancelSell">Cancel</button>
+      <button id="btnConfirmSell">Confirm Sale</button>
+    </div>
+  </div>
+</div>
+
+<div id="cameraModal" class="hidden">
+  <div id="scanLabel">Point camera at temple / barcode</div>
+  <video id="camVideo" autoplay playsinline></video>
+  <canvas id="camCanvas" class="hidden"></canvas>
+  <div class="camBar">
+    <button id="btnCaptureShot">Capture</button>
+    <button id="btnCloseCamera">Close</button>
+  </div>
+</div>
+
+<div id="settingsModal" class="hidden">
+  <div class="sheet">
+    <h2>Settings</h2>
+    <label>Groq API Key (for Temple Scan)</label>
+    <input type="text" id="settingsGroqKey" placeholder="Paste your Groq key here">
+    <div class="modalButtons">
+      <button id="btnCloseSettings">Close</button>
+      <button id="btnSaveSettings">Save</button>
+    </div>
+  </div>
+</div>
+
+<div id="poModal" class="hidden">
+  <div class="sheet">
+    <h2>New Purchase Order</h2>
+
+    <label>Business</label>
+    <select id="poBusiness">
+      <option value="Eyeland">Eyeland</option>
+      <option value="iCrops">iCrops</option>
+    </select>
+
+    <label>Supplier Name</label>
+    <input type="text" id="poSupplier" placeholder="e.g. Lajpat Rai Market vendor">
+
+    <label>Items / Notes</label>
+    <textarea id="poItems" placeholder="List model codes, quantities, etc."></textarea>
+
+    <label>Expected Cost</label>
+    <input type="number" id="poCost" placeholder="e.g. 15000">
+
+    <div class="modalButtons">
+      <button id="btnCancelPo">Cancel</button>
+      <button id="btnSavePo">Save Order</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/zxing-library/0.20.0/index.min.js"></script>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+  import { getFirestore, collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+
+  var firebaseConfig = {
+    apiKey: "AIzaSyDyaJYJQqQpQlJMI_VlJgecwdbRxudgGbo",
+    authDomain: "optistock-a73d9.firebaseapp.com",
+    projectId: "optistock-a73d9",
+    storageBucket: "optistock-a73d9.firebasestorage.app",
+    messagingSenderId: "395723657948",
+    appId: "1:395723657948:web:2ea6efeeed2a581de41a19"
+  };
+
+  var app = initializeApp(firebaseConfig);
+  var db = getFirestore(app);
+
+  // Cloudinary config (used later for photo uploads)
+  var CLOUD_NAME = "dilg3bid3";
+  var UPLOAD_PRESET = "opticalinventory";
+
+  var APP_PIN = "1122";
+  var currentBusiness = "All";
+
+  var pinInput = document.getElementById("pinInput");
+  var pinSubmit = document.getElementById("pinSubmit");
+  var pinError = document.getElementById("pinError");
+  var pinScreen = document.getElementById("pinScreen");
+  var appScreen = document.getElementById("appScreen");
+  var syncStatus = document.getElementById("syncStatus");
+
+  function tryUnlock() {
+    if (pinInput.value === APP_PIN) {
+      pinScreen.classList.add("hidden");
+      appScreen.classList.remove("hidden");
+      startSync();
+    } else {
+      pinError.textContent = "Wrong PIN, try again";
+      pinInput.value = "";
+    }
+  }
+
+  pinSubmit.addEventListener("click", tryUnlock);
+  pinInput.addEventListener("keyup", function(e) {
+    if (e.key === "Enter") { tryUnlock(); }
+  });
+
+  var bizButtons = document.querySelectorAll("#bizSwitch button");
+  for (var i = 0; i < bizButtons.length; i++) {
+    bizButtons[i].addEventListener("click", function(e) {
+      for (var j = 0; j < bizButtons.length; j++) { bizButtons[j].classList.remove("active"); }
+      e.target.classList.add("active");
+      currentBusiness = e.target.getAttribute("data-biz");
+      renderInventory();
+    });
+  }
+  document.getElementById("bizAll").classList.add("active");
+
+  var allItems = [];
+
+  function startSync() {
+    syncStatus.textContent = "Connecting...";
+    var itemsRef = collection(db, "items");
+    onSnapshot(itemsRef, function(snapshot) {
+      allItems = [];
+      snapshot.forEach(function(docSnap) {
+        var data = docSnap.data();
+        data.id = docSnap.id;
+        allItems.push(data);
+      });
+      syncStatus.textContent = "Synced (" + allItems.length + " items)";
+      renderInventory();
+    }, function(error) {
+      syncStatus.textContent = "Sync error";
+      console.error(error);
+    });
+  }
+
+  function escapeHtml(str) {
+    if (!str) { return ""; }
+    return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  function renderInventory() {
+    var content = document.getElementById("mainContent");
+    var filtered = allItems;
+    if (currentBusiness !== "All" && currentBusiness !== "Both") {
+      filtered = allItems.filter(function(it) { return it.business === currentBusiness; });
+    }
+    if (filtered.length === 0) {
+      content.innerHTML = "<p style=" + String.fromCharCode(34) + "color:#999;text-align:center;margin-top:30px;" + String.fromCharCode(34) + ">No items yet. Tap + to add one.</p>";
+      return;
+    }
+    var html = "";
+    for (var i = 0; i < filtered.length; i++) {
+      var it = filtered[i];
+      var photoSrc = it.photoUrl ? it.photoUrl : "";
+      html += "<div class=" + String.fromCharCode(34) + "itemCard" + String.fromCharCode(34) + ">";
+      if (photoSrc) {
+        html += "<img src=" + String.fromCharCode(34) + photoSrc + String.fromCharCode(34) + ">";
+      } else {
+        html += "<div style=" + String.fromCharCode(34) + "width:64px;height:64px;background:#eee;border-radius:6px;" + String.fromCharCode(34) + "></div>";
+      }
+      html += "<div class=" + String.fromCharCode(34) + "itemInfo" + String.fromCharCode(34) + ">";
+      html += "<div class=" + String.fromCharCode(34) + "itemModel" + String.fromCharCode(34) + ">" + escapeHtml(it.model) + "</div>";
+      html += "<div class=" + String.fromCharCode(34) + "itemMeta" + String.fromCharCode(34) + ">" + escapeHtml(it.colour) + " | Size " + escapeHtml(it.size) + " | Qty " + escapeHtml(it.qty) + "</div>";
+      html += "<div class=" + String.fromCharCode(34) + "itemMeta" + String.fromCharCode(34) + ">Rs. " + escapeHtml(it.price) + "</div>";
+      html += "<span class=" + String.fromCharCode(34) + "itemBizTag" + String.fromCharCode(34) + ">" + escapeHtml(it.business) + "</span>";
+      html += "<div class=" + String.fromCharCode(34) + "itemActions" + String.fromCharCode(34) + ">";
+      html += "<button class=" + String.fromCharCode(34) + "btnSell" + String.fromCharCode(34) + " data-id=" + String.fromCharCode(34) + it.id + String.fromCharCode(34) + ">Sell</button>";
+      html += "<button class=" + String.fromCharCode(34) + "btnEdit" + String.fromCharCode(34) + " data-id=" + String.fromCharCode(34) + it.id + String.fromCharCode(34) + ">Edit</button>";
+      html += "<button class=" + String.fromCharCode(34) + "btnDelete" + String.fromCharCode(34) + " data-id=" + String.fromCharCode(34) + it.id + String.fromCharCode(34) + ">Delete</button>";
+      html += "</div>";
+      html += "</div></div>";
+    }
+    content.innerHTML = html;
+    var sellButtons = document.querySelectorAll(".btnSell");
+    for (var k = 0; k < sellButtons.length; k++) {
+      sellButtons[k].addEventListener("click", function(e) {
+        openSellModal(e.target.getAttribute("data-id"));
+      });
+    }
+    var editButtons = document.querySelectorAll(".btnEdit");
+    for (var m = 0; m < editButtons.length; m++) {
+      editButtons[m].addEventListener("click", function(e) {
+        openEditModal(e.target.getAttribute("data-id"));
+      });
+    }
+    var deleteButtons = document.querySelectorAll(".btnDelete");
+    for (var n = 0; n < deleteButtons.length; n++) {
+      deleteButtons[n].addEventListener("click", function(e) {
+        deleteItem(e.target.getAttribute("data-id"));
+      });
+    }
+  }
+
+  // ---- Add item modal ----
+  var addItemModal = document.getElementById("addItemModal");
+  var addItemBtn = document.getElementById("addItemBtn");
+  var btnCancelAdd = document.getElementById("btnCancelAdd");
+  var btnSaveItem = document.getElementById("btnSaveItem");
+  var formPhoto = document.getElementById("formPhoto");
+  var photoPreview = document.getElementById("photoPreview");
+  var uploadStatus = document.getElementById("uploadStatus");
+  var uploadedPhotoUrl = "";
+  var editingItemId = "";
+
+  addItemBtn.addEventListener("click", function() {
+    editingItemId = "";
+    document.getElementById("addItemModalTitle").textContent = "Add Item";
+    btnSaveItem.textContent = "Save Item";
+    resetForm();
+    addItemModal.classList.remove("hidden");
+  });
+  btnCancelAdd.addEventListener("click", function() {
+    addItemModal.classList.add("hidden");
+    resetForm();
+  });
+
+  function openEditModal(itemId) {
+    var item = null;
+    for (var i = 0; i < allItems.length; i++) {
+      if (allItems[i].id === itemId) { item = allItems[i]; break; }
+    }
+    if (!item) { return; }
+    editingItemId = itemId;
+    document.getElementById("addItemModalTitle").textContent = "Edit Item";
+    document.getElementById("formBusiness").value = item.business;
+    document.getElementById("formModel").value = item.model;
+    document.getElementById("formColour").value = item.colour;
+    document.getElementById("formSize").value = item.size;
+    document.getElementById("formQty").value = item.qty;
+    document.getElementById("formPrice").value = item.price;
+    uploadedPhotoUrl = item.photoUrl || "";
+    if (uploadedPhotoUrl) {
+      photoPreview.src = uploadedPhotoUrl;
+      photoPreview.style.display = "block";
+    } else {
+      photoPreview.style.display = "none";
+    }
+    uploadStatus.textContent = "";
+    btnSaveItem.textContent = "Update Item";
+    addItemModal.classList.remove("hidden");
+  }
+
+  function deleteItem(itemId) {
+    var item = null;
+    for (var i = 0; i < allItems.length; i++) {
+      if (allItems[i].id === itemId) { item = allItems[i]; break; }
+    }
+    var label = item ? item.model : "this item";
+    var sure = window.confirm("Delete " + label + "? This cannot be undone.");
+    if (!sure) { return; }
+    deleteDoc(doc(db, "items", itemId)).catch(function(err) {
+      alert("Delete failed, check internet connection");
+      console.error(err);
+    });
+  }
+
+  function resetForm() {
+    document.getElementById("formModel").value = "";
+    document.getElementById("formColour").value = "";
+    document.getElementById("formSize").value = "";
+    document.getElementById("formQty").value = "1";
+    document.getElementById("formPrice").value = "";
+    formPhoto.value = "";
+    photoPreview.style.display = "none";
+    uploadStatus.textContent = "";
+    uploadedPhotoUrl = "";
+  }
+
+  formPhoto.addEventListener("change", function() {
+    var file = formPhoto.files[0];
+    if (!file) { return; }
+    photoPreview.src = URL.createObjectURL(file);
+    photoPreview.style.display = "block";
+    uploadStatus.textContent = "Uploading photo...";
+    uploadedPhotoUrl = "";
+
+    var formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", UPLOAD_PRESET);
+
+    var uploadUrl = "https://api.cloudinary.com/v1_1/" + CLOUD_NAME + "/image/upload";
+    fetch(uploadUrl, { method: "POST", body: formData })
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        if (data.secure_url) {
+          uploadedPhotoUrl = data.secure_url;
+          uploadStatus.textContent = "Photo uploaded";
+        } else {
+          uploadStatus.textContent = "Upload failed, try again";
+        }
+      })
+      .catch(function(err) {
+        uploadStatus.textContent = "Upload failed, check internet";
+        console.error(err);
+      });
+  });
+
+  // ---- Sell modal ----
+  var sellModal = document.getElementById("sellModal");
+  var sellItemLabel = document.getElementById("sellItemLabel");
+  var btnCancelSell = document.getElementById("btnCancelSell");
+  var btnConfirmSell = document.getElementById("btnConfirmSell");
+  var currentSellItemId = "";
+
+  function openSellModal(itemId) {
+    var item = null;
+    for (var i = 0; i < allItems.length; i++) {
+      if (allItems[i].id === itemId) { item = allItems[i]; break; }
+    }
+    if (!item) { return; }
+    currentSellItemId = itemId;
+    sellItemLabel.textContent = item.model + " - " + item.colour + " (Stock: " + item.qty + ")";
+    document.getElementById("sellOrderNo").value = "";
+    document.getElementById("sellCustName").value = "";
+    document.getElementById("sellCustPhone").value = "";
+    document.getElementById("sellQty").value = "1";
+    document.getElementById("sellPrice").value = item.price || "";
+    sellModal.classList.remove("hidden");
+  }
+
+  btnCancelSell.addEventListener("click", function() {
+    sellModal.classList.add("hidden");
+  });
+
+  btnConfirmSell.addEventListener("click", function() {
+    var item = null;
+    for (var i = 0; i < allItems.length; i++) {
+      if (allItems[i].id === currentSellItemId) { item = allItems[i]; break; }
+    }
+    if (!item) { return; }
+
+    var sellQty = Number(document.getElementById("sellQty").value) || 0;
+    if (sellQty <= 0 || sellQty > item.qty) {
+      alert("Invalid quantity, stock available: " + item.qty);
+      return;
+    }
+    var orderNo = document.getElementById("sellOrderNo").value.trim();
+    var custName = document.getElementById("sellCustName").value.trim();
+    var custPhone = document.getElementById("sellCustPhone").value.trim();
+    var salePrice = Number(document.getElementById("sellPrice").value) || 0;
+
+    btnConfirmSell.disabled = true;
+    btnConfirmSell.textContent = "Saving...";
+
+    var newQty = item.qty - sellQty;
+    var itemRef = doc(db, "items", item.id);
+
+    updateDoc(itemRef, { qty: newQty })
+      .then(function() {
+        var saleRecord = {
+          itemId: item.id,
+          model: item.model,
+          colour: item.colour,
+          size: item.size,
+          business: item.business,
+          orderNo: orderNo,
+          custName: custName,
+          custPhone: custPhone,
+          qty: sellQty,
+          price: salePrice,
+          soldAt: Date.now()
+        };
+        return addDoc(collection(db, "sales"), saleRecord);
+      })
+      .then(function() {
+        btnConfirmSell.disabled = false;
+        btnConfirmSell.textContent = "Confirm Sale";
+        sellModal.classList.add("hidden");
+        sendWhatsAppInvoice(item, sellQty, salePrice, orderNo, custName, custPhone);
+      })
+      .catch(function(err) {
+        alert("Sale failed, check internet connection");
+        console.error(err);
+        btnConfirmSell.disabled = false;
+        btnConfirmSell.textContent = "Confirm Sale";
+      });
+  });
+
+  function sendWhatsAppInvoice(item, qty, price, orderNo, custName, custPhone) {
+    if (!custPhone) { return; }
+    var total = qty * price;
+    var lines = [];
+    lines.push("Eyeland Opticians - Order Confirmation");
+    lines.push("Order No: " + orderNo);
+    lines.push("Customer: " + custName);
+    lines.push("Item: " + item.model + " (" + item.colour + ")");
+    lines.push("Qty: " + qty);
+    lines.push("Total: Rs. " + total);
+    lines.push("Thank you for shopping with us!");
+    var message = lines.join(String.fromCharCode(10));
+    var phoneClean = custPhone.replace(/[^0-9]/g, "");
+    if (phoneClean.length === 10) { phoneClean = "91" + phoneClean; }
+    var waUrl = "https://wa.me/" + phoneClean + "?text=" + encodeURIComponent(message);
+    window.open(waUrl, "_blank");
+  }
+
+  btnSaveItem.addEventListener("click", function() {
+    var model = document.getElementById("formModel").value.trim();
+    if (!model) {
+      alert("Please enter a model code");
+      return;
+    }
+    var newItem = {
+      business: document.getElementById("formBusiness").value,
+      model: model,
+      colour: document.getElementById("formColour").value.trim(),
+      size: document.getElementById("formSize").value.trim(),
+      qty: Number(document.getElementById("formQty").value) || 0,
+      price: Number(document.getElementById("formPrice").value) || 0,
+      photoUrl: uploadedPhotoUrl
+    };
+    btnSaveItem.disabled = true;
+    var savePromise;
+    if (editingItemId) {
+      btnSaveItem.textContent = "Updating...";
+      savePromise = updateDoc(doc(db, "items", editingItemId), newItem);
+    } else {
+      btnSaveItem.textContent = "Saving...";
+      newItem.createdAt = Date.now();
+      savePromise = addDoc(collection(db, "items"), newItem);
+    }
+    savePromise
+      .then(function() {
+        addItemModal.classList.add("hidden");
+        resetForm();
+        editingItemId = "";
+        btnSaveItem.disabled = false;
+        btnSaveItem.textContent = "Save Item";
+      })
+      .catch(function(err) {
+        alert("Save failed, check internet connection");
+        console.error(err);
+        btnSaveItem.disabled = false;
+        btnSaveItem.textContent = editingItemId ? "Update Item" : "Save Item";
+      });
+  });
+
+  // ---- Camera / Temple Scan / Barcode Scan ----
+  var cameraModal = document.getElementById("cameraModal");
+  var camVideo = document.getElementById("camVideo");
+  var camCanvas = document.getElementById("camCanvas");
+  var btnCaptureShot = document.getElementById("btnCaptureShot");
+  var btnCloseCamera = document.getElementById("btnCloseCamera");
+  var scanLabel = document.getElementById("scanLabel");
+  var btnScanTemple = document.getElementById("btnScanTemple");
+  var btnScanBarcode = document.getElementById("btnScanBarcode");
+  var currentStream = null;
+  var scanMode = "";
+  var zxingReader = null;
+
+  function openCamera(mode) {
+    scanMode = mode;
+    scanLabel.textContent = mode === "temple" ? "Point at engraved temple text, then Capture" : "Point at barcode";
+    btnCaptureShot.classList.toggle("hidden", mode !== "temple");
+    cameraModal.classList.remove("hidden");
+
+    var constraints = { video: { facingMode: "environment" } };
+    navigator.mediaDevices.getUserMedia(constraints)
+      .then(function(stream) {
+        currentStream = stream;
+        camVideo.srcObject = stream;
+        if (mode === "barcode") {
+          startBarcodeScan();
+        }
+      })
+      .catch(function(err) {
+        alert("Camera access failed");
+        console.error(err);
+        closeCamera();
+      });
+  }
+
+  function closeCamera() {
+    if (currentStream) {
+      var tracks = currentStream.getTracks();
+      for (var i = 0; i < tracks.length; i++) { tracks[i].stop(); }
+      currentStream = null;
+    }
+    if (zxingReader) {
+      try { zxingReader.reset(); } catch (e) {}
+    }
+    cameraModal.classList.add("hidden");
+  }
+
+  btnScanTemple.addEventListener("click", function() { openCamera("temple"); });
+  btnScanBarcode.addEventListener("click", function() { openCamera("barcode"); });
+  btnCloseCamera.addEventListener("click", closeCamera);
+
+  function startBarcodeScan() {
+    if (typeof ZXing === "undefined") {
+      alert("Barcode scanner not loaded, check internet");
+      return;
+    }
+    zxingReader = new ZXing.BrowserMultiFormatReader();
+    zxingReader.decodeFromConstraints({ video: { facingMode: "environment" } }, camVideo, function(result, err) {
+      if (result) {
+        document.getElementById("formModel").value = result.getText();
+        closeCamera();
+      }
+    });
+  }
+
+  btnCaptureShot.addEventListener("click", function() {
+    if (scanMode !== "temple") { return; }
+    var w = 1280;
+    var h = (camVideo.videoHeight / camVideo.videoWidth) * w;
+    camCanvas.width = w;
+    camCanvas.height = h;
+    var ctx = camCanvas.getContext("2d");
+    ctx.drawImage(camVideo, 0, 0, w, h);
+
+    var imgData = ctx.getImageData(0, 0, w, h);
+    var d = imgData.data;
+    var contrast = 1.9;
+    var intercept = 128 * (1 - contrast);
+    for (var i = 0; i < d.length; i += 4) {
+      var gray = (d[i] * 0.3 + d[i + 1] * 0.59 + d[i + 2] * 0.11);
+      gray = gray * contrast + intercept;
+      if (gray < 0) { gray = 0; }
+      if (gray > 255) { gray = 255; }
+      d[i] = gray; d[i + 1] = gray; d[i + 2] = gray;
+    }
+    ctx.putImageData(imgData, 0, 0);
+
+    var dataUrl = camCanvas.toDataURL("image/jpeg", 0.85);
+    closeCamera();
+    runTempleScan(dataUrl);
+  });
+
+  function extractModelCode(rawText) {
+    if (!rawText) { return ""; }
+    var cleaned = rawText.trim();
+    var sizePattern = /\s*\d{2}.\d{2}.\d{2,3}\s*$/;
+    cleaned = cleaned.replace(sizePattern, "");
+    return cleaned.trim();
+  }
+
+  function runTempleScan(dataUrl) {
+    var groqKey = localStorage.getItem("optistock_groq");
+    if (!groqKey) {
+      alert("Please set your Groq API key in Settings first");
+      return;
+    }
+    document.getElementById("formModel").value = "Scanning...";
+    var base64Data = dataUrl.split(",")[1];
+
+    fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + groqKey
+      },
+      body: JSON.stringify({
+        model: "meta-llama/llama-4-scout-17b-16e-instruct",
+        messages: [
+          {
+            role: "user",
+            content: [
+              { type: "text", text: "Transcribe the full engraved line of text on this eyeglass temple arm exactly as it appears, including any size numbers. Reply with only the transcribed text, nothing else." },
+              { type: "image_url", image_url: { url: "data:image/jpeg;base64," + base64Data } }
+            ]
+          }
+        ]
+      })
+    })
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        var rawText = "";
+        if (data.choices && data.choices[0] && data.choices[0].message) {
+          rawText = data.choices[0].message.content;
+        }
+        var modelCode = extractModelCode(rawText);
+        document.getElementById("formModel").value = modelCode || "";
+        if (!modelCode) {
+          alert("Could not read temple text, please type manually");
+        }
+      })
+      .catch(function(err) {
+        document.getElementById("formModel").value = "";
+        alert("Scan failed, check internet connection");
+        console.error(err);
+      });
+  }
+
+  // ---- Settings ----
+  var btnSettings = document.getElementById("btnSettings");
+  var settingsModal = document.getElementById("settingsModal");
+  var settingsGroqKey = document.getElementById("settingsGroqKey");
+  var btnCloseSettings = document.getElementById("btnCloseSettings");
+  var btnSaveSettings = document.getElementById("btnSaveSettings");
+
+  btnSettings.addEventListener("click", function() {
+    settingsGroqKey.value = localStorage.getItem("optistock_groq") || "";
+    settingsModal.classList.remove("hidden");
+  });
+  btnCloseSettings.addEventListener("click", function() {
+    settingsModal.classList.add("hidden");
+  });
+  btnSaveSettings.addEventListener("click", function() {
+    localStorage.setItem("optistock_groq", settingsGroqKey.value.trim());
+    settingsModal.classList.add("hidden");
+    alert("Settings saved");
+  });
+
+  // ---- Section tabs (Inventory / Purchase Orders / Sales) ----
+  var currentSection = "inventory";
+  var tabInventory = document.getElementById("tabInventory");
+  var tabPO = document.getElementById("tabPO");
+  var tabSales = document.getElementById("tabSales");
+  var addPoBtn = document.getElementById("addPoBtn");
+
+  function setSection(section) {
+    currentSection = section;
+    tabInventory.classList.toggle("active", section === "inventory");
+    tabPO.classList.toggle("active", section === "po");
+    tabSales.classList.toggle("active", section === "sales");
+    addItemBtn.classList.toggle("hidden", section !== "inventory");
+    addPoBtn.classList.toggle("hidden", section !== "po");
+    if (section === "inventory") {
+      renderInventory();
+    } else if (section === "po") {
+      renderPOs();
+    } else {
+      renderSales();
+    }
+  }
+  tabInventory.addEventListener("click", function() { setSection("inventory"); });
+  tabPO.addEventListener("click", function() { setSection("po"); });
+  tabSales.addEventListener("click", function() { setSection("sales"); });
+  tabInventory.classList.add("active");
+
+  // ---- Sales History ----
+  var allSales = [];
+  function startSalesSync() {
+    var salesRef = collection(db, "sales");
+    onSnapshot(salesRef, function(snapshot) {
+      allSales = [];
+      snapshot.forEach(function(docSnap) {
+        var data = docSnap.data();
+        data.id = docSnap.id;
+        allSales.push(data);
+      });
+      if (currentSection === "sales") { renderSales(); }
+    }, function(error) { console.error(error); });
+  }
+
+  function renderSales() {
+    var content = document.getElementById("mainContent");
+    var filtered = allSales;
+    if (currentBusiness !== "All" && currentBusiness !== "Both") {
+      filtered = allSales.filter(function(s) { return s.business === currentBusiness; });
+    }
+    filtered.sort(function(a, b) { return b.soldAt - a.soldAt; });
+
+    var searchBox = "<input type=" + String.fromCharCode(34) + "text" + String.fromCharCode(34) + " id=" + String.fromCharCode(34) + "salesSearch" + String.fromCharCode(34) + " placeholder=" + String.fromCharCode(34) + "Search by order no, customer, or model" + String.fromCharCode(34) + " style=" + String.fromCharCode(34) + "width:100%;padding:10px;border:1px solid #ccc;border-radius:6px;margin-bottom:12px;" + String.fromCharCode(34) + ">";
+
+    if (filtered.length === 0) {
+      content.innerHTML = searchBox + "<p style=" + String.fromCharCode(34) + "color:#999;text-align:center;margin-top:30px;" + String.fromCharCode(34) + ">No sales yet.</p>";
+      wireSalesSearch();
+      return;
+    }
+
+    var html = searchBox + "<div id=" + String.fromCharCode(34) + "salesList" + String.fromCharCode(34) + ">";
+    for (var i = 0; i < filtered.length; i++) {
+      var s = filtered[i];
+      var d = new Date(s.soldAt);
+      html += "<div class=" + String.fromCharCode(34) + "poCard" + String.fromCharCode(34) + ">";
+      html += "<div class=" + String.fromCharCode(34) + "poSupplier" + String.fromCharCode(34) + ">" + escapeHtml(s.model) + " - " + escapeHtml(s.colour) + "</div>";
+      html += "<div class=" + String.fromCharCode(34) + "poMeta" + String.fromCharCode(34) + ">Order " + escapeHtml(s.orderNo) + " | " + escapeHtml(s.custName) + " | " + escapeHtml(s.custPhone) + "</div>";
+      html += "<div class=" + String.fromCharCode(34) + "poMeta" + String.fromCharCode(34) + ">Qty " + escapeHtml(s.qty) + " | Rs. " + escapeHtml(s.price) + " | " + d.toLocaleDateString() + "</div>";
+      html += "</div>";
+    }
+    html += "</div>";
+    content.innerHTML = html;
+    wireSalesSearch();
+  }
+
+  function wireSalesSearch() {
+    var searchInput = document.getElementById("salesSearch");
+    if (!searchInput) { return; }
+    searchInput.addEventListener("keyup", function() {
+      var term = searchInput.value.toLowerCase();
+      var cards = document.querySelectorAll("#salesList .poCard");
+      for (var i = 0; i < cards.length; i++) {
+        var text = cards[i].textContent.toLowerCase();
+        cards[i].style.display = text.indexOf(term) !== -1 ? "block" : "none";
+      }
+    });
+  }
+
+  // ---- Purchase Orders ----
+  var allPOs = [];
+  var poModal = document.getElementById("poModal");
+  var btnCancelPo = document.getElementById("btnCancelPo");
+  var btnSavePo = document.getElementById("btnSavePo");
+
+  function startPOSync() {
+    var poRef = collection(db, "purchaseOrders");
+    onSnapshot(poRef, function(snapshot) {
+      allPOs = [];
+      snapshot.forEach(function(docSnap) {
+        var data = docSnap.data();
+        data.id = docSnap.id;
+        allPOs.push(data);
+      });
+      if (currentSection === "po") { renderPOs(); }
+    }, function(error) {
+      console.error(error);
+    });
+  }
+
+  function renderPOs() {
+    var content = document.getElementById("mainContent");
+    var filtered = allPOs;
+    if (currentBusiness !== "All" && currentBusiness !== "Both") {
+      filtered = allPOs.filter(function(po) { return po.business === currentBusiness; });
+    }
+    if (filtered.length === 0) {
+      content.innerHTML = "<p style=" + String.fromCharCode(34) + "color:#999;text-align:center;margin-top:30px;" + String.fromCharCode(34) + ">No purchase orders yet.</p>";
+      return;
+    }
+    filtered.sort(function(a, b) { return b.createdAt - a.createdAt; });
+    var html = "";
+    for (var i = 0; i < filtered.length; i++) {
+      var po = filtered[i];
+      var statusClass = po.status === "received" ? "received" : "pending";
+      html += "<div class=" + String.fromCharCode(34) + "poCard" + String.fromCharCode(34) + ">";
+      html += "<div class=" + String.fromCharCode(34) + "poSupplier" + String.fromCharCode(34) + ">" + escapeHtml(po.supplier) + "</div>";
+      html += "<div class=" + String.fromCharCode(34) + "poMeta" + String.fromCharCode(34) + ">" + escapeHtml(po.items) + "</div>";
+      html += "<div class=" + String.fromCharCode(34) + "poMeta" + String.fromCharCode(34) + ">Cost: Rs. " + escapeHtml(po.cost) + " | " + escapeHtml(po.business) + "</div>";
+      html += "<span class=" + String.fromCharCode(34) + "poStatus " + statusClass + String.fromCharCode(34) + " data-id=" + String.fromCharCode(34) + po.id + String.fromCharCode(34) + ">" + (po.status === "received" ? "Received" : "Pending - tap to mark received") + "</span>";
+      html += "</div>";
+    }
+    content.innerHTML = html;
+    var statusTags = document.querySelectorAll(".poStatus");
+    for (var k = 0; k < statusTags.length; k++) {
+      statusTags[k].addEventListener("click", function(e) {
+        var poId = e.target.getAttribute("data-id");
+        var poRef = doc(db, "purchaseOrders", poId);
+        updateDoc(poRef, { status: "received" }).catch(function(err) { console.error(err); });
+      });
+    }
+  }
+
+  addPoBtn.addEventListener("click", function() {
+    document.getElementById("poSupplier").value = "";
+    document.getElementById("poItems").value = "";
+    document.getElementById("poCost").value = "";
+    poModal.classList.remove("hidden");
+  });
+  btnCancelPo.addEventListener("click", function() {
+    poModal.classList.add("hidden");
+  });
+  btnSavePo.addEventListener("click", function() {
+    var supplier = document.getElementById("poSupplier").value.trim();
+    if (!supplier) {
+      alert("Please enter a supplier name");
+      return;
+    }
+    var newPO = {
+      business: document.getElementById("poBusiness").value,
+      supplier: supplier,
+      items: document.getElementById("poItems").value.trim(),
+      cost: Number(document.getElementById("poCost").value) || 0,
+      status: "pending",
+      createdAt: Date.now()
+    };
+    btnSavePo.disabled = true;
+    addDoc(collection(db, "purchaseOrders"), newPO)
+      .then(function() {
+        poModal.classList.add("hidden");
+        btnSavePo.disabled = false;
+      })
+      .catch(function(err) {
+        alert("Save failed, check internet connection");
+        console.error(err);
+        btnSavePo.disabled = false;
+      });
+  });
+
+  startPOSync();
+  startSalesSync();
+
+</script>
+
+</body>
+</html>

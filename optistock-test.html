@@ -330,6 +330,13 @@
     <h2>Settings</h2>
     <label>Groq API Key (for Temple Scan)</label>
     <input type="text" id="settingsGroqKey" placeholder="Paste your Groq key here">
+
+    <label style="margin-top:16px;">Google Sheets Apps Script URL (for backup)</label>
+    <input type="text" id="settingsSheetsUrl" placeholder="Paste your Apps Script Web App URL">
+
+    <button id="btnSyncSheets" style="width:100%;padding:12px;border-radius:8px;border:none;background:#2ecc71;color:#fff;font-size:15px;margin-top:10px;">Sync to Google Sheets Now</button>
+    <div id="syncSheetsStatus" style="font-size:12px;color:#888;margin-top:4px;"></div>
+
     <div class="modalButtons">
       <button id="btnCloseSettings">Close</button>
       <button id="btnSaveSettings">Save</button>
@@ -447,48 +454,110 @@
     return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
 
+  var inventorySearch = "";
+  var inventoryCategory = "All";
+
   function renderInventory() {
     var content = document.getElementById("mainContent");
     var filtered = allItems;
     if (currentBusiness !== "All" && currentBusiness !== "Both") {
       filtered = allItems.filter(function(it) { return it.business === currentBusiness; });
     }
+    if (inventoryCategory !== "All") {
+      filtered = filtered.filter(function(it) { return it.category === inventoryCategory; });
+    }
+    if (inventorySearch) {
+      var term = inventorySearch.toLowerCase();
+      filtered = filtered.filter(function(it) {
+        return (it.itemName && it.itemName.toLowerCase().indexOf(term) !== -1) ||
+               (it.model && it.model.toLowerCase().indexOf(term) !== -1) ||
+               (it.brand && it.brand.toLowerCase().indexOf(term) !== -1) ||
+               (it.size && it.size.toLowerCase().indexOf(term) !== -1);
+      });
+    }
+
+    var categories = ["All", "Optical Frame", "Sunglasses", "Contact Lens", "Lens", "Accessory"];
+    var chips = "<div id='catChips' style='display:flex;gap:6px;overflow-x:auto;padding:4px 0 8px;'>";
+    for (var ci = 0; ci < categories.length; ci++) {
+      var isActive = inventoryCategory === categories[ci];
+      var chipStyle = isActive
+        ? "background:#1a1a2e;color:#fff;border:none;padding:6px 14px;border-radius:20px;font-size:13px;white-space:nowrap;"
+        : "background:#eee;color:#555;border:none;padding:6px 14px;border-radius:20px;font-size:13px;white-space:nowrap;";
+      chips += "<button class='catChip' data-cat='" + categories[ci] + "' style='" + chipStyle + "'>" + categories[ci] + "</button>";
+    }
+    chips += "</div>";
+
+    var searchBox = "<input type='text' id='invSearch' placeholder='Search name, model, brand, size...' value='" + escapeHtml(inventorySearch) + "' style='width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:15px;margin-bottom:8px;'>";
+
     if (filtered.length === 0) {
-      content.innerHTML = "<p style=" + String.fromCharCode(34) + "color:#999;text-align:center;margin-top:30px;" + String.fromCharCode(34) + ">No items yet. Tap + to add one.</p>";
+      content.innerHTML = searchBox + chips + "<p style='color:#999;text-align:center;margin-top:30px;'>No items found.</p>";
+      wireInventoryControls();
       return;
     }
-    var html = "";
+    var html = searchBox + chips;
     for (var i = 0; i < filtered.length; i++) {
       var it = filtered[i];
       var photoSrc = it.photoUrl ? it.photoUrl : "";
       var coloursSummary = "";
+      var totalQty = 0;
       if (it.colours && it.colours.length > 0) {
         var parts = [];
         for (var cc = 0; cc < it.colours.length; cc++) {
-          parts.push(escapeHtml(it.colours[cc].colour) + " (" + escapeHtml(it.colours[cc].qty) + ")");
+          parts.push(escapeHtml(it.colours[cc].colour) + " (" + it.colours[cc].qty + ")");
+          totalQty += Number(it.colours[cc].qty) || 0;
         }
         coloursSummary = parts.join(", ");
       }
-      html += "<div class=" + String.fromCharCode(34) + "itemCard" + String.fromCharCode(34) + ">";
-      if (photoSrc) {
-        html += "<img src=" + String.fromCharCode(34) + photoSrc + String.fromCharCode(34) + ">";
-      } else {
-        html += "<div style=" + String.fromCharCode(34) + "width:64px;height:64px;background:#eee;border-radius:6px;" + String.fromCharCode(34) + "></div>";
+      var brandModel = [];
+      if (it.brand) { brandModel.push(escapeHtml(it.brand)); }
+      if (it.model) { brandModel.push(escapeHtml(it.model)); }
+      if (it.size) { brandModel.push(escapeHtml(it.size)); }
+      var lowStockWarn = "";
+      if (it.colours) {
+        for (var lc = 0; lc < it.colours.length; lc++) {
+          if (it.colours[lc].qty <= (it.lowStock || 2)) {
+            lowStockWarn = " <span style='color:#e74c3c;font-size:11px;'>Low Stock</span>";
+            break;
+          }
+        }
       }
-      html += "<div class=" + String.fromCharCode(34) + "itemInfo" + String.fromCharCode(34) + ">";
-      html += "<div class=" + String.fromCharCode(34) + "itemModel" + String.fromCharCode(34) + ">" + escapeHtml(it.itemName) + "</div>";
-      html += "<div class=" + String.fromCharCode(34) + "itemMeta" + String.fromCharCode(34) + ">" + escapeHtml(it.model) + (it.size ? (" | " + escapeHtml(it.size)) : "") + "</div>";
-      html += "<div class=" + String.fromCharCode(34) + "itemMeta" + String.fromCharCode(34) + ">" + coloursSummary + " | Total Qty " + escapeHtml(it.qty) + "</div>";
-      html += "<div class=" + String.fromCharCode(34) + "itemMeta" + String.fromCharCode(34) + ">Rs. " + escapeHtml(it.price) + "</div>";
-      html += "<span class=" + String.fromCharCode(34) + "itemBizTag" + String.fromCharCode(34) + ">" + escapeHtml(it.business) + "</span>";
-      html += "<div class=" + String.fromCharCode(34) + "itemActions" + String.fromCharCode(34) + ">";
-      html += "<button class=" + String.fromCharCode(34) + "btnSell" + String.fromCharCode(34) + " data-id=" + String.fromCharCode(34) + it.id + String.fromCharCode(34) + ">Sell</button>";
-      html += "<button class=" + String.fromCharCode(34) + "btnEdit" + String.fromCharCode(34) + " data-id=" + String.fromCharCode(34) + it.id + String.fromCharCode(34) + ">Edit</button>";
-      html += "<button class=" + String.fromCharCode(34) + "btnDelete" + String.fromCharCode(34) + " data-id=" + String.fromCharCode(34) + it.id + String.fromCharCode(34) + ">Delete</button>";
-      html += "</div>";
-      html += "</div></div>";
+      html += "<div class='itemCard'>";
+      if (photoSrc) {
+        html += "<img src='" + photoSrc + "' alt=''>";
+      } else {
+        html += "<div style='width:64px;height:64px;background:#eee;border-radius:6px;flex-shrink:0;'></div>";
+      }
+      html += "<div class='itemInfo'>";
+      html += "<div class='itemModel'>" + escapeHtml(it.itemName) + lowStockWarn + "</div>";
+      html += "<div class='itemMeta'>" + brandModel.join(" &middot; ") + "</div>";
+      html += "<div class='itemMeta'>" + coloursSummary + "</div>";
+      html += "<div class='itemMeta'>Rs. " + escapeHtml(it.price) + " &nbsp;|&nbsp; Qty " + totalQty + "</div>";
+      html += "<span class='itemBizTag'>" + escapeHtml(it.business) + "</span>";
+      html += "<div class='itemActions'>";
+      html += "<button class='btnSell' data-id='" + it.id + "'>Sell</button>";
+      html += "<button class='btnEdit' data-id='" + it.id + "'>Edit</button>";
+      html += "<button class='btnDelete' data-id='" + it.id + "'>Delete</button>";
+      html += "</div></div></div>";
     }
     content.innerHTML = html;
+    wireInventoryControls();
+  }
+
+  function wireInventoryControls() {
+    var invSearch = document.getElementById("invSearch");
+    if (invSearch) {
+      invSearch.addEventListener("input", function() {
+        inventorySearch = invSearch.value;
+        renderInventory();
+      });
+    }
+    var chips = document.querySelectorAll(".catChip");
+    for (var ci = 0; ci < chips.length; ci++) {
+      chips[ci].addEventListener("click", function(e) {
+        inventoryCategory = e.target.getAttribute("data-cat");
+        renderInventory();
+      });
+    }
     var sellButtons = document.querySelectorAll(".btnSell");
     for (var k = 0; k < sellButtons.length; k++) {
       sellButtons[k].addEventListener("click", function(e) {
@@ -1062,6 +1131,8 @@
 
   btnSettings.addEventListener("click", function() {
     settingsGroqKey.value = localStorage.getItem("optistock_groq") || "";
+    document.getElementById("settingsSheetsUrl").value = localStorage.getItem("optistock_sheets_url") || "";
+    document.getElementById("syncSheetsStatus").textContent = "";
     settingsModal.classList.remove("hidden");
   });
   btnCloseSettings.addEventListener("click", function() {
@@ -1069,8 +1140,76 @@
   });
   btnSaveSettings.addEventListener("click", function() {
     localStorage.setItem("optistock_groq", settingsGroqKey.value.trim());
+    localStorage.setItem("optistock_sheets_url", document.getElementById("settingsSheetsUrl").value.trim());
     settingsModal.classList.add("hidden");
     alert("Settings saved");
+  });
+
+  document.getElementById("btnSyncSheets").addEventListener("click", function() {
+    var sheetsUrl = localStorage.getItem("optistock_sheets_url") || "";
+    if (!sheetsUrl) {
+      alert("Please enter your Apps Script URL in Settings first");
+      return;
+    }
+    var statusDiv = document.getElementById("syncSheetsStatus");
+    statusDiv.textContent = "Syncing...";
+
+    var rows = [];
+    rows.push([
+      "Name", "Model No", "Size", "Brand", "Category", "For", "Frame Type",
+      "Colour", "Colour Code", "Colour Qty", "Total Stock",
+      "Selling Price", "Cost Price", "Material", "Barcode", "Supplier", "Location", "Updated"
+    ].join(","));
+
+    for (var i = 0; i < allItems.length; i++) {
+      var it = allItems[i];
+      var colours = it.colours || [];
+      if (colours.length === 0) {
+        colours = [{ colour: "", code: "", qty: it.qty || 0 }];
+      }
+      for (var c = 0; c < colours.length; c++) {
+        var row = [
+          it.itemName || "",
+          it.model || "",
+          it.size || "",
+          it.brand || "",
+          it.category || "",
+          it.forWhom || "",
+          it.frameType || "",
+          colours[c].colour || "",
+          colours[c].code || "",
+          colours[c].qty || 0,
+          it.qty || 0,
+          it.price || 0,
+          it.costPrice || 0,
+          it.material || "",
+          it.barcode || "",
+          it.supplier || "",
+          it.location || "",
+          new Date().toLocaleString()
+        ];
+        rows.push(row.map(function(val) {
+          var s = String(val).replace(/"/g, '""');
+          if (s.indexOf(",") !== -1 || s.indexOf('"') !== -1) { s = '"' + s + '"'; }
+          return s;
+        }).join(","));
+      }
+    }
+
+    var csvData = rows.join(String.fromCharCode(10));
+
+    fetch(sheetsUrl, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "syncInventory", csv: csvData })
+    })
+      .then(function() {
+        statusDiv.textContent = "Synced! Check your Google Sheet to verify.";
+      })
+      .catch(function(err) {
+        statusDiv.textContent = "Sync failed: " + err.message;
+      });
   });
 
   // ---- Section tabs (Inventory / Purchase Orders / Sales) ----

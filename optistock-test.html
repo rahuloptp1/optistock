@@ -1139,14 +1139,16 @@
     settingsModal.classList.add("hidden");
   });
   btnSaveSettings.addEventListener("click", function() {
-    localStorage.setItem("optistock_groq", settingsGroqKey.value.trim());
-    localStorage.setItem("optistock_sheets_url", document.getElementById("settingsSheetsUrl").value.trim());
+    var groqVal = document.getElementById("settingsGroqKey").value.trim();
+    var sheetsVal = document.getElementById("settingsSheetsUrl").value.trim();
+    localStorage.setItem("optistock_groq", groqVal);
+    localStorage.setItem("optistock_sheets_url", sheetsVal);
     settingsModal.classList.add("hidden");
     alert("Settings saved");
   });
 
   document.getElementById("btnSyncSheets").addEventListener("click", function() {
-    var sheetsUrl = localStorage.getItem("optistock_sheets_url") || "";
+    var sheetsUrl = document.getElementById("settingsSheetsUrl").value.trim() || localStorage.getItem("optistock_sheets_url") || "";
     if (!sheetsUrl) {
       alert("Please enter your Apps Script URL in Settings first");
       return;

@@ -141,7 +141,7 @@
   </div>
   <div id="bizSwitch">
     <button id="bizEyeland" data-biz="Eyeland">Eyeland</button>
-    <button id="bizICrops" data-biz="iCrops">iCrops</button>
+    <button id="bizICrops" data-biz="EYECROX">EYECROX</button>
     <button id="bizBoth" data-biz="Both">Both</button>
     <button id="bizAll" data-biz="All">All</button>
   </div>
@@ -164,7 +164,7 @@
     <label>Business</label>
     <select id="formBusiness">
       <option value="Eyeland">Eyeland</option>
-      <option value="iCrops">iCrops</option>
+      <option value="EYECROX">EYECROX</option>
     </select>
 
     <label>Frame Photo</label>
@@ -198,7 +198,13 @@
       </div>
       <div>
         <label>Material</label>
-        <input type="text" id="formMaterial" placeholder="Metal / Plastic">
+        <select id="formMaterial">
+          <option value="">Select</option>
+          <option value="Metal">Metal</option>
+          <option value="Titanium">Titanium</option>
+          <option value="Sheet">Sheet</option>
+          <option value="Fiber">Fiber</option>
+        </select>
       </div>
     </div>
 
@@ -209,9 +215,11 @@
           <option value="">Select</option>
           <option value="Optical Frame">Optical Frame</option>
           <option value="Sunglasses">Sunglasses</option>
+          <option value="Reading Glass">Reading Glass</option>
           <option value="Contact Lens">Contact Lens</option>
           <option value="Lens">Lens</option>
           <option value="Accessory">Accessory</option>
+          <option value="Other">Other</option>
         </select>
       </div>
       <div>
@@ -234,6 +242,8 @@
           <option value="Full Rim">Full Rim</option>
           <option value="Half Rim">Half Rim</option>
           <option value="Rimless">Rimless</option>
+          <option value="Sheet">Sheet</option>
+          <option value="N/A">N/A</option>
         </select>
       </div>
       <div>
@@ -331,6 +341,9 @@
     <label>Groq API Key (for Temple Scan)</label>
     <input type="text" id="settingsGroqKey" placeholder="Paste your Groq key here">
 
+    <label style="margin-top:16px;">Delete Password (required to delete any item)</label>
+    <input type="password" id="settingsDeletePin" placeholder="Set a delete password">
+
     <label style="margin-top:16px;">Google Sheets Apps Script URL (for backup)</label>
     <input type="text" id="settingsSheetsUrl" placeholder="Paste your Apps Script Web App URL">
 
@@ -351,7 +364,7 @@
     <label>Business</label>
     <select id="poBusiness">
       <option value="Eyeland">Eyeland</option>
-      <option value="iCrops">iCrops</option>
+      <option value="EYECROX">EYECROX</option>
     </select>
 
     <label>Supplier Name</label>
@@ -476,7 +489,7 @@
       });
     }
 
-    var categories = ["All", "Optical Frame", "Sunglasses", "Contact Lens", "Lens", "Accessory"];
+    var categories = ["All", "Optical Frame", "Sunglasses", "Reading Glass", "Contact Lens", "Lens", "Accessory"];
     var chips = "<div id='catChips' style='display:flex;gap:6px;overflow-x:auto;padding:4px 0 8px;'>";
     for (var ci = 0; ci < categories.length; ci++) {
       var isActive = inventoryCategory === categories[ci];
@@ -708,6 +721,15 @@
   }
 
   function deleteItem(itemId) {
+    var savedPin = localStorage.getItem("optistock_delete_pin") || "";
+    if (savedPin) {
+      var entered = window.prompt("Enter delete password to confirm:");
+      if (entered === null) { return; }
+      if (entered.trim() !== savedPin) {
+        alert("Wrong password. Item not deleted.");
+        return;
+      }
+    }
     var item = null;
     for (var i = 0; i < allItems.length; i++) {
       if (allItems[i].id === itemId) { item = allItems[i]; break; }
@@ -1131,6 +1153,7 @@
 
   btnSettings.addEventListener("click", function() {
     settingsGroqKey.value = localStorage.getItem("optistock_groq") || "";
+    document.getElementById("settingsDeletePin").value = localStorage.getItem("optistock_delete_pin") || "";
     document.getElementById("settingsSheetsUrl").value = localStorage.getItem("optistock_sheets_url") || "";
     document.getElementById("syncSheetsStatus").textContent = "";
     settingsModal.classList.remove("hidden");
@@ -1141,8 +1164,10 @@
   btnSaveSettings.addEventListener("click", function() {
     var groqVal = document.getElementById("settingsGroqKey").value.trim();
     var sheetsVal = document.getElementById("settingsSheetsUrl").value.trim();
+    var deletePinVal = document.getElementById("settingsDeletePin").value.trim();
     localStorage.setItem("optistock_groq", groqVal);
     localStorage.setItem("optistock_sheets_url", sheetsVal);
+    if (deletePinVal) { localStorage.setItem("optistock_delete_pin", deletePinVal); }
     settingsModal.classList.add("hidden");
     alert("Settings saved");
   });

@@ -338,22 +338,32 @@
 <div id="settingsModal" class="hidden">
   <div class="sheet">
     <h2>Settings</h2>
+
     <label>Groq API Key (for Temple Scan)</label>
-    <input type="text" id="settingsGroqKey" placeholder="Paste your Groq key here">
-
-    <label style="margin-top:16px;">Delete Password (required to delete any item)</label>
-    <input type="password" id="settingsDeletePin" placeholder="Set a delete password">
-
-    <label style="margin-top:16px;">Google Sheets Apps Script URL (for backup)</label>
-    <input type="text" id="settingsSheetsUrl" placeholder="Paste your Apps Script Web App URL">
-
-    <button id="btnSyncSheets" style="width:100%;padding:12px;border-radius:8px;border:none;background:#2ecc71;color:#fff;font-size:15px;margin-top:10px;">Sync to Google Sheets Now</button>
-    <div id="syncSheetsStatus" style="font-size:12px;color:#888;margin-top:4px;"></div>
-
-    <div class="modalButtons">
-      <button id="btnCloseSettings">Close</button>
-      <button id="btnSaveSettings">Save</button>
+    <div style="display:flex;gap:6px;margin-top:4px;">
+      <input type="text" id="settingsGroqKey" placeholder="Paste Groq key" style="flex:1;">
+      <button id="btnSaveGroq" style="padding:10px 14px;border:none;border-radius:6px;background:#4cafef;color:#fff;font-size:14px;white-space:nowrap;">Save</button>
     </div>
+    <div id="groqStatus" style="font-size:12px;color:#2ecc71;margin-top:2px;height:16px;"></div>
+
+    <label style="margin-top:14px;">Delete Password</label>
+    <div style="display:flex;gap:6px;margin-top:4px;">
+      <input type="password" id="settingsDeletePin" placeholder="Set delete password" style="flex:1;">
+      <button id="btnSaveDeletePin" style="padding:10px 14px;border:none;border-radius:6px;background:#4cafef;color:#fff;font-size:14px;white-space:nowrap;">Save</button>
+    </div>
+    <div id="deletePinStatus" style="font-size:12px;color:#2ecc71;margin-top:2px;height:16px;"></div>
+
+    <label style="margin-top:14px;">Google Sheets Apps Script URL</label>
+    <div style="display:flex;gap:6px;margin-top:4px;">
+      <input type="text" id="settingsSheetsUrl" placeholder="Paste Apps Script URL" style="flex:1;">
+      <button id="btnSaveSheetsUrl" style="padding:10px 14px;border:none;border-radius:6px;background:#4cafef;color:#fff;font-size:14px;white-space:nowrap;">Save</button>
+    </div>
+    <div id="sheetsUrlStatus" style="font-size:12px;color:#2ecc71;margin-top:2px;height:16px;"></div>
+
+    <button id="btnSyncSheets" style="width:100%;padding:12px;border-radius:8px;border:none;background:#2ecc71;color:#fff;font-size:15px;margin-top:14px;">Sync to Google Sheets Now</button>
+    <div id="syncSheetsStatus" style="font-size:12px;color:#888;margin-top:4px;min-height:16px;"></div>
+
+    <button id="btnCloseSettings" style="width:100%;padding:12px;border-radius:8px;border:none;background:#eee;color:#333;font-size:15px;margin-top:14px;">Close</button>
   </div>
 </div>
 
@@ -1149,27 +1159,55 @@
   var settingsModal = document.getElementById("settingsModal");
   var settingsGroqKey = document.getElementById("settingsGroqKey");
   var btnCloseSettings = document.getElementById("btnCloseSettings");
-  var btnSaveSettings = document.getElementById("btnSaveSettings");
 
   btnSettings.addEventListener("click", function() {
     settingsGroqKey.value = localStorage.getItem("optistock_groq") || "";
-    document.getElementById("settingsDeletePin").value = localStorage.getItem("optistock_delete_pin") || "";
+    document.getElementById("settingsDeletePin").value = "";
     document.getElementById("settingsSheetsUrl").value = localStorage.getItem("optistock_sheets_url") || "";
+    document.getElementById("groqStatus").textContent = localStorage.getItem("optistock_groq") ? "Saved" : "";
+    document.getElementById("deletePinStatus").textContent = localStorage.getItem("optistock_delete_pin") ? "Password set" : "";
+    document.getElementById("sheetsUrlStatus").textContent = localStorage.getItem("optistock_sheets_url") ? "Saved" : "";
     document.getElementById("syncSheetsStatus").textContent = "";
     settingsModal.classList.remove("hidden");
   });
+
   btnCloseSettings.addEventListener("click", function() {
     settingsModal.classList.add("hidden");
   });
-  btnSaveSettings.addEventListener("click", function() {
-    var groqVal = document.getElementById("settingsGroqKey").value.trim();
-    var sheetsVal = document.getElementById("settingsSheetsUrl").value.trim();
-    var deletePinVal = document.getElementById("settingsDeletePin").value.trim();
-    if (groqVal) { localStorage.setItem("optistock_groq", groqVal); }
-    if (sheetsVal) { localStorage.setItem("optistock_sheets_url", sheetsVal); }
-    if (deletePinVal) { localStorage.setItem("optistock_delete_pin", deletePinVal); }
-    settingsModal.classList.add("hidden");
-    alert("Settings saved");
+
+  document.getElementById("btnSaveGroq").addEventListener("click", function() {
+    var val = document.getElementById("settingsGroqKey").value.trim();
+    if (!val) { alert("Please enter your Groq API key"); return; }
+    localStorage.setItem("optistock_groq", val);
+    document.getElementById("groqStatus").textContent = "Saved!";
+  });
+
+  document.getElementById("btnSaveDeletePin").addEventListener("click", function() {
+    var val = document.getElementById("settingsDeletePin").value.trim();
+    if (!val) { alert("Please enter a delete password"); return; }
+    localStorage.setItem("optistock_delete_pin", val);
+    document.getElementById("deletePinStatus").textContent = "Password saved!";
+  });
+
+  document.getElementById("btnSaveSheetsUrl").addEventListener("click", function() {
+    var val = document.getElementById("settingsSheetsUrl").value.trim();
+    if (!val) { alert("Please paste your Apps Script URL"); return; }
+    localStorage.setItem("optistock_sheets_url", val);
+    document.getElementById("sheetsUrlStatus").textContent = "Saved!";
+  });
+
+  // Also save on input change (as user types/pastes)
+  document.getElementById("settingsGroqKey").addEventListener("change", function() {
+    var val = this.value.trim();
+    if (val) { localStorage.setItem("optistock_groq", val); document.getElementById("groqStatus").textContent = "Auto-saved"; }
+  });
+  document.getElementById("settingsSheetsUrl").addEventListener("change", function() {
+    var val = this.value.trim();
+    if (val) { localStorage.setItem("optistock_sheets_url", val); document.getElementById("sheetsUrlStatus").textContent = "Auto-saved"; }
+  });
+  document.getElementById("settingsDeletePin").addEventListener("change", function() {
+    var val = this.value.trim();
+    if (val) { localStorage.setItem("optistock_delete_pin", val); document.getElementById("deletePinStatus").textContent = "Auto-saved"; }
   });
 
   document.getElementById("btnSyncSheets").addEventListener("click", function() {

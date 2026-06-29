@@ -1165,8 +1165,8 @@
     var groqVal = document.getElementById("settingsGroqKey").value.trim();
     var sheetsVal = document.getElementById("settingsSheetsUrl").value.trim();
     var deletePinVal = document.getElementById("settingsDeletePin").value.trim();
-    localStorage.setItem("optistock_groq", groqVal);
-    localStorage.setItem("optistock_sheets_url", sheetsVal);
+    if (groqVal) { localStorage.setItem("optistock_groq", groqVal); }
+    if (sheetsVal) { localStorage.setItem("optistock_sheets_url", sheetsVal); }
     if (deletePinVal) { localStorage.setItem("optistock_delete_pin", deletePinVal); }
     settingsModal.classList.add("hidden");
     alert("Settings saved");
@@ -1174,6 +1174,7 @@
 
   document.getElementById("btnSyncSheets").addEventListener("click", function() {
     var sheetsUrl = document.getElementById("settingsSheetsUrl").value.trim() || localStorage.getItem("optistock_sheets_url") || "";
+    if (sheetsUrl) { localStorage.setItem("optistock_sheets_url", sheetsUrl); }
     if (!sheetsUrl) {
       alert("Please enter your Apps Script URL in Settings first");
       return;

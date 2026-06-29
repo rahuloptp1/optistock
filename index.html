@@ -2,1645 +2,1398 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="OptiStock">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#030712">
-<title>OptiStock v5.0</title>
-<script src="https://unpkg.com/@zxing/library@0.19.1/umd/index.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>OptiStock</title>
 <style>
-:root{--bg:#030712;--bg2:#0f172a;--card:#0f172a;--card2:#1e293b;--bdr:#1e293b;--bdr2:#334155;--txt:#f1f5f9;--txt2:#94a3b8;--txt3:#64748b;--accent:#3b82f6;--accent2:#1d4ed8;--green:#22c55e;--red:#ef4444;--yellow:#f59e0b;--r:12px;--r2:16px}
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,sans-serif;font-size:15px;overflow:hidden}
-body{display:flex;flex-direction:column}
-#pinScreen{position:fixed;inset:0;background:var(--bg);z-index:1000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px}
-.pin-logo{font-size:60px;animation:pulse 2s infinite}
-@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
-.pin-title{font-size:26px;font-weight:800}
-.pin-sub{font-size:13px;color:var(--txt2);margin-top:-20px}
-.pin-dots{display:flex;gap:18px}
-.pin-dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--bdr2);transition:all .2s}
-.pin-dot.filled{background:var(--accent);border-color:var(--accent);transform:scale(1.2)}
-.pin-keypad{display:grid;grid-template-columns:repeat(3,76px);gap:12px}
-.pin-key{height:76px;border-radius:50%;background:var(--card2);border:none;color:var(--txt);font-size:24px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center}
-.pin-key:active{transform:scale(0.88);background:var(--bdr2)}
-.pin-key.del{background:transparent;color:var(--txt2)}
-.pin-err{color:var(--red);font-size:13px;min-height:18px;text-align:center}
-#app{display:none;flex-direction:column;height:100%}
-.topbar{display:flex;align-items:center;gap:10px;padding:52px 16px 12px;background:var(--bg);border-bottom:1px solid var(--bdr);flex-shrink:0}
-#btnBack{width:36px;height:36px;border-radius:50%;background:var(--card2);border:none;color:var(--txt);font-size:20px;cursor:pointer;display:none;align-items:center;justify-content:center;flex-shrink:0}
-#topTitle{font-size:18px;font-weight:700;flex:1}
-.topbar-acts{display:flex;gap:8px}
-.tbtn{width:36px;height:36px;border-radius:10px;background:var(--card2);border:none;color:var(--txt);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center}
-.content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
-.page{padding:16px;display:none;min-height:100%}
-.page.active{display:block}
-.subpage{display:none;padding:16px;min-height:100%}
-.bottom-nav{display:flex;background:var(--bg2);border-top:1px solid var(--bdr);padding:8px 0 calc(8px + env(safe-area-inset-bottom));flex-shrink:0}
-.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 4px;cursor:pointer;border:none;background:transparent;color:var(--txt3);font-size:10px;font-weight:500}
-.nav-item.active{color:var(--accent)}
-.nav-icon{font-size:22px;line-height:1}
-.card{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r2);padding:16px}
-.card2{background:var(--card2);border-radius:var(--r);padding:12px}
-.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
-.stat-card{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r2);padding:14px}
-.stat-label{font-size:11px;color:var(--txt2);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
-.stat-val{font-size:26px;font-weight:800;line-height:1}
-.stat-sub{font-size:11px;color:var(--txt2);margin-top:4px}
-.btn{border:none;border-radius:var(--r);padding:13px 18px;font-size:14px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:7px;justify-content:center}
-.btn-primary{background:var(--accent);color:#fff}
-.btn-green{background:var(--green);color:#fff}
-.btn-red{background:var(--red);color:#fff}
-.btn-outline{background:transparent;color:var(--txt);border:1px solid var(--bdr2)}
-.btn-wa{background:#25D366;color:#fff}
-.btn-sm{padding:8px 12px;font-size:13px;border-radius:10px}
-.btn-full{width:100%}
-.form-group{margin-bottom:14px}
-.form-label{display:block;font-size:11px;font-weight:700;color:var(--txt2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
-.form-input{width:100%;background:var(--card2);border:1px solid var(--bdr2);border-radius:var(--r);color:var(--txt);padding:12px 14px;font-size:15px;outline:none;-webkit-appearance:none;font-family:inherit;transition:border-color .2s}
-.form-input:focus{border-color:var(--accent)}
-select.form-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%2364748b' viewBox='0 0 24 24'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;background-size:20px}
-.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.item-row{display:flex;align-items:center;gap:12px;padding:12px;background:var(--card);border:1px solid var(--bdr);border-radius:var(--r2);margin-bottom:8px;cursor:pointer}
-.item-thumb{width:48px;height:48px;border-radius:10px;background:var(--card2);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:24px;overflow:hidden}
-.item-thumb img{width:100%;height:100%;object-fit:cover}
-.item-info{flex:1;min-width:0}
-.item-name{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.item-sub{font-size:12px;color:var(--txt2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.item-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
-.badge{font-size:11px;padding:3px 8px;border-radius:6px;font-weight:600;white-space:nowrap}
-.badge-green{background:rgba(34,197,94,.15);color:var(--green)}
-.badge-red{background:rgba(239,68,68,.15);color:var(--red)}
-.badge-yellow{background:rgba(245,158,11,.15);color:var(--yellow)}
-.badge-blue{background:rgba(59,130,246,.15);color:var(--accent)}
-.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px;scrollbar-width:none}
-.chips::-webkit-scrollbar{display:none}
-.chip{flex-shrink:0;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:500;border:1px solid var(--bdr2);background:transparent;color:var(--txt2);cursor:pointer;white-space:nowrap}
-.chip.active{background:var(--accent);border-color:var(--accent);color:#fff}
-.search-wrap{position:relative;margin-bottom:12px}
-.search-input{width:100%;background:var(--card2);border:1px solid var(--bdr2);border-radius:var(--r);color:var(--txt);padding:12px 14px 12px 42px;font-size:15px;outline:none;-webkit-appearance:none}
-.search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--txt3);font-size:17px;pointer-events:none}
-.sec-title{font-size:11px;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.8px;margin:20px 0 10px}
-.sec-title:first-child{margin-top:0}
-.menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
-.menu-card{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r2);padding:16px;cursor:pointer;display:flex;flex-direction:column;gap:5px}
-.menu-card:active{background:var(--card2)}
-.menu-icon{font-size:28px}
-.menu-label{font-size:14px;font-weight:600}
-.menu-sub{font-size:11px;color:var(--txt2)}
-.fab{position:fixed;bottom:calc(72px + env(safe-area-inset-bottom) + 16px);right:16px;width:56px;height:56px;border-radius:50%;background:var(--accent);border:none;color:#fff;font-size:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:100}
-.modal-wrap{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:600;display:none;align-items:flex-end;justify-content:center}
-.modal-wrap.open{display:flex}
-.modal{background:var(--card);border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:480px;max-height:85vh;overflow-y:auto}
-.modal-handle{width:36px;height:4px;background:var(--bdr2);border-radius:2px;margin:0 auto 20px}
-.modal-title{font-size:18px;font-weight:700;margin-bottom:16px}
-#toast{position:fixed;bottom:calc(82px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:var(--card2);color:var(--txt);padding:12px 20px;border-radius:24px;font-size:14px;font-weight:500;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;border:1px solid var(--bdr2);white-space:nowrap}
-#toast.show{opacity:1}
-#scanVideo{width:100%;border-radius:var(--r2);background:#000;display:block;max-height:260px;object-fit:cover}
-.scan-box-wrap{position:relative;margin-bottom:14px;border-radius:var(--r2);overflow:hidden}
-.scan-aim{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
-.scan-aim-box{width:220px;height:100px;border:2.5px solid var(--accent);border-radius:12px;box-shadow:0 0 0 9999px rgba(0,0,0,.5)}
-.scan-line{position:absolute;width:200px;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);animation:scanmove 2s ease-in-out infinite}
-@keyframes scanmove{0%,100%{top:30%}50%{top:65%}}
-.toggle-row{display:flex;gap:4px;background:var(--card2);border-radius:var(--r);padding:4px;margin-bottom:16px}
-.toggle-btn{flex:1;padding:10px;border:none;border-radius:10px;background:transparent;color:var(--txt2);font-size:14px;font-weight:500;cursor:pointer}
-.toggle-btn.active{background:var(--card);color:var(--txt);font-weight:600}
-.photo-pick{width:78px;height:78px;border-radius:var(--r);background:var(--card2);border:2px dashed var(--bdr2);display:flex;align-items:center;justify-content:center;font-size:30px;overflow:hidden;cursor:pointer;flex-shrink:0}
-.photo-pick img{width:100%;height:100%;object-fit:cover}
-.divider{height:1px;background:var(--bdr);margin:14px 0}
-.row{display:flex;align-items:center;gap:10px}
-.col{display:flex;flex-direction:column}
-.between{justify-content:space-between}
-.grow{flex:1}
-.gap-8{gap:8px}
-.mb-8{margin-bottom:8px}
-.mb-12{margin-bottom:12px}
-.mb-16{margin-bottom:16px}
-.bold{font-weight:700}
-.sm{font-size:13px}
-.xs{font-size:12px}
-.muted{color:var(--txt2)}
-.c-green{color:var(--green)}
-.c-red{color:var(--red)}
-.c-blue{color:var(--accent)}
-.empty-state{display:flex;flex-direction:column;align-items:center;gap:12px;padding:60px 20px;color:var(--txt3);text-align:center}
-.empty-icon{font-size:48px;opacity:.5}
-.empty-text{font-size:15px;font-weight:500}
-.empty-sub{font-size:13px;max-width:240px}
-::-webkit-scrollbar{width:0;height:0}
-textarea.form-input{resize:vertical;min-height:80px}
-.color-row .form-input{padding:10px 8px;font-size:14px}
-.scan-status{background:var(--card2);border-radius:var(--r);padding:12px;text-align:center;margin-bottom:12px;font-size:13px;color:var(--txt2)}
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; background: #f2f2f2; color: #222; }
+  .hidden { display: none !important; }
+
+  /* PIN screen */
+  #pinScreen { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #1a1a2e; }
+  #pinScreen h1 { color: #fff; margin-bottom: 20px; font-size: 24px; }
+  #pinInput { font-size: 28px; letter-spacing: 8px; text-align: center; width: 220px; padding: 12px; border-radius: 8px; border: none; margin-bottom: 16px; }
+  #pinSubmit { font-size: 18px; padding: 12px 30px; border-radius: 8px; border: none; background: #4cafef; color: #fff; }
+  #pinError { color: #ff6b6b; margin-top: 10px; height: 20px; }
+
+  /* Top bar */
+  #topBar { background: #1a1a2e; color: #fff; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; }
+  #topBar .title { font-size: 18px; font-weight: bold; }
+  #syncStatus { font-size: 12px; color: #aaa; }
+
+  /* Business switch */
+  #bizSwitch { display: flex; background: #fff; border-bottom: 1px solid #ddd; }
+  #bizSwitch button { flex: 1; padding: 12px 4px; border: none; background: #fff; font-size: 14px; color: #555; border-bottom: 3px solid transparent; }
+  #bizSwitch button.active { color: #1a1a2e; font-weight: bold; border-bottom: 3px solid #4cafef; }
+
+  #sectionTabs { display: flex; background: #2c2c44; }
+  #sectionTabs button { flex: 1; padding: 10px 4px; border: none; background: #2c2c44; color: #bbb; font-size: 13px; }
+  #sectionTabs button.active { background: #1a1a2e; color: #fff; font-weight: bold; }
+
+  #settingsModal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: flex-end; z-index: 80; }
+  #settingsModal .sheet { background: #fff; width: 100%; border-radius: 16px 16px 0 0; padding: 18px; }
+  #settingsModal label { display: block; font-size: 13px; color: #555; margin-top: 10px; margin-bottom: 4px; }
+  #settingsModal input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; }
+  #settingsModal .modalButtons { display: flex; gap: 10px; margin-top: 18px; }
+  #settingsModal .modalButtons button { flex: 1; padding: 12px; border-radius: 8px; border: none; font-size: 15px; }
+  #btnCloseSettings { background: #eee; color: #333; }
+  #btnSaveSettings { background: #4cafef; color: #fff; }
+
+  /* Purchase Orders */
+  .poCard { background: #fff; border-radius: 8px; padding: 12px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+  .poCard .poSupplier { font-weight: bold; font-size: 15px; }
+  .poCard .poMeta { font-size: 13px; color: #666; margin-top: 2px; }
+  .poStatus { font-size: 11px; padding: 2px 8px; border-radius: 10px; display: inline-block; margin-top: 6px; }
+  .poStatus.pending { background: #fff3cd; color: #856404; }
+  .poStatus.received { background: #d4edda; color: #155724; }
+
+  #addPoBtn { position: fixed; bottom: 20px; right: 20px; width: 56px; height: 56px; border-radius: 50%; background: #e67e22; color: #fff; font-size: 28px; border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+  #poModal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: flex-end; z-index: 60; }
+  #poModal .sheet { background: #fff; width: 100%; max-height: 90vh; overflow-y: auto; border-radius: 16px 16px 0 0; padding: 18px; }
+  #poModal label { display: block; font-size: 13px; color: #555; margin-top: 10px; margin-bottom: 4px; }
+  #poModal input, #poModal textarea, #poModal select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; }
+  #poModal textarea { min-height: 80px; }
+  #poModal .modalButtons { display: flex; gap: 10px; margin-top: 18px; }
+  #poModal .modalButtons button { flex: 1; padding: 12px; border-radius: 8px; border: none; font-size: 15px; }
+  #btnCancelPo { background: #eee; color: #333; }
+  #btnSavePo { background: #e67e22; color: #fff; }
+
+  #mainContent { padding: 14px; padding-bottom: 80px; }
+
+  #addItemBtn { position: fixed; bottom: 20px; right: 20px; width: 56px; height: 56px; border-radius: 50%; background: #4cafef; color: #fff; font-size: 28px; border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+
+  .itemCard { background: #fff; border-radius: 8px; padding: 10px; margin-bottom: 10px; display: flex; gap: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+  .itemCard img { width: 64px; height: 64px; object-fit: cover; border-radius: 6px; background: #eee; }
+  .itemCard .itemInfo { flex: 1; }
+  .itemCard .itemModel { font-weight: bold; font-size: 15px; }
+  .itemCard .itemMeta { font-size: 13px; color: #666; }
+  .itemCard .itemBizTag { font-size: 11px; padding: 2px 6px; border-radius: 4px; background: #e0f0ff; color: #1a1a2e; display: inline-block; margin-top: 4px; }
+
+  /* Add item modal */
+  #addItemModal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: flex-end; z-index: 50; }
+  #addItemModal .sheet { background: #fff; width: 100%; max-height: 90vh; overflow-y: auto; border-radius: 16px 16px 0 0; padding: 18px; }
+  #addItemModal h2 { margin-bottom: 14px; }
+  #addItemModal label { display: block; font-size: 13px; color: #555; margin-top: 10px; margin-bottom: 4px; }
+  #addItemModal input, #addItemModal select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; }
+  #addItemModal .modalButtons { display: flex; gap: 10px; margin-top: 18px; }
+  #addItemModal .modalButtons button { flex: 1; padding: 12px; border-radius: 8px; border: none; font-size: 15px; }
+
+  .formRow2 { display: flex; gap: 10px; }
+  .formRow2 > div { flex: 1; }
+
+  .colourRow { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; }
+  .colourRow input { flex: 1; }
+  .colourRow input.colourQty { flex: 0 0 60px; }
+  .colourRow .btnRemoveColour { flex: 0 0 36px; background: #e74c3c; color: #fff; border: none; border-radius: 6px; height: 40px; font-size: 16px; }
+
+  .addColourBtn { width: 100%; padding: 10px; border-radius: 6px; border: 1px dashed #999; background: #fafafa; color: #555; font-size: 14px; margin-top: 4px; }
+
+  .barcodeRow { display: flex; gap: 6px; }
+  .barcodeRow input { flex: 1; }
+  .barcodeRow button { flex: 0 0 44px; border: none; border-radius: 6px; background: #e67e22; color: #fff; font-size: 16px; }
+  #btnCancelAdd { background: #eee; color: #333; }
+  #btnSaveItem { background: #4cafef; color: #fff; }
+  #uploadStatus { font-size: 12px; color: #888; margin-top: 4px; }
+  #photoPreview { width: 80px; height: 80px; object-fit: cover; border-radius: 6px; margin-top: 6px; display: none; background: #eee; }
+
+  .itemCard .itemActions { display: flex; gap: 6px; margin-top: 6px; }
+  .btnSell { background: #2ecc71; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; font-size: 13px; }
+  .btnEdit { background: #4cafef; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; font-size: 13px; }
+  .btnDelete { background: #e74c3c; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; font-size: 13px; }
+
+  #sellModal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: flex-end; z-index: 60; }
+  #sellModal .sheet { background: #fff; width: 100%; max-height: 90vh; overflow-y: auto; border-radius: 16px 16px 0 0; padding: 18px; }
+  #sellModal label { display: block; font-size: 13px; color: #555; margin-top: 10px; margin-bottom: 4px; }
+  #sellModal input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; }
+  #sellModal .modalButtons { display: flex; gap: 10px; margin-top: 18px; }
+  #sellModal .modalButtons button { flex: 1; padding: 12px; border-radius: 8px; border: none; font-size: 15px; }
+  #btnCancelSell { background: #eee; color: #333; }
+  #btnConfirmSell { background: #2ecc71; color: #fff; }
+
+  .scanButtons { display: flex; gap: 8px; margin-top: 10px; }
+  .scanButtons button { flex: 1; padding: 10px; border-radius: 6px; border: none; font-size: 13px; color: #fff; }
+  #btnScanTemple { background: #9b59b6; }
+  #btnScanBarcode { background: #e67e22; }
+
+  #cameraModal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #000; z-index: 70; display: flex; flex-direction: column; }
+  #cameraModal video { flex: 1; width: 100%; object-fit: cover; background: #000; }
+  #cameraModal .camBar { background: #111; padding: 14px; display: flex; gap: 10px; }
+  #cameraModal .camBar button { flex: 1; padding: 12px; border-radius: 8px; border: none; font-size: 15px; }
+  #btnCaptureShot { background: #4cafef; color: #fff; }
+  #btnCloseCamera { background: #555; color: #fff; }
+  #scanLabel { color: #fff; text-align: center; padding: 8px; font-size: 13px; }
 </style>
 </head>
 <body>
 
-<!-- PIN SCREEN -->
 <div id="pinScreen">
-  <div class="pin-logo">&#128083;</div>
-  <div class="pin-title">OptiStock</div>
-  <div class="pin-sub">Smart Optical Store Manager</div>
-  <div class="pin-dots">
-    <div class="pin-dot" id="d0"></div>
-    <div class="pin-dot" id="d1"></div>
-    <div class="pin-dot" id="d2"></div>
-    <div class="pin-dot" id="d3"></div>
+  <h1>OptiStock</h1>
+  <input type="password" id="pinInput" maxlength="4" inputmode="numeric" placeholder="----">
+  <button id="pinSubmit">Unlock</button>
+  <div id="pinError"></div>
+</div>
+
+<div id="appScreen" class="hidden">
+  <div id="topBar">
+    <div class="title">OptiStock</div>
+    <div id="syncStatus">Connecting...</div>
+    <button id="btnSettings" style="background:none;border:none;color:#fff;font-size:20px;">&#9881;</button>
   </div>
-  <div class="pin-err" id="pinErr">&nbsp;</div>
-  <div class="pin-keypad">
-    <button class="pin-key" onclick="pinPress('1')">1</button>
-    <button class="pin-key" onclick="pinPress('2')">2</button>
-    <button class="pin-key" onclick="pinPress('3')">3</button>
-    <button class="pin-key" onclick="pinPress('4')">4</button>
-    <button class="pin-key" onclick="pinPress('5')">5</button>
-    <button class="pin-key" onclick="pinPress('6')">6</button>
-    <button class="pin-key" onclick="pinPress('7')">7</button>
-    <button class="pin-key" onclick="pinPress('8')">8</button>
-    <button class="pin-key" onclick="pinPress('9')">9</button>
-    <button class="pin-key" onclick="pinPress('')"></button>
-    <button class="pin-key" onclick="pinPress('0')">0</button>
-    <button class="pin-key del" onclick="pinDel()">&#9003;</button>
+  <div id="bizSwitch">
+    <button id="bizEyeland" data-biz="Eyeland">Eyeland</button>
+    <button id="bizICrops" data-biz="iCrops">iCrops</button>
+    <button id="bizBoth" data-biz="Both">Both</button>
+    <button id="bizAll" data-biz="All">All</button>
+  </div>
+  <div id="sectionTabs">
+    <button id="tabInventory" data-section="inventory">Inventory</button>
+    <button id="tabPO" data-section="po">Purchase Orders</button>
+    <button id="tabSales" data-section="sales">Sales</button>
+  </div>
+  <div id="mainContent">
+    <p>Loading...</p>
+  </div>
+  <button id="addItemBtn">+</button>
+  <button id="addPoBtn" class="hidden">+</button>
+</div>
+
+<div id="addItemModal" class="hidden">
+  <div class="sheet">
+    <h2 id="addItemModalTitle">Add Item</h2>
+
+    <label>Business</label>
+    <select id="formBusiness">
+      <option value="Eyeland">Eyeland</option>
+      <option value="iCrops">iCrops</option>
+    </select>
+
+    <label>Frame Photo</label>
+    <input type="file" id="formPhoto" accept="image/*" capture="environment">
+    <div id="uploadStatus"></div>
+    <img id="photoPreview">
+
+    <label>Item Name *</label>
+    <input type="text" id="formItemName" placeholder="e.g. Ray-Ban Aviator Gold">
+
+    <div class="formRow2">
+      <div>
+        <label>Model No</label>
+        <input type="text" id="formModel" placeholder="e.g. RB3025">
+      </div>
+      <div>
+        <label>Size</label>
+        <input type="text" id="formSize" placeholder="e.g. 52-18-140">
+      </div>
+    </div>
+
+    <div class="scanButtons">
+      <button type="button" id="btnScanTemple">Scan Temple</button>
+      <button type="button" id="btnScanBarcode">Scan Barcode</button>
+    </div>
+
+    <div class="formRow2">
+      <div>
+        <label>Brand</label>
+        <input type="text" id="formBrand" placeholder="Ray-Ban / Leo">
+      </div>
+      <div>
+        <label>Material</label>
+        <input type="text" id="formMaterial" placeholder="Metal / Plastic">
+      </div>
+    </div>
+
+    <div class="formRow2">
+      <div>
+        <label>Category</label>
+        <select id="formCategory">
+          <option value="">Select</option>
+          <option value="Optical Frame">Optical Frame</option>
+          <option value="Sunglasses">Sunglasses</option>
+          <option value="Contact Lens">Contact Lens</option>
+          <option value="Lens">Lens</option>
+          <option value="Accessory">Accessory</option>
+        </select>
+      </div>
+      <div>
+        <label>For</label>
+        <select id="formFor">
+          <option value="">Select</option>
+          <option value="Men">Men</option>
+          <option value="Women">Women</option>
+          <option value="Unisex">Unisex</option>
+          <option value="Kids">Kids</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="formRow2">
+      <div>
+        <label>Frame Type</label>
+        <select id="formFrameType">
+          <option value="">Select</option>
+          <option value="Full Rim">Full Rim</option>
+          <option value="Half Rim">Half Rim</option>
+          <option value="Rimless">Rimless</option>
+        </select>
+      </div>
+      <div>
+        <label>Low Stock Alert (per colour)</label>
+        <input type="number" id="formLowStock" placeholder="2" value="2">
+      </div>
+    </div>
+
+    <label style="margin-top:16px;">Pricing (same for all colours)</label>
+    <div class="formRow2">
+      <div>
+        <label>Selling Price (Rs) *</label>
+        <input type="number" id="formPrice" placeholder="e.g. 2500">
+      </div>
+      <div>
+        <label>Cost Price (Rs)</label>
+        <input type="number" id="formCostPrice" placeholder="e.g. 1200">
+      </div>
+    </div>
+
+    <label style="margin-top:16px;">Colours &amp; Quantity</label>
+    <div id="colourRows"></div>
+    <button type="button" id="btnAddColour" class="addColourBtn">+ Add Colour</button>
+
+    <label style="margin-top:16px;">Barcode</label>
+    <div class="barcodeRow">
+      <input type="text" id="formBarcode" placeholder="Scan or type barcode">
+      <button type="button" id="btnScanBarcodeField">&#128247;</button>
+    </div>
+
+    <div class="formRow2">
+      <div>
+        <label>Supplier</label>
+        <input type="text" id="formSupplier" placeholder="Supplier name">
+      </div>
+      <div>
+        <label>Location</label>
+        <input type="text" id="formLocation" placeholder="e.g. Rack A-1">
+      </div>
+    </div>
+
+    <label>Notes</label>
+    <input type="text" id="formNotes" placeholder="Extra notes...">
+
+    <div class="modalButtons">
+      <button id="btnCancelAdd">Cancel</button>
+      <button id="btnSaveItem">Save Item</button>
+    </div>
   </div>
 </div>
 
-<!-- APP -->
-<div id="app">
-  <div class="topbar">
-    <button id="btnBack" onclick="goBack()">&#8249;</button>
-    <span id="topTitle">OptiStock</span>
-    <div class="topbar-acts" id="topActs"></div>
+<div id="sellModal" class="hidden">
+  <div class="sheet">
+    <h2>Sell Item</h2>
+    <p id="sellItemLabel" style="color:#555;margin-top:6px;"></p>
+
+    <label>Colour</label>
+    <select id="sellColour"></select>
+
+    <label>Order No.</label>
+    <input type="text" id="sellOrderNo" placeholder="e.g. 101">
+
+    <label>Customer Name</label>
+    <input type="text" id="sellCustName" placeholder="Customer name">
+
+    <label>Customer WhatsApp Number</label>
+    <input type="text" id="sellCustPhone" placeholder="10-digit number" inputmode="numeric">
+
+    <label>Quantity Sold</label>
+    <input type="number" id="sellQty" value="1" min="1">
+
+    <label>Sale Price</label>
+    <input type="number" id="sellPrice" placeholder="e.g. 1500">
+
+    <div class="modalButtons">
+      <button id="btnCancelSell">Cancel</button>
+      <button id="btnConfirmSell">Confirm Sale</button>
+    </div>
   </div>
+</div>
 
-  <div class="content" id="mainContent">
-
-    <!-- HOME -->
-    <div class="page active" id="pgHome">
-      <div class="stats-grid" id="statsGrid"></div>
-      <div class="sec-title">Quick Actions</div>
-      <div class="menu-grid">
-        <div class="menu-card" onclick="openAddItem()"><div class="menu-icon">&#10133;</div><div class="menu-label">Add Item</div><div class="menu-sub">Add to stock</div></div>
-        <div class="menu-card" onclick="openSaleForm()"><div class="menu-icon">&#128176;</div><div class="menu-label">New Sale</div><div class="menu-sub">Record a sale</div></div>
-        <div class="menu-card" onclick="switchTab('scan');setScanMode('barcode')"><div class="menu-icon">&#128247;</div><div class="menu-label">Scan Barcode</div><div class="menu-sub">Quick lookup</div></div>
-        <div class="menu-card" onclick="switchTab('scan');setScanMode('temple')"><div class="menu-icon">&#128083;</div><div class="menu-label">Temple Scan</div><div class="menu-sub">AI frame scan</div></div>
-      </div>
-      <div class="sec-title">Low Stock Alerts</div>
-      <div id="lowStockList"></div>
-      <div class="sec-title">Recent Sales</div>
-      <div id="recentSales"></div>
-    </div>
-
-    <!-- INVENTORY -->
-    <div class="page" id="pgInventory">
-      <div class="search-wrap">
-        <span class="search-icon">&#128269;</span>
-        <input class="search-input" id="invSearch" placeholder="Search name, model, brand, size..." oninput="renderInventory()">
-      </div>
-      <div class="chips" id="catChips"></div>
-      <div id="invList"></div>
-    </div>
-
-    <!-- SALES -->
-    <div class="page" id="pgSales">
-      <div class="card mb-12" id="salesTodayCard"></div>
-      <div class="sec-title">History</div>
-      <div id="salesList"></div>
-    </div>
-
-    <!-- SCAN -->
-    <div class="page" id="pgScan">
-      <div class="toggle-row">
-        <button class="toggle-btn active" id="tgBarcode" onclick="setScanMode('barcode')">&#128247; Barcode</button>
-        <button class="toggle-btn" id="tgTemple" onclick="setScanMode('temple')">&#128083; Temple Scan</button>
-      </div>
-
-      <!-- BARCODE SECTION -->
-      <div id="barcodeSect">
-        <div class="scan-box-wrap">
-          <video id="scanVideo" autoplay muted playsinline></video>
-          <div class="scan-aim">
-            <div style="display:flex;flex-direction:column;align-items:center;gap:0">
-              <div class="scan-aim-box"></div>
-              <div class="scan-line"></div>
-            </div>
-          </div>
-        </div>
-        <div class="scan-status" id="barcodeStatus">Point camera at barcode</div>
-        <button class="btn btn-primary btn-full mb-8" id="btnStartScan" onclick="startBarcodeScanner()">&#9654; Start Scanner</button>
-        <button class="btn btn-red btn-full" id="btnStopScan" onclick="stopBarcodeScanner()" style="display:none">&#9632; Stop Scanner</button>
-        <div style="margin-top:12px">
-          <div class="sec-title" style="margin-top:0">Manual Search</div>
-          <div class="row gap-8">
-            <input class="form-input grow" id="manualBarcode" placeholder="Type barcode or model no...">
-            <button class="btn btn-outline btn-sm" onclick="manualSearch()">Search</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- TEMPLE SCAN SECTION -->
-      <div id="templeSect" style="display:none">
-        <div id="templeKeyBanner" class="card mb-12" style="display:none">
-          <div class="bold mb-8" style="color:var(--yellow)">&#9888; Groq API Key Required</div>
-          <div class="xs muted mb-12" style="line-height:1.6">Enter your free Groq API key to enable AI temple scanning. Get it at console.groq.com</div>
-          <input class="form-input mb-12" id="inlineGroqKey" type="text" placeholder="gsk_..." autocomplete="off">
-          <button class="btn btn-primary btn-full" onclick="saveInlineGroqKey()">&#10003; Save Key &amp; Enable</button>
-        </div>
-        <div id="templeKeyOk" class="card mb-12" style="display:none">
-          <div class="row between" style="align-items:center">
-            <div class="xs c-green bold">&#9989; Groq AI Connected</div>
-            <button class="btn btn-outline btn-sm" onclick="clearGroqKey()">Change Key</button>
-          </div>
-        </div>
-        <div class="card mb-12">
-          <div class="sec-title" style="margin-top:0">How Temple Scan Works</div>
-          <div class="muted sm" style="line-height:1.8">
-            1. Take a clear photo of the temple arm<br>
-            2. AI reads the model/SKU code printed on it<br>
-            3. App searches your inventory for that model
-          </div>
-        </div>
-        <div style="display:flex;gap:10px;margin-bottom:12px">
-          <button class="btn btn-primary grow" onclick="checkKeyThenScan('templeCamera')">&#128248; Take Photo</button>
-          <button class="btn btn-outline grow" onclick="checkKeyThenScan('templeGallery')">&#128444; Gallery</button>
-        </div>
-        <input type="file" id="templeCamera" accept="image/*" capture="environment" style="display:none" onchange="handleTemplePhoto(this)">
-        <input type="file" id="templeGallery" accept="image/*" style="display:none" onchange="handleTemplePhoto(this)">
-        <div id="templeResult"></div>
-      </div>
-    </div>
-
-    <!-- MORE -->
-    <div class="page" id="pgMore">
-      <div class="sec-title">Management</div>
-      <div class="menu-grid">
-        <div class="menu-card" onclick="showSub('pgPOs','Purchase Orders');renderPOs()"><div class="menu-icon">&#128203;</div><div class="menu-label">Purchase Orders</div><div class="menu-sub" id="poCount">0 orders</div></div>
-        <div class="menu-card" onclick="showSub('pgSuppliers','Suppliers');renderSuppliers()"><div class="menu-icon">&#127981;</div><div class="menu-label">Suppliers</div><div class="menu-sub" id="supplierCount">0 suppliers</div></div>
-        <div class="menu-card" onclick="exportCSV()"><div class="menu-icon">&#128228;</div><div class="menu-label">Export CSV</div><div class="menu-sub">Download data</div></div>
-        <div class="menu-card" onclick="doBackup()"><div class="menu-icon">&#9729;</div><div class="menu-label">Sync Sheets</div><div class="menu-sub">Google Backup</div></div>
-      </div>
-      <div class="sec-title">App</div>
-      <div class="menu-grid">
-        <div class="menu-card" onclick="showSub('pgSettings','Settings');renderSettings()"><div class="menu-icon">&#9881;</div><div class="menu-label">Settings</div><div class="menu-sub">Configure</div></div>
-        <div class="menu-card" onclick="showSub('pgSheetSetup','Sheets Setup')"><div class="menu-icon">&#128202;</div><div class="menu-label">Sheets Setup</div><div class="menu-sub">Backup guide</div></div>
-      </div>
-      <div class="card" style="font-size:12px;color:var(--txt2);line-height:1.9">
-        <b style="color:var(--txt)">OptiStock v5.0</b><br>
-        Temple Scan &#183; Barcode &#183; WhatsApp Invoice &#183; Purchase Orders &#183; Google Sheets
-      </div>
-    </div>
-
-    <!-- ADD/EDIT ITEM -->
-    <div class="subpage" id="pgAddItem">
-      <div class="sec-title">Frame Photo</div>
-      <div class="row gap-8 mb-16">
-        <div class="photo-pick" id="itemThumbPick" onclick="document.getElementById('itemCameraFile').click()">
-          <span>&#128230;</span>
-        </div>
-        <div class="col gap-8 grow">
-          <button class="btn btn-primary btn-sm" onclick="document.getElementById('itemCameraFile').click()">&#128248; Take Photo</button>
-          <button class="btn btn-outline btn-sm" onclick="document.getElementById('itemPhotoFile').click()">&#128444; Choose from Gallery</button>
-          <button class="btn btn-outline btn-sm" onclick="openScanForItem()">&#128083; Temple Scan</button>
-        </div>
-        <input type="file" id="itemCameraFile" accept="image/*" capture="environment" style="display:none" onchange="previewItemPhoto(this)">
-        <input type="file" id="itemPhotoFile" accept="image/*" style="display:none" onchange="previewItemPhoto(this)">
-      </div>
-
-      <div class="sec-title">Basic Info</div>
-      <div class="form-group"><label class="form-label">Item Name *</label><input class="form-input" id="fName" placeholder="e.g. Ray-Ban Aviator Gold"></div>
-
-      <div class="form-row mb-8">
-        <div class="form-group" style="margin:0">
-          <label class="form-label">Model No</label>
-          <div class="row gap-8">
-            <input class="form-input grow" id="fSku" placeholder="e.g. RB3025">
-            <button class="btn btn-outline btn-sm" onclick="scanForField('fSku')" style="padding:12px;flex-shrink:0">&#128247;</button>
-          </div>
-        </div>
-        <div class="form-group" style="margin:0"><label class="form-label">Size</label><input class="form-input" id="fSize" placeholder="e.g. 52-18-140"></div>
-      </div>
-
-      <div class="form-row mb-8">
-        <div class="form-group" style="margin:0"><label class="form-label">Brand</label><input class="form-input" id="fBrand" placeholder="Ray-Ban / Leo"></div>
-        <div class="form-group" style="margin:0"><label class="form-label">Material</label><input class="form-input" id="fMaterial" placeholder="Metal / Plastic"></div>
-      </div>
-
-      <div class="form-row mb-8">
-        <div class="form-group" style="margin:0">
-          <label class="form-label">Category</label>
-          <select class="form-input" id="fCategory">
-            <option value="">Select</option>
-            <option>Optical Frame</option><option>Sunglasses</option><option>Contact Lens</option>
-            <option>Reading Glass</option><option>Lens</option><option>Accessories</option><option>Other</option>
-          </select>
-        </div>
-        <div class="form-group" style="margin:0">
-          <label class="form-label">For</label>
-          <select class="form-input" id="fFor">
-            <option value="">Select</option>
-            <option>Men</option><option>Women</option><option>Kids</option><option>Unisex</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="form-row mb-8">
-        <div class="form-group" style="margin:0">
-          <label class="form-label">Frame Type</label>
-          <select class="form-input" id="fFrameType">
-            <option value="">Select</option>
-            <option>Full Rim</option><option>Half Rim</option><option>Rimless</option><option>Sheet</option><option>N/A</option>
-          </select>
-        </div>
-        <div class="form-group" style="margin:0"><label class="form-label">Low Stock Alert (per colour)</label><input class="form-input" id="fLowAt" type="number" placeholder="2" min="0"></div>
-      </div>
-
-      <div class="sec-title">Pricing (same for all colours)</div>
-      <div class="form-row mb-16">
-        <div class="form-group" style="margin:0"><label class="form-label">Selling Price (Rs)*</label><input class="form-input" id="fPrice" type="number" placeholder="2500" min="0"></div>
-        <div class="form-group" style="margin:0"><label class="form-label">Cost Price (Rs)</label><input class="form-input" id="fCost" type="number" placeholder="1200" min="0"></div>
-      </div>
-
-      <div class="sec-title">Colours &amp; Quantity</div>
-      <div class="muted xs mb-8" style="line-height:1.6">Add each colour with its quantity. Colour code is optional (for branded frames, useful when reordering).</div>
-      <div id="colorRows" class="mb-8"></div>
-      <button class="btn btn-outline btn-full mb-16" onclick="addColorRow('','',1)">&#10133; Add Colour</button>
-
-      <div class="sec-title">Other Details</div>
-      <div class="form-group">
-        <label class="form-label">Barcode</label>
-        <div class="row gap-8">
-          <input class="form-input grow" id="fBarcode" placeholder="Scan or type barcode">
-          <button class="btn btn-outline btn-sm" onclick="scanForField('fBarcode')" style="padding:12px;flex-shrink:0">&#128247;</button>
-        </div>
-      </div>
-      <div class="form-row mb-8">
-        <div class="form-group" style="margin:0"><label class="form-label">Supplier</label><select class="form-input" id="fSupplier"><option value="">None</option></select></div>
-        <div class="form-group" style="margin:0"><label class="form-label">Location</label><input class="form-input" id="fLocation" placeholder="Rack A-1"></div>
-      </div>
-      <div class="form-group"><label class="form-label">Notes</label><textarea class="form-input" id="fNotes" placeholder="Extra notes..."></textarea></div>
-
-      <div style="display:flex;gap:10px;margin-top:8px">
-        <button class="btn btn-primary grow" onclick="saveItem()">&#10003; Save Item</button>
-        <button class="btn btn-red btn-sm" id="btnDeleteItem" onclick="confirmDeleteItem()" style="display:none">&#128465;</button>
-      </div>
-    </div>
-
-    <!-- ITEM DETAIL -->
-    <div class="subpage" id="pgItemDetail"><div id="itemDetailContent"></div></div>
-
-    <!-- SALE FORM -->
-    <div class="subpage" id="pgSaleForm">
-      <div class="sec-title">Customer Info</div>
-      <div class="form-row mb-8">
-        <div class="form-group" style="margin:0"><label class="form-label">Name</label><input class="form-input" id="sCustName" placeholder="Optional"></div>
-        <div class="form-group" style="margin:0"><label class="form-label">Phone (WhatsApp)</label><input class="form-input" id="sCustPhone" type="tel" placeholder="9876543210"></div>
-      </div>
-      <div class="sec-title">Items</div>
-      <div id="saleItemsList" class="mb-12"></div>
-      <button class="btn btn-outline btn-full mb-12" onclick="openAddSaleItem()">&#10133; Add Item to Sale</button>
-      <div class="card mb-12" id="saleSummaryCard" style="display:none">
-        <div class="row between mb-8"><span class="muted">Subtotal</span><span id="sSubtotal" class="bold">Rs 0</span></div>
-        <div class="row between mb-8">
-          <span class="muted">Discount (Rs)</span>
-          <input class="form-input" id="sDiscount" type="number" placeholder="0" min="0" style="width:100px;text-align:right" oninput="calcSaleSummary()">
-        </div>
-        <div class="divider"></div>
-        <div class="row between"><span class="bold" style="font-size:17px">Total</span><span class="bold c-green" id="sTotal" style="font-size:20px">Rs 0</span></div>
-      </div>
-      <div class="form-group"><label class="form-label">Notes</label><input class="form-input" id="sSaleNotes" placeholder="Optional"></div>
-      <button class="btn btn-green btn-full" onclick="saveSale()">&#128176; Complete Sale</button>
-    </div>
-
-    <!-- SALE DETAIL -->
-    <div class="subpage" id="pgSaleDetail"><div id="saleDetailContent"></div></div>
-
-    <!-- PURCHASE ORDERS -->
-    <div class="subpage" id="pgPOs">
-      <div class="chips" id="poFilterChips">
-        <button class="chip active" onclick="setPOFilter('all',this)">All</button>
-        <button class="chip" onclick="setPOFilter('pending',this)">Pending</button>
-        <button class="chip" onclick="setPOFilter('received',this)">Received</button>
-      </div>
-      <div id="poList"></div>
-      <button class="fab" onclick="openAddPO()">+</button>
-    </div>
-
-    <!-- ADD PO -->
-    <div class="subpage" id="pgAddPO">
-      <div class="form-group"><label class="form-label">Supplier</label><select class="form-input" id="poSupplier"><option value="">Select</option></select></div>
-      <div class="form-row mb-8">
-        <div class="form-group" style="margin:0"><label class="form-label">Order Date</label><input class="form-input" id="poDate" type="date"></div>
-        <div class="form-group" style="margin:0"><label class="form-label">Expected By</label><input class="form-input" id="poExpected" type="date"></div>
-      </div>
-      <div class="sec-title">Items to Order</div>
-      <div id="poItemsList" class="mb-12"></div>
-      <button class="btn btn-outline btn-full mb-16" onclick="addPOItemRow()">&#10133; Add Item</button>
-      <div class="form-group"><label class="form-label">Notes</label><textarea class="form-input" id="poNotes"></textarea></div>
-      <button class="btn btn-primary btn-full" onclick="savePO()">&#128203; Create Purchase Order</button>
-    </div>
-
-    <!-- PO DETAIL -->
-    <div class="subpage" id="pgPODetail"><div id="poDetailContent"></div></div>
-
-    <!-- SUPPLIERS -->
-    <div class="subpage" id="pgSuppliers">
-      <div id="supplierList" class="mb-12"></div>
-      <div class="sec-title">Add New Supplier</div>
-      <div class="form-row mb-8">
-        <div class="form-group" style="margin:0"><label class="form-label">Name *</label><input class="form-input" id="supName" placeholder="Supplier name"></div>
-        <div class="form-group" style="margin:0"><label class="form-label">Phone</label><input class="form-input" id="supPhone" type="tel"></div>
-      </div>
-      <div class="form-group"><label class="form-label">Company</label><input class="form-input" id="supCompany" placeholder="Company name"></div>
-      <button class="btn btn-primary btn-full" onclick="addSupplier()">&#10133; Add Supplier</button>
-    </div>
-
-    <!-- SETTINGS -->
-    <div class="subpage" id="pgSettings">
-      <div class="sec-title">Shop Info</div>
-      <div class="form-group"><label class="form-label">Shop Name</label><input class="form-input" id="stShopName" placeholder="My Optical Store"></div>
-      <div class="form-row mb-8">
-        <div class="form-group" style="margin:0"><label class="form-label">Phone</label><input class="form-input" id="stShopPhone" type="tel"></div>
-        <div class="form-group" style="margin:0"><label class="form-label">GST No.</label><input class="form-input" id="stGST" placeholder="27XXXXX"></div>
-      </div>
-      <div class="form-group"><label class="form-label">Address</label><textarea class="form-input" id="stAddress" style="min-height:60px"></textarea></div>
-      <div class="sec-title">API Keys</div>
-      <div class="form-group"><label class="form-label">Groq API Key (Temple Scan)</label><input class="form-input" id="stGroqKey" type="password" placeholder="gsk_..." autocomplete="off"></div>
-      <div class="form-group">
-        <label class="form-label">Google Sheets Web App URL</label>
-        <input class="form-input" id="stSheetUrl" placeholder="https://script.google.com/...">
-        <div class="xs muted" style="margin-top:6px">Get URL from Sheets Setup guide in More tab</div>
-      </div>
-      <div class="sec-title">Change PIN</div>
-      <div class="form-row mb-16">
-        <div class="form-group" style="margin:0"><label class="form-label">New PIN</label><input class="form-input" id="stPin1" type="password" maxlength="4" placeholder="4 digits" inputmode="numeric"></div>
-        <div class="form-group" style="margin:0"><label class="form-label">Confirm PIN</label><input class="form-input" id="stPin2" type="password" maxlength="4" placeholder="4 digits" inputmode="numeric"></div>
-      </div>
-      <div style="display:flex;gap:10px">
-        <button class="btn btn-primary grow" onclick="saveSettings()">&#10003; Save Settings</button>
-        <button class="btn btn-outline btn-sm" onclick="testSheetUrl()">Test Sheets</button>
-      </div>
-    </div>
-
-    <!-- SHEETS SETUP -->
-    <div class="subpage" id="pgSheetSetup">
-      <div class="card mb-16" style="background:rgba(59,130,246,.1);border-color:rgba(59,130,246,.3)">
-        <div class="bold mb-8">&#128274; 100% Free &amp; Private</div>
-        <div class="xs muted" style="line-height:1.7">Data saved directly to YOUR Google Sheet. No third party. Free forever.</div>
-      </div>
-      <div class="sec-title">Setup Steps</div>
-      <div class="card mb-12"><div class="bold mb-8">Step 1: Create Google Sheet</div><div class="xs muted" style="line-height:1.7">Go to sheets.google.com &#8594; Click + (New) &#8594; Name it "OptiStock Backup"</div></div>
-      <div class="card mb-12"><div class="bold mb-8">Step 2: Open Apps Script</div><div class="xs muted">Click Extensions &#8594; Apps Script &#8594; Delete all existing code</div></div>
-      <div class="card mb-12">
-        <div class="bold mb-8">Step 3: Paste Script</div>
-        <button class="btn btn-outline btn-sm btn-full mb-8" onclick="copyScript()">&#128203; Copy Script to Clipboard</button>
-        <div id="scriptPreview" class="xs muted" style="line-height:1.6">Saves inventory, sales &amp; purchase orders to your Sheet automatically after each sale.</div>
-      </div>
-      <div class="card mb-12"><div class="bold mb-8">Step 4: Deploy</div><div class="xs muted" style="line-height:1.8">Click Deploy &#8594; New Deployment &#8594; Type: Web app &#8594; Execute as: Me &#8594; Who has access: Anyone &#8594; Deploy &#8594; Authorize &#8594; Copy the Web App URL</div></div>
-      <div class="card mb-16">
-        <div class="bold mb-8">Step 5: Save URL in Settings</div>
-        <button class="btn btn-primary btn-full" onclick="showSub('pgSettings','Settings');renderSettings()">Go to Settings &#8594;</button>
-      </div>
-      <div class="card" style="background:rgba(34,197,94,.08);border-color:rgba(34,197,94,.2)">
-        <div class="bold mb-4 c-green">&#10003; After setup, every sale auto-syncs!</div>
-        <div class="xs muted">You can also manually sync anytime from More &#8594; Sync Sheets</div>
-      </div>
-    </div>
-
-  </div><!-- /content -->
-
-  <div class="bottom-nav">
-    <button class="nav-item active" data-tab="home" onclick="switchTab('home')"><span class="nav-icon">&#127968;</span><span>Home</span></button>
-    <button class="nav-item" data-tab="inventory" onclick="switchTab('inventory')"><span class="nav-icon">&#128230;</span><span>Stock</span></button>
-    <button class="nav-item" data-tab="sales" onclick="switchTab('sales')"><span class="nav-icon">&#128176;</span><span>Sales</span></button>
-    <button class="nav-item" data-tab="scan" onclick="switchTab('scan')"><span class="nav-icon">&#128247;</span><span>Scan</span></button>
-    <button class="nav-item" data-tab="more" onclick="switchTab('more')"><span class="nav-icon">&#9776;</span><span>More</span></button>
+<div id="cameraModal" class="hidden">
+  <div id="scanLabel">Point camera at temple / barcode</div>
+  <video id="camVideo" autoplay playsinline></video>
+  <canvas id="camCanvas" class="hidden"></canvas>
+  <div class="camBar">
+    <button id="btnCaptureShot">Capture</button>
+    <button id="btnCloseCamera">Close</button>
   </div>
-</div><!-- /app -->
+</div>
 
-<div class="modal-wrap" id="modalWrap" onclick="closeModal(event)"><div class="modal"><div class="modal-handle"></div><div id="modalBody"></div></div></div>
-<div id="toast"></div>
+<div id="settingsModal" class="hidden">
+  <div class="sheet">
+    <h2>Settings</h2>
+    <label>Groq API Key (for Temple Scan)</label>
+    <input type="text" id="settingsGroqKey" placeholder="Paste your Groq key here">
 
-<script>
-/* ==============================================
-   DATA LAYER
-============================================== */
+    <label style="margin-top:16px;">Google Sheets Apps Script URL (for backup)</label>
+    <input type="text" id="settingsSheetsUrl" placeholder="Paste your Apps Script Web App URL">
 
-function oc(id){window._ocId=id}
-function confirmDelPO(){openModal('<div class="modal-title">Delete PO?</div><div class="muted mb-16">This cannot be undone.</div><div style="display:flex;gap:10px"><button class="btn btn-outline grow" onclick="closeModalForce()">Cancel</button><button class="btn btn-red grow" onclick="ocDeletePO()">Delete</button></div>')}
-function confirmDelSale(){openModal('<div class="modal-title">Delete Sale?</div><div class="muted mb-16">Stock will NOT be restored.</div><div style="display:flex;gap:10px"><button class="btn btn-outline grow" onclick="closeModalForce()">Cancel</button><button class="btn btn-red grow" onclick="ocDeleteSale()">Delete</button></div>')}
-function setCatFilter(c){invCatFilter=c;renderInventory()}
-function ocItemDetail(){openItemDetail(window._ocId)}
-function templeSearch(){switchTab('inventory');setTimeout(function(){var el=document.getElementById('invSearch');if(el)el.value=window._lastTempleCode||'';
-renderInventory()},100)}
-function getTempleEditCode(){var el=document.getElementById('templeEditCode');return el&&el.value.trim()?el.value.trim():(window._lastTempleCode||'')}
-function templeRecheck(){var code=getTempleEditCode();window._lastTempleCode=code;switchTab('inventory');setTimeout(function(){var el=document.getElementById('invSearch');if(el)el.value=code;renderInventory()},100)}
-function templeAddCorrected(){var code=getTempleEditCode();openAddItem(code)}
-function ocEditItem(){openEditItem(window._ocId)}
-function ocSaleDetail(){openSaleDetail(window._ocId)}
-function ocDeleteSale(){doDeleteSale(window._ocId)}
-function ocPODetail(){openPODetail(window._ocId)}
-function ocReceivePO(){receivePO(window._ocId)}
-function ocDeletePO(){doDeletePO(window._ocId)}
-function ocSaleForm(){openSaleForm(window._ocId)}
-function ocAddSaleItem(){addSpecificSaleItem(window._ocId)}
-function ocDeleteSupplier(){deleteSupplier(window._ocId)}
-function ocAdjustStock(){}
+    <button id="btnSyncSheets" style="width:100%;padding:12px;border-radius:8px;border:none;background:#2ecc71;color:#fff;font-size:15px;margin-top:10px;">Sync to Google Sheets Now</button>
+    <div id="syncSheetsStatus" style="font-size:12px;color:#888;margin-top:4px;"></div>
 
-var DB = 'optistock_v4';
-function loadDB(){try{return JSON.parse(localStorage.getItem(DB)||'{}')}catch(e){return{}}}
-function saveDB(d){localStorage.setItem(DB,JSON.stringify(d))}
-function getInventory(){return loadDB().inventory||[]}
-function getSales(){return loadDB().sales||[]}
-function getPOs(){return loadDB().pos||[]}
-function getSuppliers(){return loadDB().suppliers||[]}
-function getSettings(){return loadDB().settings||{}}
-function saveInventory(v){var d=loadDB();d.inventory=v;saveDB(d)}
-function saveSales(v){var d=loadDB();d.sales=v;saveDB(d)}
-function savePOs(v){var d=loadDB();d.pos=v;saveDB(d)}
-function saveSuppliers(v){var d=loadDB();d.suppliers=v;saveDB(d)}
-function saveSettingsObj(s){var d=loadDB();d.settings=Object.assign(d.settings||{},s);saveDB(d)}
-function saveSetting(k,v){var d=loadDB();d.settings=d.settings||{};d.settings[k]=v;saveDB(d)}
-function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
-function fDate(ts){if(!ts)return'';return new Date(ts).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}
-function fTime(ts){if(!ts)return'';return new Date(ts).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}
-function fCur(n){return 'Rs '+(parseFloat(n)||0).toLocaleString('en-IN')}
-function todayISO(){return new Date().toISOString().split('T')[0]}
-function cap(s){return s.charAt(0).toUpperCase()+s.slice(1)}
-function nextBillNo(){var s=getSales();var n=s.map(function(x){return parseInt((x.billNo||'').replace(/\D/g,'')||0)}).filter(Boolean);return 'B-'+String(Math.max.apply(null,[0].concat(n))+1).padStart(4,'0')}
-function nextPONo(){var p=getPOs();var n=p.map(function(x){return parseInt((x.poNumber||'').replace(/\D/g,'')||0)}).filter(Boolean);return 'PO-'+String(Math.max.apply(null,[0].concat(n))+1).padStart(3,'0')}
+    <div class="modalButtons">
+      <button id="btnCloseSettings">Close</button>
+      <button id="btnSaveSettings">Save</button>
+    </div>
+  </div>
+</div>
 
-/* ==============================================
-   PIN
-============================================== */
-var pinEntry = '';
-function pinPress(d){
-  if(d===''||pinEntry.length>=4)return;
-  pinEntry+=d;
-  updateDots();
-  if(pinEntry.length===4)setTimeout(checkPin,120);
-}
-function pinDel(){
-  if(pinEntry.length>0){pinEntry=pinEntry.slice(0,-1);updateDots()}
-}
-function updateDots(){
-  for(var i=0;i<4;i++)document.getElementById('d'+i).classList.toggle('filled',i<pinEntry.length);
-}
-function checkPin(){
-  var correct=getSettings().pin||'1122';
-  if(pinEntry===correct){
-    document.getElementById('pinScreen').style.display='none';
-    document.getElementById('app').style.display='flex';
-    sessionStorage.setItem('unlocked','1');
-    initApp();
-  }else{
-    document.getElementById('pinErr').textContent='Wrong PIN. Try again.';
-    pinEntry='';
-    updateDots();
-    setTimeout(function(){document.getElementById('pinErr').textContent=' '},2000);
-  }
-}
+<div id="poModal" class="hidden">
+  <div class="sheet">
+    <h2>New Purchase Order</h2>
 
-/* ==============================================
-   NAVIGATION
-============================================== */
-var curTab='home', subStack=[], editId=null, scanFieldTarget=null, poFilterMode='all';
+    <label>Business</label>
+    <select id="poBusiness">
+      <option value="Eyeland">Eyeland</option>
+      <option value="iCrops">iCrops</option>
+    </select>
 
-function switchTab(tab){
-  if(curTab==='scan')stopBarcodeScanner();
-  curTab=tab;subStack=[];
-  document.querySelectorAll('.page,.subpage').forEach(function(p){p.style.display='none'});
-  document.getElementById('pg'+cap(tab)).style.display='block';
-  document.querySelectorAll('.nav-item').forEach(function(n){n.classList.toggle('active',n.dataset.tab===tab)});
-  document.getElementById('btnBack').style.display='none';
-  document.getElementById('topActs').innerHTML='';
-  var titles={home:'OptiStock',inventory:'Inventory',sales:'Sales',scan:'Scan',more:'More'};
-  document.getElementById('topTitle').textContent=titles[tab]||tab;
-  if(tab==='home')renderHome();
-  if(tab==='inventory'){renderInventory();document.getElementById('topActs').innerHTML='<button class="tbtn" onclick="openAddItem(\'\')">+</button>'}
-  if(tab==='sales'){renderSales();document.getElementById('topActs').innerHTML='<button class="tbtn" onclick="openSaleForm(\'\')">+</button>'}
-  if(tab==='more')renderMore();
-}
+    <label>Supplier Name</label>
+    <input type="text" id="poSupplier" placeholder="e.g. Lajpat Rai Market vendor">
 
-function showSub(id,title){
-  subStack.push({id:id,title:title});
-  document.querySelectorAll('.page,.subpage').forEach(function(p){p.style.display='none'});
-  var el=document.getElementById(id);
-  if(el){el.style.display='block';el.scrollTop=0}
-  document.getElementById('btnBack').style.display='flex';
-  document.getElementById('topTitle').textContent=title||'';
-  document.getElementById('topActs').innerHTML='';
-  document.getElementById('mainContent').scrollTop=0;
-}
+    <label>Items / Notes</label>
+    <textarea id="poItems" placeholder="List model codes, quantities, etc."></textarea>
 
-function goBack(){
-  subStack.pop();
-  if(subStack.length===0){switchTab(curTab)}
-  else{
-    var prev=subStack[subStack.length-1];
-    document.querySelectorAll('.page,.subpage').forEach(function(p){p.style.display='none'});
-    var el=document.getElementById(prev.id);if(el)el.style.display='block';
-    document.getElementById('topTitle').textContent=prev.title||'';
-    if(prev.id==='pgPOs')renderPOs();
-    if(prev.id==='pgSuppliers')renderSuppliers();
-  }
-}
+    <label>Expected Cost</label>
+    <input type="number" id="poCost" placeholder="e.g. 15000">
 
-/* ==============================================
-   TOAST & MODAL
-============================================== */
-var toastTimer;
-function showToast(msg,dur){
-  dur=dur||2500;
-  var t=document.getElementById('toast');
-  t.textContent=msg;t.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer=setTimeout(function(){t.classList.remove('show')},dur);
-}
-function openModal(html){document.getElementById('modalBody').innerHTML=html;document.getElementById('modalWrap').classList.add('open')}
-function closeModal(e){if(!e||e.target===document.getElementById('modalWrap'))document.getElementById('modalWrap').classList.remove('open')}
-function closeModalForce(){document.getElementById('modalWrap').classList.remove('open')}
+    <div class="modalButtons">
+      <button id="btnCancelPo">Cancel</button>
+      <button id="btnSavePo">Save Order</button>
+    </div>
+  </div>
+</div>
 
-/* ==============================================
-   HOME
-============================================== */
-function renderHome(){
-  var inv=getInventory(),sales=getSales(),today=todayISO();
-  var ts=sales.filter(function(s){return s.date&&s.date.startsWith(today)});
-  var tr=ts.reduce(function(a,s){return a+(s.grandTotal||0)},0);
-  var out=inv.filter(function(i){return parseInt(i.stock)===0});
-  var low=inv.filter(function(i){return (parseInt(i.stock)||0)<=(parseInt(i.lowAt)||3)&&parseInt(i.stock)>0});
-  var monthRev=sales.filter(function(s){return s.date&&s.date.startsWith(today.slice(0,7))}).reduce(function(a,s){return a+(s.grandTotal||0)},0);
-  document.getElementById('statsGrid').innerHTML=
-    '<div class="stat-card"><div class="stat-label">Total Items</div><div class="stat-val">'+inv.length+'</div><div class="stat-sub">'+out.length+' out of stock</div></div>'+
-    '<div class="stat-card"><div class="stat-label">Today Sales</div><div class="stat-val">'+ts.length+'</div><div class="stat-sub">'+fCur(tr)+'</div></div>'+
-    '<div class="stat-card"><div class="stat-label">Total Stock</div><div class="stat-val">'+inv.reduce(function(a,i){return a+(parseInt(i.stock)||0)},0)+'</div><div class="stat-sub">units in store</div></div>'+
-    '<div class="stat-card"><div class="stat-label">This Month</div><div class="stat-val" style="font-size:18px">'+fCur(monthRev)+'</div><div class="stat-sub">revenue</div></div>';
-  // Backup reminder
-  var s=getSettings();
-  if(s.sheetUrl){
-    var last=s.lastSync||0;
-    var days=Math.floor((Date.now()-last)/(1000*60*60*24));
-    if(!last||days>=3){
-      var msg=last?('Last backup '+days+' days ago'):'No backup yet';
-      var banner='<div class="card mb-16" style="background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.3);cursor:pointer" onclick="doBackup()"><div class="row between" style="align-items:center"><div><div class="bold" style="color:var(--yellow)">&#9888; Backup Reminder</div><div class="xs muted" style="margin-top:4px">'+msg+' &middot; Tap to sync now</div></div><div style="font-size:24px">&#9729;</div></div></div>';
-      var sg=document.getElementById('statsGrid');
-      sg.insertAdjacentHTML('afterend',banner);
+<script src="https://unpkg.com/@zxing/library@0.20.0/umd/index.min.js"></script>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+  import { getFirestore, collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+
+  var firebaseConfig = {
+    apiKey: "AIzaSyDyaJYJQqQpQlJMI_VlJgecwdbRxudgGbo",
+    authDomain: "optistock-a73d9.firebaseapp.com",
+    projectId: "optistock-a73d9",
+    storageBucket: "optistock-a73d9.firebasestorage.app",
+    messagingSenderId: "395723657948",
+    appId: "1:395723657948:web:2ea6efeeed2a581de41a19"
+  };
+
+  var app = initializeApp(firebaseConfig);
+  var db = getFirestore(app);
+
+  // Cloudinary config (used later for photo uploads)
+  var CLOUD_NAME = "dilg3bid3";
+  var UPLOAD_PRESET = "opticalinventory";
+
+  var APP_PIN = "1122";
+  var currentBusiness = "All";
+
+  var pinInput = document.getElementById("pinInput");
+  var pinSubmit = document.getElementById("pinSubmit");
+  var pinError = document.getElementById("pinError");
+  var pinScreen = document.getElementById("pinScreen");
+  var appScreen = document.getElementById("appScreen");
+  var syncStatus = document.getElementById("syncStatus");
+
+  function tryUnlock() {
+    if (pinInput.value === APP_PIN) {
+      pinScreen.classList.add("hidden");
+      appScreen.classList.remove("hidden");
+      startSync();
+    } else {
+      pinError.textContent = "Wrong PIN, try again";
+      pinInput.value = "";
     }
   }
-  var lsEl=document.getElementById('lowStockList');
-  // Build per-colour low/out alerts
-  var alerts=[];
-  inv.forEach(function(i){
-    var la=parseInt(i.lowAt)||2;
-    var cols=i.colors&&i.colors.length?i.colors:[{name:'',code:'',qty:i.stock||0}];
-    cols.forEach(function(c){
-      var q=parseInt(c.qty)||0;
-      if(q<=la){alerts.push({id:i.id,name:i.name,sku:i.sku,colorName:c.name,qty:q,photo:i.photo})}
+
+  pinSubmit.addEventListener("click", tryUnlock);
+  pinInput.addEventListener("keyup", function(e) {
+    if (e.key === "Enter") { tryUnlock(); }
+  });
+
+  var bizButtons = document.querySelectorAll("#bizSwitch button");
+  for (var i = 0; i < bizButtons.length; i++) {
+    bizButtons[i].addEventListener("click", function(e) {
+      for (var j = 0; j < bizButtons.length; j++) { bizButtons[j].classList.remove("active"); }
+      e.target.classList.add("active");
+      currentBusiness = e.target.getAttribute("data-biz");
+      renderInventory();
     });
-  });
-  if(!alerts.length){
-    lsEl.innerHTML='<div class="card" style="color:var(--green);font-size:13px">&#9989; All colours adequately stocked</div>';
-  }else{
-    var h='';
-    alerts.slice(0,8).forEach(function(a){
-      h+='<div class="item-row" onclick="oc(\''+a.id+'\');ocItemDetail()">';
-      h+=a.photo?'<div class="item-thumb"><img src="'+a.photo+'"></div>':'<div class="item-thumb">&#128230;</div>';
-      h+='<div class="item-info"><div class="item-name">'+a.name+(a.colorName?' &middot; '+a.colorName:'')+'</div><div class="item-sub">'+(a.sku||'')+'</div></div>';
-      h+='<span class="badge '+(a.qty===0?'badge-red':'badge-yellow')+'">'+(a.qty===0?'OUT':'Low: '+a.qty)+'</span></div>';
-    });
-    lsEl.innerHTML=h;
   }
-  var reEl=document.getElementById('recentSales');
-  var recent=sales.slice().reverse().slice(0,5);
-  if(!recent.length){reEl.innerHTML='<div class="card muted sm">No sales yet. Tap New Sale to get started.</div>';return}
-  var h2='';
-  recent.forEach(function(s){
-    h2+='<div class="item-row" onclick="oc(\''+s.id+'\');ocSaleDetail()">';
-    h2+='<div class="item-thumb" style="background:rgba(34,197,94,.1);font-size:18px">&#128176;</div>';
-    h2+='<div class="item-info"><div class="item-name">'+(s.billNo||'-')+' '+(s.customerName?'&#8211; '+s.customerName:'')+'</div><div class="item-sub">'+fDate(s.date)+' '+fTime(s.date)+' &middot; '+(s.items||[]).length+' item(s)</div></div>';
-    h2+='<span class="bold c-green" style="font-size:15px">'+fCur(s.grandTotal)+'</span></div>';
-  });
-  reEl.innerHTML=h2;
-}
+  document.getElementById("bizAll").classList.add("active");
 
-/* ==============================================
-   INVENTORY
-============================================== */
-var invCatFilter='All';
-function renderInventory(){
-  var inv=getInventory();
-  var cats=['All'];
-  inv.forEach(function(i){if(i.category&&cats.indexOf(i.category)===-1)cats.push(i.category)});
-  document.getElementById('catChips').innerHTML=cats.map(function(c){
-    return '<button class="chip '+(c===invCatFilter?'active':'')+'" onclick="setCatFilter(\'' + c + '\')">'+c+'</button>';
-  }).join('');
-  var q=(document.getElementById('invSearch')?document.getElementById('invSearch').value:'').toLowerCase().trim();
-  var list=inv;
-  if(invCatFilter!=='All')list=list.filter(function(i){return i.category===invCatFilter});
-  if(q)list=list.filter(function(i){
-    var colorText=(i.colors||[]).map(function(c){return c.name+' '+c.code}).join(' ');
-    return(i.name+i.sku+i.brand+i.barcode+i.size+colorText+'').toLowerCase().indexOf(q)!==-1;
-  });
-  var el=document.getElementById('invList');
-  if(!list.length){
-    el.innerHTML='<div class="empty-state"><div class="empty-icon">&#128230;</div><div class="empty-text">'+(inv.length?'No results found':'No items yet')+'</div><div class="empty-sub">'+(inv.length?'Try a different search term':'Tap + to add your first item')+'</div></div>';
-    return;
-  }
-  var h='';
-  list.forEach(function(i){
-    var st=parseInt(i.stock)||0,la=parseInt(i.lowAt)||2;
-    var nColors=(i.colors||[]).length;
-    var badge=st===0?'<span class="badge badge-red">OUT</span>':'<span class="badge badge-green">'+st+' pcs</span>';
-    h+='<div class="item-row" onclick="oc(\''+i.id+'\');ocItemDetail()">';
-    h+=i.photo?'<div class="item-thumb"><img src="'+i.photo+'"></div>':'<div class="item-thumb">&#128230;</div>';
-    h+='<div class="item-info"><div class="item-name">'+i.name+'</div>';
-    h+='<div class="item-sub">'+[i.brand,i.sku,i.size,(nColors?nColors+' colour'+(nColors>1?'s':''):'')].filter(Boolean).join(' &middot; ')+'</div></div>';
-    h+='<div class="item-right">'+badge+'<span class="muted xs">'+fCur(i.price)+'</span></div></div>';
-  });
-  el.innerHTML=h;
-}
+  var allItems = [];
 
-/* ==============================================
-   ITEM DETAIL
-============================================== */
-function openItemDetail(id){
-  var item=getInventory().find(function(i){return i.id===id});
-  if(!item)return;
-  window._detailId=id;
-  showSub('pgItemDetail',item.name);
-  document.getElementById('topActs').innerHTML='<button class="tbtn" onclick="oc(window._detailId);ocEditItem()">&#9999;</button>';
-  var st=parseInt(item.stock)||0;
-  var la=parseInt(item.lowAt)||2;
-  var badgeClass=st===0?'badge-red':st<=la?'badge-yellow':'badge-green';
-  function dr(label,val){return val?'<div class="row between mb-8"><span class="muted">'+label+'</span><span class="bold">'+val+'</span></div>':''}
-  var h='';
-  if(item.photo)h+='<img src="'+item.photo+'" style="width:100%;max-height:240px;object-fit:cover;border-radius:var(--r2);margin-bottom:16px">';
-  h+='<div class="row between mb-16" style="align-items:center">';
-  h+='<div><div style="font-size:22px;font-weight:800">'+item.name+'</div>';
-  h+='<div class="muted sm">'+[item.brand,item.sku,item.size].filter(Boolean).join(' &middot; ')+'</div></div>';
-  h+='<span class="badge '+badgeClass+'" style="font-size:13px">'+(st===0?'OUT OF STOCK':'Total: '+st)+'</span></div>';
-  // COLOURS with -/+ buttons
-  h+='<div class="card mb-12"><div class="sec-title" style="margin-top:0">Colours &amp; Stock</div>';
-  var colors=item.colors&&item.colors.length?item.colors:[{name:item.color||'(no colour)',code:'',qty:item.stock||0}];
-  colors.forEach(function(c,ci){
-    var cq=parseInt(c.qty)||0;
-    var qColor=cq===0?'c-red':cq<=la?'':'';
-    h+='<div class="row between mb-8" style="align-items:center;gap:8px">';
-    h+='<div class="grow"><div class="bold sm">'+c.name+(c.code?' <span class="muted xs">('+c.code+')</span>':'')+'</div>';
-    if(cq===0)h+='<div class="xs c-red">Out of stock</div>';
-    else if(cq<=la)h+='<div class="xs" style="color:var(--yellow)">Low stock</div>';
-    h+='</div>';
-    h+='<div class="row" style="gap:6px;align-items:center">';
-    h+='<button class="btn btn-outline btn-sm" style="width:34px;height:34px;padding:0" onclick="adjColor('+ci+',-1)">&#8722;</button>';
-    h+='<span class="bold" style="min-width:28px;text-align:center;font-size:16px">'+cq+'</span>';
-    h+='<button class="btn btn-outline btn-sm" style="width:34px;height:34px;padding:0" onclick="adjColor('+ci+',1)">+</button>';
-    h+='</div></div>';
-  });
-  h+='</div>';
-  h+='<div class="card mb-12"><div class="sec-title" style="margin-top:0">Pricing</div>';
-  h+=dr('Selling Price','<span class="c-green" style="font-size:17px">'+fCur(item.price)+'</span>');
-  if(item.cost)h+=dr('Cost Price',fCur(item.cost));
-  if(item.cost&&item.price)h+=dr('Margin','<span class="c-green">'+Math.round(((item.price-item.cost)/item.price)*100)+'%</span>');
-  h+='</div><div class="card mb-12"><div class="sec-title" style="margin-top:0">Details</div>';
-  h+=dr('Category',item.category)+dr('For',item.fFor)+dr('Frame Type',item.frameType);
-  h+=dr('Model No',item.sku)+dr('Size',item.size)+dr('Material',item.material);
-  h+=dr('Location',item.location)+dr('Supplier',item.supplier)+dr('Barcode',item.barcode);
-  if(item.notes)h+='<div class="divider"></div><div class="muted xs" style="line-height:1.6">'+item.notes+'</div>';
-  h+='</div><div style="display:flex;gap:10px">';
-  h+='<button class="btn btn-primary grow" onclick="oc(window._detailId);ocEditItem()">&#9999; Edit Item</button></div>';
-  document.getElementById('itemDetailContent').innerHTML=h;
-}
-
-function adjColor(colorIndex,delta){
-  var id=window._detailId;
-  var inv=getInventory();
-  var item=inv.find(function(i){return i.id===id});
-  if(!item||!item.colors||!item.colors[colorIndex])return;
-  var c=item.colors[colorIndex];
-  c.qty=Math.max(0,(parseInt(c.qty)||0)+delta);
-  item.stock=item.colors.reduce(function(a,x){return a+(parseInt(x.qty)||0)},0);
-  item.updatedAt=Date.now();
-  saveInventory(inv);
-  autoBackup();
-  openItemDetail(id);
-  showToast(delta<0?(c.name+' sold (-1)'):(c.name+' added (+1)'));
-}
-
-/* ==============================================
-   ADD / EDIT ITEM
-============================================== */
-function openAddItem(prefillSku){
-  editId=null;showSub('pgAddItem','Add Item');clearItemForm();
-  if(prefillSku)document.getElementById('fSku').value=prefillSku;
-  document.getElementById('btnDeleteItem').style.display='none';
-  populateSupplierSelect('fSupplier','');
-}
-
-function openEditItem(id){
-  editId=id;
-  var item=getInventory().find(function(i){return i.id===id});
-  if(!item)return;
-  showSub('pgAddItem','Edit Item');
-  document.getElementById('fName').value=item.name||'';
-  document.getElementById('fSku').value=item.sku||'';
-  document.getElementById('fSize').value=item.size||'';
-  document.getElementById('fBrand').value=item.brand||'';
-  document.getElementById('fCategory').value=item.category||'';
-  document.getElementById('fFor').value=item.fFor||'';
-  document.getElementById('fFrameType').value=item.frameType||'';
-  document.getElementById('fMaterial').value=item.material||'';
-  document.getElementById('fLowAt').value=item.lowAt||'';
-  document.getElementById('fPrice').value=item.price||'';
-  document.getElementById('fCost').value=item.cost||'';
-  document.getElementById('fBarcode').value=item.barcode||'';
-  document.getElementById('fLocation').value=item.location||'';
-  document.getElementById('fNotes').value=item.notes||'';
-  populateSupplierSelect('fSupplier',item.supplier||'');
-  if(item.photo)document.getElementById('itemThumbPick').innerHTML='<img src="'+item.photo+'">';
-  document.getElementById('colorRows').innerHTML='';
-  var colors=item.colors&&item.colors.length?item.colors:[{name:item.color||'',code:'',qty:item.stock||0}];
-  colors.forEach(function(c){addColorRow(c.name,c.code,c.qty)});
-  document.getElementById('btnDeleteItem').style.display='flex';
-}
-function clearItemForm(){
-  ['fName','fSku','fSize','fBrand','fMaterial','fLowAt','fPrice','fCost','fBarcode','fLocation','fNotes'].forEach(function(id){
-    var el=document.getElementById(id);if(el)el.value='';
-  });
-  ['fCategory','fFor','fFrameType'].forEach(function(id){
-    var el=document.getElementById(id);if(el)el.value='';
-  });
-  document.getElementById('itemThumbPick').innerHTML='<span>&#128230;</span>';
-  document.getElementById('colorRows').innerHTML='';
-  addColorRow('','',1);
-  window._pendingPhoto=null;
-}
-function addColorRow(name,code,qty){
-  var div=document.createElement('div');
-  div.className='color-row row gap-8 mb-8';
-  div.style.cssText='align-items:center';
-  div.innerHTML='<input class="form-input cr-name" placeholder="Colour" value="'+(name||'').replace(/"/g,'&quot;')+'" style="flex:2"><input class="form-input cr-code" placeholder="Code" value="'+(code||'').replace(/"/g,'&quot;')+'" style="flex:1.2"><input class="form-input cr-qty" type="number" min="0" placeholder="Qty" value="'+(qty===0||qty?qty:1)+'" style="width:64px"><button class="btn btn-red btn-sm" style="width:34px;height:44px;padding:0;flex-shrink:0" onclick="this.parentNode.remove()">&#10005;</button>';
-  document.getElementById('colorRows').appendChild(div);
-}
-function readColorRows(){
-  var rows=document.getElementById('colorRows').querySelectorAll('.color-row');
-  var colors=[];
-  rows.forEach(function(r){
-    var nm=r.querySelector('.cr-name').value.trim();
-    var cd=r.querySelector('.cr-code').value.trim();
-    var q=parseInt(r.querySelector('.cr-qty').value)||0;
-    if(nm)colors.push({name:nm,code:cd,qty:q});
-  });
-  return colors;
-}
-function previewItemPhoto(input){
-  var f=input.files[0];if(!f)return;
-  compressImage(f,function(b64){
-    window._pendingPhoto=b64;
-    document.getElementById('itemThumbPick').innerHTML='<img src="'+b64+'">';
-  });
-}
-function compressImage(file,cb){
-  try{
-    var img=new Image();
-    var url=URL.createObjectURL(file);
-    img.onload=function(){
-      try{
-        var r=Math.min(600/img.width,600/img.height,1);
-        var c=document.createElement('canvas');
-        c.width=Math.round(img.width*r);c.height=Math.round(img.height*r);
-        c.getContext('2d').drawImage(img,0,0,c.width,c.height);
-        var out=c.toDataURL('image/jpeg',0.78);
-        URL.revokeObjectURL(url);
-        cb(out);
-      }catch(e){
-        URL.revokeObjectURL(url);
-        // fallback: read original file directly
-        var rd=new FileReader();
-        rd.onload=function(){cb(rd.result)};
-        rd.readAsDataURL(file);
-      }
-    };
-    img.onerror=function(){
-      URL.revokeObjectURL(url);
-      var rd=new FileReader();
-      rd.onload=function(){cb(rd.result)};
-      rd.readAsDataURL(file);
-    };
-    img.src=url;
-  }catch(e){
-    var rd=new FileReader();
-    rd.onload=function(){cb(rd.result)};
-    rd.readAsDataURL(file);
-  }
-}
-function enhanceTempleImage(file,cb){
-  try{
-    var img=new Image();
-    var url=URL.createObjectURL(file);
-    img.onload=function(){
-      try{
-        var maxDim=1280;
-        var r=Math.min(maxDim/img.width,maxDim/img.height,1);
-        var w=Math.round(img.width*r),h=Math.round(img.height*r);
-        var c=document.createElement('canvas');
-        c.width=w;c.height=h;
-        var ctx=c.getContext('2d');
-        ctx.drawImage(img,0,0,w,h);
-        var imgd=ctx.getImageData(0,0,w,h);
-        var d=imgd.data;
-        var i,gray;
-        var contrast=1.9;
-        var intercept=128*(1-contrast);
-        for(i=0;i<d.length;i+=4){
-          gray=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];
-          gray=contrast*gray+intercept;
-          if(gray<0)gray=0;if(gray>255)gray=255;
-          d[i]=d[i+1]=d[i+2]=gray;
-        }
-        ctx.putImageData(imgd,0,0);
-        var out=c.toDataURL('image/jpeg',0.92);
-        URL.revokeObjectURL(url);
-        cb(out);
-      }catch(e){
-        URL.revokeObjectURL(url);
-        compressImage(file,cb);
-      }
-    };
-    img.onerror=function(){URL.revokeObjectURL(url);compressImage(file,cb)};
-    img.src=url;
-  }catch(e){compressImage(file,cb)}
-}
-function saveItem(){
-  var name=document.getElementById('fName').value.trim();
-  if(!name){showToast('Item name is required');return}
-  var colors=readColorRows();
-  if(!colors.length){showToast('Add at least one colour with quantity');return}
-  var totalStock=colors.reduce(function(a,c){return a+(parseInt(c.qty)||0)},0);
-  var inv=getInventory();
-  var item={
-    id:editId||uid(),name:name,
-    sku:document.getElementById('fSku').value.trim(),
-    size:document.getElementById('fSize').value.trim(),
-    brand:document.getElementById('fBrand').value.trim(),
-    colors:colors,
-    category:document.getElementById('fCategory').value,
-    fFor:document.getElementById('fFor').value,
-    frameType:document.getElementById('fFrameType').value,
-    material:document.getElementById('fMaterial').value.trim(),
-    stock:totalStock,
-    lowAt:parseInt(document.getElementById('fLowAt').value)||2,
-    price:parseFloat(document.getElementById('fPrice').value)||0,
-    cost:parseFloat(document.getElementById('fCost').value)||0,
-    barcode:document.getElementById('fBarcode').value.trim(),
-    supplier:document.getElementById('fSupplier').value,
-    location:document.getElementById('fLocation').value.trim(),
-    notes:document.getElementById('fNotes').value.trim(),
-    updatedAt:Date.now()
-  };
-  if(window._pendingPhoto){item.photo=window._pendingPhoto}
-  else if(editId){var old=inv.find(function(i){return i.id===editId});if(old&&old.photo)item.photo=old.photo}
-  window._pendingPhoto=null;
-  if(editId){var idx=inv.findIndex(function(i){return i.id===editId});if(idx>=0)inv[idx]=item}
-  else{item.createdAt=Date.now();inv.push(item)}
-  saveInventory(inv);
-  showToast(editId?'Item updated!':'Item added!');
-  goBack();
-  setTimeout(function(){if(curTab==='inventory')renderInventory()},100);
-}
-function confirmDeleteItem(){
-  openModal('<div class="modal-title">Delete Item?</div><div class="muted mb-16">This cannot be undone.</div><div style="display:flex;gap:10px"><button class="btn btn-outline grow" onclick="closeModalForce()">Cancel</button><button class="btn btn-red grow" onclick="deleteItem(editId)">Delete</button></div>');
-}
-function deleteItem(id){
-  saveInventory(getInventory().filter(function(i){return i.id!==id}));
-  closeModalForce();showToast('Item deleted');goBack();goBack();
-}
-
-/* ==============================================
-   SALES
-============================================== */
-function renderSales(){
-  var sales=getSales(),today=todayISO();
-  var ts=sales.filter(function(s){return s.date&&s.date.startsWith(today)});
-  var tr=ts.reduce(function(a,s){return a+(s.grandTotal||0)},0);
-  document.getElementById('salesTodayCard').innerHTML=
-    '<div class="row between" style="align-items:center"><div><div class="xs muted mb-8">Today Revenue</div><div style="font-size:26px;font-weight:800;color:var(--green)">'+fCur(tr)+'</div></div><div style="text-align:right"><div class="xs muted mb-8">Sales Count</div><div style="font-size:26px;font-weight:800">'+ts.length+'</div></div></div>';
-  var el=document.getElementById('salesList');
-  if(!sales.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">&#128176;</div><div class="empty-text">No sales recorded yet</div><div class="empty-sub">Tap + to record your first sale</div></div>';return}
-  var h='';
-  sales.slice().reverse().forEach(function(s){
-    h+='<div class="item-row" onclick="oc(\''+s.id+'\');ocSaleDetail()">';
-    h+='<div class="item-thumb" style="background:rgba(34,197,94,.1);font-size:18px">&#128176;</div>';
-    h+='<div class="item-info"><div class="item-name">'+(s.billNo||'-')+' '+(s.customerName?'&#8211; '+s.customerName:'')+'</div>';
-    h+='<div class="item-sub">'+fDate(s.date)+' '+fTime(s.date)+' &middot; '+(s.items||[]).length+' item(s)</div></div>';
-    h+='<span class="bold c-green" style="font-size:15px">'+fCur(s.grandTotal)+'</span></div>';
-  });
-  el.innerHTML=h;
-}
-
-var saleItems=[];
-function openSaleForm(prefillItemId){
-  saleItems=[];showSub('pgSaleForm','New Sale');
-  ['sCustName','sCustPhone','sDiscount','sSaleNotes'].forEach(function(id){document.getElementById(id).value=''});
-  renderSaleItems();
-  if(prefillItemId)setTimeout(function(){addSpecificSaleItem(prefillItemId)},100);
-}
-function openAddSaleItem(){
-  var inv=getInventory().filter(function(i){return parseInt(i.stock)>0});
-  if(!inv.length){showToast('No items with stock available');return}
-  var h='<div class="modal-title">Select Item</div>';
-  h+='<div class="search-wrap mb-12"><span class="search-icon">&#128269;</span><input class="search-input" id="saleItemSearch" placeholder="Search..." oninput="filterSaleItems()"></div>';
-  h+='<div id="saleItemModal">'+renderSaleItemOptions(inv)+'</div>';
-  openModal(h);
-}
-function renderSaleItemOptions(list){
-  var h='';
-  list.forEach(function(i){
-    h+='<div class="item-row" onclick="oc(\''+i.id+'\');ocAddSaleItem()">';
-    h+=i.photo?'<div class="item-thumb"><img src="'+i.photo+'"></div>':'<div class="item-thumb">&#128230;</div>';
-    h+='<div class="item-info"><div class="item-name">'+i.name+'</div><div class="item-sub">'+(i.sku||'')+' '+(i.size||'')+' Stock: '+i.stock+'</div></div>';
-    h+='<span class="bold">'+fCur(i.price)+'</span></div>';
-  });
-  return h;
-}
-function filterSaleItems(){
-  var q=document.getElementById('saleItemSearch').value.toLowerCase();
-  var inv=getInventory().filter(function(i){return parseInt(i.stock)>0&&(i.name+i.sku+i.brand+i.size+'').toLowerCase().indexOf(q)!==-1});
-  document.getElementById('saleItemModal').innerHTML=renderSaleItemOptions(inv);
-}
-function addSpecificSaleItem(itemId){
-  closeModalForce();
-  var item=getInventory().find(function(i){return i.id===itemId});if(!item)return;
-  var ex=saleItems.find(function(s){return s.itemId===itemId});
-  if(ex)ex.qty++;else saleItems.push({itemId:itemId,name:item.name,price:item.price,qty:1});
-  renderSaleItems();
-}
-function renderSaleItems(){
-  var el=document.getElementById('saleItemsList');
-  if(!saleItems.length){
-    el.innerHTML='<div class="muted sm" style="padding:12px 0">No items added yet</div>';
-    document.getElementById('saleSummaryCard').style.display='none';
-    return;
-  }
-  var h='';
-  saleItems.forEach(function(s,i){
-    h+='<div class="card2 row mb-8" style="align-items:center;gap:8px">';
-    h+='<div class="grow"><div class="bold sm">'+s.name+'</div><div class="xs muted">'+fCur(s.price)+' x '+s.qty+' = '+fCur(s.price*s.qty)+'</div></div>';
-    h+='<div class="row" style="gap:6px;align-items:center">';
-    h+='<button class="btn btn-outline btn-sm" style="width:32px;height:32px;padding:0" onclick="changeSaleQty('+i+',-1)">&#8722;</button>';
-    h+='<span class="bold" style="min-width:24px;text-align:center">'+s.qty+'</span>';
-    h+='<button class="btn btn-outline btn-sm" style="width:32px;height:32px;padding:0" onclick="changeSaleQty('+i+',1)">+</button>';
-    h+='<button class="btn btn-red btn-sm" style="width:32px;height:32px;padding:0" onclick="removeSaleItem('+i+')">&#10005;</button></div></div>';
-  });
-  el.innerHTML=h;
-  document.getElementById('saleSummaryCard').style.display='block';
-  calcSaleSummary();
-}
-function changeSaleQty(i,d){saleItems[i].qty=Math.max(1,saleItems[i].qty+d);renderSaleItems()}
-function removeSaleItem(i){saleItems.splice(i,1);renderSaleItems()}
-function calcSaleSummary(){
-  var sub=saleItems.reduce(function(a,s){return a+s.price*s.qty},0);
-  var disc=parseFloat(document.getElementById('sDiscount').value||0)||0;
-  document.getElementById('sSubtotal').textContent=fCur(sub);
-  document.getElementById('sTotal').textContent=fCur(Math.max(0,sub-disc));
-}
-function saveSale(){
-  if(!saleItems.length){showToast('Add at least one item');return}
-  var sub=saleItems.reduce(function(a,s){return a+s.price*s.qty},0);
-  var disc=parseFloat(document.getElementById('sDiscount').value||0)||0;
-  var sale={
-    id:uid(),billNo:nextBillNo(),date:new Date().toISOString(),
-    customerName:document.getElementById('sCustName').value.trim(),
-    customerPhone:document.getElementById('sCustPhone').value.trim(),
-    items:saleItems.map(function(s){return{itemId:s.itemId,name:s.name,qty:s.qty,price:s.price,total:s.price*s.qty}}),
-    subtotal:sub,discount:disc,grandTotal:Math.max(0,sub-disc),
-    notes:document.getElementById('sSaleNotes').value.trim()
-  };
-  var sales=getSales();sales.push(sale);saveSales(sales);
-  autoBackup();goBack();showToast('Sale recorded! (Adjust colour stock from item screen)');
-  setTimeout(function(){openSaleDetail(sale.id)},300);
-}
-
-function openSaleDetail(id){
-  var sale=getSales().find(function(s){return s.id===id});if(!sale)return;
-  showSub('pgSaleDetail','Invoice '+sale.billNo);
-  var st=getSettings();var shop=st.shopName||'OptiStock';
-  var h='<div class="card mb-12" style="background:rgba(34,197,94,.06);border-color:rgba(34,197,94,.2)">';
-  h+='<div class="row between mb-8" style="align-items:center">';
-  h+='<div><div style="font-size:22px;font-weight:800">'+sale.billNo+'</div><div class="xs muted">'+fDate(sale.date)+' '+fTime(sale.date)+'</div></div>';
-  h+='<div style="text-align:right"><div style="font-size:22px;font-weight:800;color:var(--green)">'+fCur(sale.grandTotal)+'</div>';
-  if(sale.discount)h+='<div class="xs muted">Disc: '+fCur(sale.discount)+'</div>';
-  h+='</div></div>';
-  if(sale.customerName)h+='<div class="xs muted">'+sale.customerName+(sale.customerPhone?' &middot; '+sale.customerPhone:'')+'</div>';
-  h+='</div>';
-  h+='<div class="card mb-12"><div class="sec-title" style="margin-top:0">Items</div>';
-  (sale.items||[]).forEach(function(it){h+='<div class="row between mb-8" style="align-items:center"><div class="grow sm">'+it.name+'</div><div class="muted xs">'+it.qty+' x '+fCur(it.price)+'</div><div class="bold sm" style="margin-left:12px">'+fCur(it.total)+'</div></div>'});
-  if(sale.discount)h+='<div class="row between muted sm"><span>Discount</span><span>&#8722; '+fCur(sale.discount)+'</span></div>';
-  h+='<div class="divider"></div><div class="row between"><span class="bold">Total</span><span class="bold c-green" style="font-size:18px">'+fCur(sale.grandTotal)+'</span></div></div>';
-  if(sale.notes)h+='<div class="card mb-12 muted sm">'+sale.notes+'</div>';
-  h+='<div style="display:flex;flex-direction:column;gap:10px">';
-  h+='<button class="btn btn-wa btn-full" onclick="sendWhatsAppInvoice(sale.id)">&#128242; Send WhatsApp Invoice</button>';
-  h+='<button class="btn btn-outline btn-full" onclick="printInvoice(sale.id)">&#128424; Print / PDF</button>';
-  h+='<button class="btn btn-red btn-sm btn-full" onclick="oc(\''+sale.id+'\');confirmDelSale()">&#128465; Delete Sale</button></div>';
-  document.getElementById('saleDetailContent').innerHTML=h;
-}
-function sendWhatsAppInvoice(saleId){
-  var sale=getSales().find(function(s){return s.id===saleId});if(!sale)return;
-  var st=getSettings();var shop=st.shopName||'OptiStock';
-  var nl=String.fromCharCode(10);
-  var msg='*'+shop+'*'+nl;
-  if(st.shopAddress)msg+=st.shopAddress+nl;
-  if(st.gstNo)msg+='GST: '+st.gstNo+nl;
-  msg+=nl+'Invoice: *'+sale.billNo+'*'+nl+'Date: '+fDate(sale.date)+nl;
-  if(sale.customerName)msg+=nl+'Customer: '+sale.customerName+(sale.customerPhone?' | '+sale.customerPhone:'')+nl;
-  msg+=nl+'*Items:*'+nl;
-  (sale.items||[]).forEach(function(it){msg+='- '+it.name+' x'+it.qty+' @ '+fCur(it.price)+' = '+fCur(it.total)+nl});
-  if(sale.discount)msg+=nl+'Discount: -'+fCur(sale.discount);
-  msg+=nl+nl+'*Total: '+fCur(sale.grandTotal)+'*';
-  msg+=nl+nl+'Thank you for shopping with us!';
-  var phone=(sale.customerPhone||'').replace(/\D/g,'');
-  window.open(phone?'https://wa.me/91'+phone+'?text='+encodeURIComponent(msg):'https://wa.me/?text='+encodeURIComponent(msg),'_blank');
-}
-function printInvoice(saleId){
-  var sale=getSales().find(function(s){return s.id===saleId});if(!sale)return;
-  var st=getSettings();var shop=st.shopName||'OptiStock';
-  var win=window.open('','_blank');
-  var h='<!DOCTYPE html><html><head><title>Invoice '+sale.billNo+'</title>';
-  h+='<style>body{font-family:Arial,sans-serif;padding:24px;max-width:400px;margin:auto}h2{margin:0}table{width:100%;border-collapse:collapse;margin:16px 0}th,td{padding:8px;border:1px solid #ddd;text-align:left}th{background:#f5f5f5}.total{font-size:18px;font-weight:bold}hr{margin:16px 0}</style></head><body>';
-  h+='<h2>'+shop+'</h2>';
-  if(st.shopAddress)h+='<p>'+st.shopAddress+'</p>';
-  if(st.gstNo)h+='<p>GST No: '+st.gstNo+'</p>';
-  h+='<hr><h3>Invoice '+sale.billNo+'</h3><p>Date: '+fDate(sale.date)+' '+fTime(sale.date)+'</p>';
-  if(sale.customerName)h+='<p>Customer: '+sale.customerName+(sale.customerPhone?' | Ph: '+sale.customerPhone:'')+'</p>';
-  h+='<table><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr>';
-  (sale.items||[]).forEach(function(it){h+='<tr><td>'+it.name+'</td><td>'+it.qty+'</td><td>'+it.price+'</td><td>'+it.total+'</td></tr>'});
-  h+='</table>';
-  if(sale.discount)h+='<p>Discount: Rs '+sale.discount+'</p>';
-  h+='<p class="total">Grand Total: Rs '+sale.grandTotal+'</p><hr><p style="text-align:center">Thank you!</p>';
-  h+='<script>window.print();<\/script></body></html>';
-  win.document.write(h);win.document.close();
-}
-function confirmDeleteSale(id){
-  openModal('<div class="modal-title">Delete Sale?</div><div class="muted mb-16">This action cannot be undone. Stock will NOT be restored.</div><div style="display:flex;gap:10px"><button class="btn btn-outline grow" onclick="closeModalForce()">Cancel</button><button class="btn btn-red grow" onclick="oc(id);ocDeleteSale()">Delete</button></div>');
-}
-function doDeleteSale(id){saveSales(getSales().filter(function(s){return s.id!==id}));closeModalForce();showToast('Sale deleted');goBack()}
-
-/* ==============================================
-   BARCODE SCANNER
-============================================== */
-var zxReader=null, scanActive=false, scanMode='barcode';
-
-function setScanMode(mode){
-  scanMode=mode;
-  document.getElementById('tgBarcode').classList.toggle('active',mode==='barcode');
-  document.getElementById('tgTemple').classList.toggle('active',mode==='temple');
-  document.getElementById('barcodeSect').style.display=mode==='barcode'?'block':'none';
-  document.getElementById('templeSect').style.display=mode==='temple'?'block':'none';
-  if(mode!=='barcode')stopBarcodeScanner();
-  if(mode==='temple'){document.getElementById('templeResult').innerHTML='';updateTempleKeyUI()}
-}
-
-function startBarcodeScanner(){
-  if(scanActive)return;
-  if(typeof ZXing==='undefined'){showToast('Scanner library not loaded');return}
-  setBarcodeStatus('Starting camera...');
-  document.getElementById('btnStartScan').style.display='none';
-  document.getElementById('btnStopScan').style.display='block';
-  zxReader=new ZXing.BrowserMultiFormatReader();
-  scanActive=true;
-  var hints=new Map();
-  hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS,[
-    ZXing.BarcodeFormat.EAN_13,ZXing.BarcodeFormat.EAN_8,
-    ZXing.BarcodeFormat.CODE_128,ZXing.BarcodeFormat.CODE_39,
-    ZXing.BarcodeFormat.QR_CODE,ZXing.BarcodeFormat.DATA_MATRIX,
-    ZXing.BarcodeFormat.UPC_A,ZXing.BarcodeFormat.UPC_E
-  ]);
-  hints.set(ZXing.DecodeHintType.TRY_HARDER,true);
-  zxReader.hints=hints;
-  zxReader.decodeFromConstraints(
-    {video:{facingMode:'environment',width:{ideal:1920},height:{ideal:1080}}},
-    'scanVideo',
-    function(result,err){
-      if(result&&scanActive){
-        stopBarcodeScanner();
-        handleBarcodeResult(result.getText());
-      }else if(err&&typeof ZXing!=='undefined'&&!(err instanceof ZXing.NotFoundException)){
-        console.warn('Scan error:',err);
-      }
-    }
-  ).then(function(){
-    setBarcodeStatus('Scanning... hold steady');
-  }).catch(function(e){
-    stopBarcodeScanner();
-    setBarcodeStatus('Camera error: '+e.message);
-    showToast('Allow camera permission & try again');
-  });
-}
-
-function stopBarcodeScanner(){
-  scanActive=false;
-  if(zxReader){try{zxReader.reset()}catch(e){}zxReader=null}
-  var v=document.getElementById('scanVideo');
-  if(v&&v.srcObject){v.srcObject.getTracks().forEach(function(t){t.stop()});v.srcObject=null}
-  document.getElementById('btnStartScan').style.display='block';
-  document.getElementById('btnStopScan').style.display='none';
-  setBarcodeStatus('Point camera at barcode');
-}
-
-function setBarcodeStatus(msg){
-  var el=document.getElementById('barcodeStatus');if(el)el.textContent=msg;
-}
-
-function handleBarcodeResult(code){
-  code=code.trim();
-  if(!code)return;
-  showToast('Scanned: '+code);
-  if(scanFieldTarget){
-    var el=document.getElementById(scanFieldTarget);
-    if(el)el.value=code;
-    scanFieldTarget=null;goBack();return;
-  }
-  var inv=getInventory();
-  var item=inv.find(function(i){return i.barcode===code||i.sku===code||i.sku===code.replace(/^0+/,'')});
-  if(item){
-    showToast('Found: '+item.name);
-    setTimeout(function(){switchTab('inventory');setTimeout(function(){openItemDetail(item.id)},100)},500);
-  }else{
-    openModal('<div class="modal-title">Barcode Scanned</div><div class="card2 mb-12 bold" style="font-size:16px;text-align:center;letter-spacing:1px">'+code+'</div><div class="muted sm mb-16">This barcode is not in your inventory.</div><div style="display:flex;flex-direction:column;gap:8px"><button class="btn btn-primary btn-full" onclick="closeModalForce();window._bcode=code;openAddItem(window._bcode)">&#10133; Add as New Item</button><button class="btn btn-outline btn-full" onclick="closeModalForce()">Close</button></div>');
-  }
-}
-
-function manualSearch(){
-  var q=(document.getElementById('manualBarcode').value||'').trim();
-  if(!q){showToast('Enter a barcode or model number');return}
-  handleBarcodeResult(q);
-}
-
-function scanForField(fieldId){
-  scanFieldTarget=fieldId;switchTab('scan');setScanMode('barcode');
-  showToast('Scan barcode - will fill automatically');
-}
-
-/* ==============================================
-   TEMPLE SCAN (GROQ AI)
-============================================== */
-function openScanForItem(){switchTab('scan');setScanMode('temple')}
-
-function getGroqKey(){return localStorage.getItem('optistock_groq')||getSettings().groqKey||''}
-function storeGroqKey(key){localStorage.setItem('optistock_groq',key);saveSetting('groqKey',key)}
-function clearGroqKey(){localStorage.removeItem('optistock_groq');saveSetting('groqKey','');updateTempleKeyUI()}
-
-function updateTempleKeyUI(){
-  var key=getGroqKey();
-  var b=document.getElementById('templeKeyBanner');
-  var o=document.getElementById('templeKeyOk');
-  if(!b||!o)return;
-  b.style.display=key?'none':'block';
-  o.style.display=key?'block':'none';
-}
-function saveInlineGroqKey(){
-  var val=(document.getElementById('inlineGroqKey').value||'').trim();
-  if(!val||!val.startsWith('gsk_')){showToast('Invalid key - must start with gsk_');return}
-  storeGroqKey(val);
-  document.getElementById('inlineGroqKey').value='';
-  showToast('Groq key saved!');
-  updateTempleKeyUI();
-}
-function checkKeyThenScan(inputId){
-  if(!getGroqKey()){showToast('Please enter your Groq API key first');return}
-  document.getElementById(inputId).click();
-}
-
-function handleTemplePhoto(input){
-  var f=input.files[0];if(!f)return;input.value='';
-  var resultEl=document.getElementById('templeResult');
-  resultEl.innerHTML='<div class="card" style="text-align:center;padding:28px"><div style="font-size:40px">&#128269;</div><div class="muted sm" style="margin-top:12px">AI reading temple arm...</div></div>';
-  enhanceTempleImage(f,function(dataUrl){
-    callGroqVision(dataUrl,function(code,err){
-      if(err){
-        resultEl.innerHTML='<div class="card"><div class="bold c-red mb-8">&#10060; Error: '+err+'</div><div class="muted xs mb-12">Check your Groq API key in Settings</div><button class="btn btn-outline btn-sm btn-full" onclick="checkKeyThenScan(\'templeCamera\')">&#128247; Try Again</button></div>';
-        return;
-      }
-      if(!code||code==='UNCLEAR'||code.length<2||code.length>30){
-        resultEl.innerHTML='<div class="card"><div class="bold mb-8">&#9888; Could not read temple text</div><div class="muted sm mb-12" style="line-height:1.7">Tips for better results:<br>&#8226; Hold phone still, 10-15cm from temple<br>&#8226; Good lighting on the text<br>&#8226; Focus on just the temple arm<br>&#8226; Make sure text is clearly visible</div><button class="btn btn-primary btn-full" onclick="checkKeyThenScan(\'templeCamera\')">&#128247; Try Again</button></div>';
-        return;
-      }
-      window._lastTempleCode=code;
-      var inv=getInventory();
-      var found=inv.find(function(i){
-        var c=code.toLowerCase();
-        return (i.sku&&i.sku.toLowerCase()===c)||
-               (i.sku&&i.sku.toLowerCase().replace(/[-\s]/g,'')=== c.replace(/[-\s]/g,''))||
-               (i.barcode&&i.barcode===code)||
-               (i.name&&i.name.toLowerCase().indexOf(c)!==-1);
+  function startSync() {
+    syncStatus.textContent = "Connecting...";
+    var itemsRef = collection(db, "items");
+    onSnapshot(itemsRef, function(snapshot) {
+      allItems = [];
+      snapshot.forEach(function(docSnap) {
+        var data = docSnap.data();
+        data.id = docSnap.id;
+        allItems.push(data);
       });
-      if(found){
-        var h='<div class="card mb-12" style="background:rgba(34,197,94,.08);border-color:rgba(34,197,94,.2)">';
-        h+='<div class="bold mb-4 c-green">&#9989; Match Found in Inventory!</div>';
-        h+='<div class="xs muted">Model read from frame: <b>'+code+'</b></div></div>';
-        h+='<div class="item-row" onclick="oc(\''+found.id+'\');ocItemDetail()">';
-        h+=found.photo?'<div class="item-thumb"><img src="'+found.photo+'"></div>':'<div class="item-thumb">&#128230;</div>';
-        h+='<div class="item-info"><div class="item-name">'+found.name+'</div>';
-        h+='<div class="item-sub">Stock: '+found.stock+' &middot; '+fCur(found.price)+'</div></div>';
-        h+='<span class="badge '+(parseInt(found.stock)>0?'badge-green':'badge-red')+'">'+(parseInt(found.stock)>0?found.stock+' pcs':'OUT')+'</span></div>';
-        resultEl.innerHTML=h;
-      }else{
-        var h2='<div class="card mb-12">';
-        h2+='<div class="bold mb-4">Text Read from Frame:</div>';
-        h2+='<div class="c-blue bold" style="font-size:22px;letter-spacing:1px">'+code+'</div>';
-        h2+='<div class="muted xs" style="margin-top:8px">No match found. If wrong, correct it below:</div>';
-        h2+='<input class="form-input" id="templeEditCode" value="'+code.replace(/"/g,'&quot;')+'" style="margin-top:10px;font-size:16px;font-weight:700;text-align:center">';
-        h2+='</div>';
-        h2+='<div style="display:flex;flex-direction:column;gap:8px">';
-        h2+='<button class="btn btn-outline btn-full" onclick="templeRecheck()">&#128269; Search This Model</button>';
-        h2+='<button class="btn btn-primary btn-full" onclick="templeAddCorrected()">&#10133; Add as New Item</button>';
-        h2+='<button class="btn btn-outline btn-sm btn-full" onclick="checkKeyThenScan(\'templeCamera\')">&#128247; Scan Again</button></div>';
-        resultEl.innerHTML=h2;
+      syncStatus.textContent = "Synced (" + allItems.length + " items)";
+      renderInventory();
+    }, function(error) {
+      syncStatus.textContent = "Sync error";
+      console.error(error);
+    });
+  }
+
+  function escapeHtml(str) {
+    if (!str) { return ""; }
+    return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  var inventorySearch = "";
+  var inventoryCategory = "All";
+
+  function renderInventory() {
+    var content = document.getElementById("mainContent");
+    var filtered = allItems;
+    if (currentBusiness !== "All" && currentBusiness !== "Both") {
+      filtered = allItems.filter(function(it) { return it.business === currentBusiness; });
+    }
+    if (inventoryCategory !== "All") {
+      filtered = filtered.filter(function(it) { return it.category === inventoryCategory; });
+    }
+    if (inventorySearch) {
+      var term = inventorySearch.toLowerCase();
+      filtered = filtered.filter(function(it) {
+        return (it.itemName && it.itemName.toLowerCase().indexOf(term) !== -1) ||
+               (it.model && it.model.toLowerCase().indexOf(term) !== -1) ||
+               (it.brand && it.brand.toLowerCase().indexOf(term) !== -1) ||
+               (it.size && it.size.toLowerCase().indexOf(term) !== -1);
+      });
+    }
+
+    var categories = ["All", "Optical Frame", "Sunglasses", "Contact Lens", "Lens", "Accessory"];
+    var chips = "<div id='catChips' style='display:flex;gap:6px;overflow-x:auto;padding:4px 0 8px;'>";
+    for (var ci = 0; ci < categories.length; ci++) {
+      var isActive = inventoryCategory === categories[ci];
+      var chipStyle = isActive
+        ? "background:#1a1a2e;color:#fff;border:none;padding:6px 14px;border-radius:20px;font-size:13px;white-space:nowrap;"
+        : "background:#eee;color:#555;border:none;padding:6px 14px;border-radius:20px;font-size:13px;white-space:nowrap;";
+      chips += "<button class='catChip' data-cat='" + categories[ci] + "' style='" + chipStyle + "'>" + categories[ci] + "</button>";
+    }
+    chips += "</div>";
+
+    var searchBox = "<input type='text' id='invSearch' placeholder='Search name, model, brand, size...' value='" + escapeHtml(inventorySearch) + "' style='width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:15px;margin-bottom:8px;'>";
+
+    if (filtered.length === 0) {
+      content.innerHTML = searchBox + chips + "<p style='color:#999;text-align:center;margin-top:30px;'>No items found.</p>";
+      wireInventoryControls();
+      return;
+    }
+    var html = searchBox + chips;
+    for (var i = 0; i < filtered.length; i++) {
+      var it = filtered[i];
+      var photoSrc = it.photoUrl ? it.photoUrl : "";
+      var coloursSummary = "";
+      var totalQty = 0;
+      if (it.colours && it.colours.length > 0) {
+        var parts = [];
+        for (var cc = 0; cc < it.colours.length; cc++) {
+          parts.push(escapeHtml(it.colours[cc].colour) + " (" + it.colours[cc].qty + ")");
+          totalQty += Number(it.colours[cc].qty) || 0;
+        }
+        coloursSummary = parts.join(", ");
+      }
+      var brandModel = [];
+      if (it.brand) { brandModel.push(escapeHtml(it.brand)); }
+      if (it.model) { brandModel.push(escapeHtml(it.model)); }
+      if (it.size) { brandModel.push(escapeHtml(it.size)); }
+      var lowStockWarn = "";
+      if (it.colours) {
+        for (var lc = 0; lc < it.colours.length; lc++) {
+          if (it.colours[lc].qty <= (it.lowStock || 2)) {
+            lowStockWarn = " <span style='color:#e74c3c;font-size:11px;'>Low Stock</span>";
+            break;
+          }
+        }
+      }
+      html += "<div class='itemCard'>";
+      if (photoSrc) {
+        html += "<img src='" + photoSrc + "' alt=''>";
+      } else {
+        html += "<div style='width:64px;height:64px;background:#eee;border-radius:6px;flex-shrink:0;'></div>";
+      }
+      html += "<div class='itemInfo'>";
+      html += "<div class='itemModel'>" + escapeHtml(it.itemName) + lowStockWarn + "</div>";
+      html += "<div class='itemMeta'>" + brandModel.join(" &middot; ") + "</div>";
+      html += "<div class='itemMeta'>" + coloursSummary + "</div>";
+      html += "<div class='itemMeta'>Rs. " + escapeHtml(it.price) + " &nbsp;|&nbsp; Qty " + totalQty + "</div>";
+      html += "<span class='itemBizTag'>" + escapeHtml(it.business) + "</span>";
+      html += "<div class='itemActions'>";
+      html += "<button class='btnSell' data-id='" + it.id + "'>Sell</button>";
+      html += "<button class='btnEdit' data-id='" + it.id + "'>Edit</button>";
+      html += "<button class='btnDelete' data-id='" + it.id + "'>Delete</button>";
+      html += "</div></div></div>";
+    }
+    content.innerHTML = html;
+    wireInventoryControls();
+  }
+
+  function wireInventoryControls() {
+    var invSearch = document.getElementById("invSearch");
+    if (invSearch) {
+      invSearch.addEventListener("input", function() {
+        inventorySearch = invSearch.value;
+        renderInventory();
+      });
+    }
+    var chips = document.querySelectorAll(".catChip");
+    for (var ci = 0; ci < chips.length; ci++) {
+      chips[ci].addEventListener("click", function(e) {
+        inventoryCategory = e.target.getAttribute("data-cat");
+        renderInventory();
+      });
+    }
+    var sellButtons = document.querySelectorAll(".btnSell");
+    for (var k = 0; k < sellButtons.length; k++) {
+      sellButtons[k].addEventListener("click", function(e) {
+        openSellModal(e.target.getAttribute("data-id"));
+      });
+    }
+    var editButtons = document.querySelectorAll(".btnEdit");
+    for (var m = 0; m < editButtons.length; m++) {
+      editButtons[m].addEventListener("click", function(e) {
+        openEditModal(e.target.getAttribute("data-id"));
+      });
+    }
+    var deleteButtons = document.querySelectorAll(".btnDelete");
+    for (var n = 0; n < deleteButtons.length; n++) {
+      deleteButtons[n].addEventListener("click", function(e) {
+        deleteItem(e.target.getAttribute("data-id"));
+      });
+    }
+  }
+
+  // ---- Add item modal ----
+  var addItemModal = document.getElementById("addItemModal");
+  var addItemBtn = document.getElementById("addItemBtn");
+  var btnCancelAdd = document.getElementById("btnCancelAdd");
+  var btnSaveItem = document.getElementById("btnSaveItem");
+  var formPhoto = document.getElementById("formPhoto");
+  var photoPreview = document.getElementById("photoPreview");
+  var uploadStatus = document.getElementById("uploadStatus");
+  var colourRowsDiv = document.getElementById("colourRows");
+  var btnAddColour = document.getElementById("btnAddColour");
+  var uploadedPhotoUrl = "";
+  var editingItemId = "";
+
+  function createColourRow(colourVal, codeVal, qtyVal) {
+    var row = document.createElement("div");
+    row.className = "colourRow";
+
+    var colourInput = document.createElement("input");
+    colourInput.type = "text";
+    colourInput.placeholder = "Colour";
+    colourInput.className = "colourName";
+    colourInput.value = colourVal || "";
+
+    var codeInput = document.createElement("input");
+    codeInput.type = "text";
+    codeInput.placeholder = "Code";
+    codeInput.className = "colourCode";
+    codeInput.value = codeVal || "";
+
+    var qtyInput = document.createElement("input");
+    qtyInput.type = "number";
+    qtyInput.placeholder = "Qty";
+    qtyInput.className = "colourQty";
+    qtyInput.value = (qtyVal === undefined || qtyVal === null) ? "1" : qtyVal;
+    qtyInput.min = "0";
+
+    var removeBtn = document.createElement("button");
+    removeBtn.type = "button";
+    removeBtn.className = "btnRemoveColour";
+    removeBtn.textContent = "\u00d7";
+    removeBtn.addEventListener("click", function() {
+      if (colourRowsDiv.children.length > 1) {
+        colourRowsDiv.removeChild(row);
       }
     });
-  });
-}
 
-function callGroqVision(dataUrl,cb){
-  var key=getGroqKey();
-  if(!key){cb(null,'No API key. Please add your Groq key in Settings.');return}
-  var prompt='You are an expert OCR reader. The image is a high-contrast black-and-white close-up of an eyeglass temple arm with tiny engraved text on it.\n\nTranscribe the engraved text EXACTLY as you see it, left to right, as a single line. Keep all spaces, dashes, letters and digits in their original order. Ignore bright white dots or blurry spots - those are light reflections, not characters.\n\nThe text usually looks like: MODEL  SIZE-A[]SIZE-B-SIZE-C  COLOUR  (for example "L110 50\u25a119-145" or "52294 50\u25a116-140 C4").\n\nOutput ONLY the transcribed line, nothing else. No explanation, no labels. If you can read nothing, output: UNCLEAR';
-  fetch('https://api.groq.com/openai/v1/chat/completions',{
-    method:'POST',
-    headers:{'Authorization':'Bearer '+key,'Content-Type':'application/json'},
-    body:JSON.stringify({
-      model:'meta-llama/llama-4-scout-17b-16e-instruct',
-      max_tokens:40,
-      temperature:0.1,
-      messages:[{role:'user',content:[
-        {type:'image_url',image_url:{url:dataUrl}},
-        {type:'text',text:prompt}
-      ]}]
-    })
-  }).then(function(r){
-    if(!r.ok){r.json().then(function(e){cb(null,(e.error&&e.error.message)||'API error '+r.status)}).catch(function(){cb(null,'API error '+r.status)});return}
-    return r.json();
-  }).then(function(data){
-    if(!data)return;
-    var raw=((data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content)||'UNCLEAR').trim();
-    var firstLine=raw.split(String.fromCharCode(10))[0].trim();
-    var code=extractModelCode(firstLine);
-    cb(code,null);
-  }).catch(function(e){cb(null,e.message||'Network error')});
-}
-function extractModelCode(text){
-  if(!text)return 'UNCLEAR';
-  if(/unclear/i.test(text))return 'UNCLEAR';
-  // if a label with colon precedes the value, take what comes after the last colon
-  if(text.indexOf(':')>=0){text=text.split(':').pop();}
-  // normalise: treat the box symbol and various dashes as a single dash separator
-  var t=' '+text.replace(/[\u25a1\u25fb\u25fc\u2610\u2b1c]/g,'-').replace(/[\u2012\u2013\u2014\u2015]/g,'-')+' ';
-  // remove the SIZE pattern: NN-NN-NNN (eye-bridge-temple), e.g. 50-19-145 or 50 19 145
-  // accept optional spaces around the dashes
-  t=t.replace(/\b\d{2}\s*-\s*\d{2}\s*-\s*\d{2,3}\b/g,' ');
-  // also remove a lone temple length like 140/145 if it slipped through with a leading dash
-  t=t.replace(/-\s*\d{2,3}\b/g,' ');
-  // now collect candidate tokens (letters+digits or pure digits), order preserved
-  var tokens=t.match(/[A-Za-z]*\d[A-Za-z0-9]*/g)||[];
-  // drop pure 2-digit leftovers (likely stray size fragments)
-  var good=tokens.filter(function(x){return !/^\d{2}$/.test(x)});
-  var pick=good.length?good[0]:(tokens.length?tokens[0]:'');
-  pick=pick.replace(/[^A-Za-z0-9]/g,'').slice(0,25);
-  return pick||'UNCLEAR';
-}
-
-/* ==============================================
-   PURCHASE ORDERS
-============================================== */
-function renderPOs(){
-  var pos=getPOs();
-  document.getElementById('poCount').textContent=pos.length+' orders';
-  var filtered=poFilterMode==='all'?pos:pos.filter(function(p){return p.status===poFilterMode});
-  var el=document.getElementById('poList');
-  if(!filtered.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">&#128203;</div><div class="empty-text">No purchase orders</div><div class="empty-sub">Tap + to create a purchase order</div></div>';return}
-  var h='';
-  filtered.slice().reverse().forEach(function(po){
-    h+='<div class="item-row" onclick="oc(\''+po.id+'\');ocPODetail()">';
-    h+='<div class="item-thumb" style="font-size:20px;background:rgba(59,130,246,.1)">&#128203;</div>';
-    h+='<div class="item-info"><div class="item-name">'+po.poNumber+' &ndash; '+(po.supplier||'No Supplier')+'</div>';
-    h+='<div class="item-sub">'+fDate(po.date)+' &middot; '+(po.items||[]).length+' item(s)</div></div>';
-    h+='<span class="badge '+(po.status==='received'?'badge-green':'badge-blue')+'">'+(po.status==='received'?'Received':'Pending')+'</span></div>';
-  });
-  el.innerHTML=h;
-}
-function setPOFilter(mode,el){poFilterMode=mode;document.querySelectorAll('#poFilterChips .chip').forEach(function(c){c.classList.remove('active')});el.classList.add('active');renderPOs()}
-function openAddPO(){
-  showSub('pgAddPO','New Purchase Order');
-  populateSupplierSelect('poSupplier','');
-  document.getElementById('poDate').value=todayISO();
-  document.getElementById('poExpected').value='';
-  document.getElementById('poNotes').value='';
-  document.getElementById('poItemsList').innerHTML='';
-  addPOItemRow();
-}
-function addPOItemRow(){
-  var inv=getInventory();
-  var opts='<option value="">Select item</option>';
-  inv.forEach(function(i){opts+='<option value="'+i.id+'" data-cost="'+(i.cost||0)+'">'+i.name+(i.sku?' ('+i.sku+')':'')+'</option>'});
-  var div=document.createElement('div');
-  div.className='row mb-8';div.style.cssText='gap:8px;align-items:center';
-  div.innerHTML='<select class="form-input grow" style="flex:2" onchange="var r=this.parentNode;r.querySelector(\'.po-cost\').value=this.options[this.selectedIndex].dataset.cost">'+opts+'</select><input class="form-input po-qty" type="number" placeholder="Qty" min="1" style="width:60px" value="1"><input class="form-input po-cost" type="number" placeholder="Cost" min="0" style="width:80px"><button class="btn btn-red btn-sm" style="width:34px;height:44px;padding:0;flex-shrink:0" onclick="this.parentNode.remove()">&#10005;</button>';
-  document.getElementById('poItemsList').appendChild(div);
-}
-function savePO(){
-  var supplier=document.getElementById('poSupplier').value;
-  var rows=document.getElementById('poItemsList').querySelectorAll('.row');
-  var items=[];
-  rows.forEach(function(row){
-    var sel=row.querySelector('select');var qty=row.querySelector('.po-qty');var cost=row.querySelector('.po-cost');
-    if(sel&&sel.value)items.push({itemId:sel.value,itemName:sel.options[sel.selectedIndex]?sel.options[sel.selectedIndex].text:'',qty:parseInt(qty?qty.value:1)||1,cost:parseFloat(cost?cost.value:0)||0});
-  });
-  if(!items.length){showToast('Add at least one item');return}
-  var po={id:uid(),poNumber:nextPONo(),date:new Date().toISOString(),supplier:supplier,expectedDate:document.getElementById('poExpected').value,status:'pending',notes:document.getElementById('poNotes').value.trim(),items:items};
-  var pos=getPOs();pos.push(po);savePOs(pos);
-  showToast('Purchase Order created!');goBack();renderPOs();
-}
-function openPODetail(id){
-  var po=getPOs().find(function(p){return p.id===id});if(!po)return;
-  showSub('pgPODetail','PO '+po.poNumber);
-  var tc=(po.items||[]).reduce(function(a,i){return a+i.cost*i.qty},0);
-  var h='<div class="card mb-12"><div class="row between mb-8" style="align-items:center">';
-  h+='<div><div style="font-size:20px;font-weight:800">'+po.poNumber+'</div><div class="xs muted">'+fDate(po.date)+'</div></div>';
-  h+='<span class="badge '+(po.status==='received'?'badge-green':'badge-blue')+'">'+(po.status==='received'?'Received':'Pending')+'</span></div>';
-  if(po.supplier)h+='<div class="xs muted">Supplier: '+po.supplier+'</div>';
-  if(po.expectedDate)h+='<div class="xs muted">Expected: '+fDate(po.expectedDate)+'</div>';
-  h+='</div><div class="card mb-12"><div class="sec-title" style="margin-top:0">Items Ordered</div>';
-  (po.items||[]).forEach(function(it){h+='<div class="row between mb-8" style="align-items:center"><div class="grow sm bold">'+it.itemName+'</div><div class="xs muted">'+it.qty+' pcs</div>'+(it.cost?'<div class="xs muted" style="margin-left:8px">'+fCur(it.cost*it.qty)+'</div>':'')+'</div>'});
-  h+='<div class="divider"></div><div class="row between"><span class="muted">Total Cost</span><span class="bold">'+fCur(tc)+'</span></div></div>';
-  h+='<div style="display:flex;flex-direction:column;gap:10px">';
-  if(po.status!=='received')h+='<button class="btn btn-green btn-full" onclick="oc(\''+po.id+'\');ocReceivePO()">&#9989; Mark as Received (Update Stock)</button>';
-  else h+='<div class="card" style="color:var(--green);font-size:13px">&#9989; Stock was received and added to inventory</div>';
-  h+='<button class="btn btn-red btn-sm btn-full" onclick="oc(\''+po.id+'\');confirmDelPO()">&#128465; Delete PO</button></div>';
-  document.getElementById('poDetailContent').innerHTML=h;
-}
-function receivePO(id){
-  openModal('<div class="modal-title">Receive Stock?</div><div class="muted mb-16">This will add all ordered quantities to your inventory.</div><div style="display:flex;gap:10px"><button class="btn btn-outline grow" onclick="closeModalForce()">Cancel</button><button class="btn btn-green grow" onclick="doReceivePO(id)">&#9989; Confirm Receive</button></div>');
-}
-function doReceivePO(id){
-  var pos=getPOs();var po=pos.find(function(p){return p.id===id});if(!po)return;
-  var inv=getInventory();
-  (po.items||[]).forEach(function(poi){var item=inv.find(function(i){return i.id===poi.itemId});if(item)item.stock=(parseInt(item.stock)||0)+parseInt(poi.qty)});
-  saveInventory(inv);po.status='received';po.receivedDate=new Date().toISOString();savePOs(pos);
-  closeModalForce();showToast('Stock updated! Items added to inventory');openPODetail(id);
-}
-function confirmDeletePO(id){
-  openModal('<div class="modal-title">Delete PO?</div><div class="muted mb-16">This cannot be undone.</div><div style="display:flex;gap:10px"><button class="btn btn-outline grow" onclick="closeModalForce()">Cancel</button><button class="btn btn-red grow" onclick="oc(id);ocDeletePO()">Delete</button></div>');
-}
-function doDeletePO(id){savePOs(getPOs().filter(function(p){return p.id!==id}));closeModalForce();showToast('PO deleted');goBack()}
-
-/* ==============================================
-   SUPPLIERS
-============================================== */
-function renderSuppliers(){
-  var sups=getSuppliers();
-  document.getElementById('supplierCount').textContent=sups.length+' suppliers';
-  var el=document.getElementById('supplierList');
-  if(!sups.length){el.innerHTML='<div class="muted sm mb-8">No suppliers added yet</div>';return}
-  var h='';
-  sups.forEach(function(s){
-    h+='<div class="item-row"><div class="item-thumb" style="font-size:22px">&#127981;</div>';
-    h+='<div class="item-info"><div class="item-name">'+s.name+'</div><div class="item-sub">'+[s.company,s.phone].filter(Boolean).join(' &middot; ')+'</div></div>';
-    h+='<button class="btn btn-red btn-sm" style="padding:6px 10px" onclick="oc(\''+s.id+'\');ocDeleteSupplier()">&#10005;</button></div>';
-  });
-  el.innerHTML=h;
-}
-function addSupplier(){
-  var name=document.getElementById('supName').value.trim();
-  if(!name){showToast('Supplier name is required');return}
-  var sups=getSuppliers();
-  sups.push({id:uid(),name:name,phone:document.getElementById('supPhone').value.trim(),company:document.getElementById('supCompany').value.trim()});
-  saveSuppliers(sups);
-  ['supName','supPhone','supCompany'].forEach(function(id){document.getElementById(id).value=''});
-  showToast('Supplier added');renderSuppliers();
-  populateSupplierSelect('fSupplier','');populateSupplierSelect('poSupplier','');
-}
-function deleteSupplier(id){
-  saveSuppliers(getSuppliers().filter(function(s){return s.id!==id}));
-  showToast('Supplier removed');renderSuppliers();
-}
-function populateSupplierSelect(selectId,selected){
-  var el=document.getElementById(selectId);if(!el)return;
-  var h='<option value="">None</option>';
-  getSuppliers().forEach(function(s){h+='<option value="'+s.name+'"'+(s.name===selected?' selected':'')+'>'+s.name+'</option>'});
-  el.innerHTML=h;
-}
-
-/* ==============================================
-   SETTINGS
-============================================== */
-function renderSettings(){
-  var s=getSettings();
-  document.getElementById('stShopName').value=s.shopName||'';
-  document.getElementById('stShopPhone').value=s.shopPhone||'';
-  document.getElementById('stGST').value=s.gstNo||'';
-  document.getElementById('stAddress').value=s.shopAddress||'';
-  document.getElementById('stGroqKey').value=getGroqKey()||'';
-  document.getElementById('stSheetUrl').value=s.sheetUrl||'';
-  document.getElementById('stPin1').value='';
-  document.getElementById('stPin2').value='';
-}
-function saveSettings(){
-  var updates={
-    shopName:document.getElementById('stShopName').value.trim(),
-    shopPhone:document.getElementById('stShopPhone').value.trim(),
-    gstNo:document.getElementById('stGST').value.trim(),
-    shopAddress:document.getElementById('stAddress').value.trim(),
-    groqKey:document.getElementById('stGroqKey').value.trim(),
-    sheetUrl:document.getElementById('stSheetUrl').value.trim()
-  };
-  var p1=document.getElementById('stPin1').value;
-  var p2=document.getElementById('stPin2').value;
-  if(p1||p2){
-    if(p1.length!==4||!/^\d+$/.test(p1)){showToast('PIN must be exactly 4 digits');return}
-    if(p1!==p2){showToast('PINs do not match');return}
-    updates.pin=p1;
+    row.appendChild(colourInput);
+    row.appendChild(codeInput);
+    row.appendChild(qtyInput);
+    row.appendChild(removeBtn);
+    colourRowsDiv.appendChild(row);
   }
-  saveSettingsObj(updates);
-  if(updates.groqKey)storeGroqKey(updates.groqKey);
-  showToast('Settings saved successfully');
-  updateTempleKeyUI();
-}
-function testSheetUrl(){
-  var url=document.getElementById('stSheetUrl').value.trim();
-  if(!url){showToast('Please enter a Google Sheets URL first');return}
-  showToast('Testing connection...',3000);
-  fetch(url,{method:'GET',mode:'no-cors'}).then(function(){showToast('Connection OK &#10003;')}).catch(function(e){showToast('Connection failed: '+e.message)});
-}
 
-/* ==============================================
-   GOOGLE SHEETS BACKUP
-============================================== */
-var GS_SCRIPT = "// OptiStock v5.0 - Google Apps Script\n// Extensions > Apps Script > Paste > Save > Deploy as Web App\n// Execute as: Me | Who has access: Anyone\n\nfunction doPost(e){\n  try{\n    var ss=SpreadsheetApp.getActiveSpreadsheet();\n    var data=JSON.parse(e.postData.contents);\n    var inv=ss.getSheetByName(\"Inventory\")||ss.insertSheet(\"Inventory\");\n    inv.clearContents();\n    inv.appendRow([\"Name\",\"Model No\",\"Size\",\"Brand\",\"Category\",\"For\",\"Frame Type\",\"Colour\",\"Colour Code\",\"Colour Qty\",\"Total Stock\",\"Selling Price\",\"Cost Price\",\"Material\",\"Barcode\",\"Supplier\",\"Location\",\"Updated\"]);\n    (data.inventory||[]).forEach(function(i){\n      var cols=(i.colors&&i.colors.length)?i.colors:[{name:i.color||\"\",code:\"\",qty:i.stock||0}];\n      cols.forEach(function(c){\n        inv.appendRow([i.name,i.sku||\"\",i.size||\"\",i.brand||\"\",i.category||\"\",i.fFor||\"\",i.frameType||\"\",c.name||\"\",c.code||\"\",c.qty||0,i.stock||0,i.price||0,i.cost||0,i.material||\"\",i.barcode||\"\",i.supplier||\"\",i.location||\"\",new Date()]);\n      });\n    });\n    var sal=ss.getSheetByName(\"Sales\")||ss.insertSheet(\"Sales\");\n    sal.clearContents();\n    sal.appendRow([\"Bill No\",\"Date\",\"Customer\",\"Phone\",\"Item\",\"Qty\",\"Price\",\"Total\",\"Grand Total\",\"Discount\"]);\n    (data.sales||[]).forEach(function(s){(s.items||[]).forEach(function(it,idx){sal.appendRow([s.billNo||\"\",new Date(s.date),s.customerName||\"\",s.customerPhone||\"\",it.name,it.qty,it.price,it.total,idx===0?s.grandTotal:\"\",idx===0?s.discount||0:\"\"])})});\n    var pos=ss.getSheetByName(\"PurchaseOrders\")||ss.insertSheet(\"PurchaseOrders\");\n    pos.clearContents();\n    pos.appendRow([\"PO Number\",\"Date\",\"Supplier\",\"Item\",\"Qty\",\"Cost\",\"Status\"]);\n    (data.pos||[]).forEach(function(p){(p.items||[]).forEach(function(it){pos.appendRow([p.poNumber||\"\",new Date(p.date),p.supplier||\"\",it.itemName,it.qty,it.cost||0,p.status||\"\"])})});\n    return ContentService.createTextOutput(JSON.stringify({status:\"ok\"})).setMimeType(ContentService.MimeType.JSON);\n  }catch(err){return ContentService.createTextOutput(JSON.stringify({status:\"error\",message:err.toString()})).setMimeType(ContentService.MimeType.JSON)}\n}\n\nfunction doGet(e){return ContentService.createTextOutput(\"OptiStock Backup Active\").setMimeType(ContentService.MimeType.TEXT)}"
+  btnAddColour.addEventListener("click", function() {
+    createColourRow("", "", "1");
+  });
 
-function doBackup(){
-  var url=getSettings().sheetUrl;
-  if(!url){
-    showToast('Set Google Sheets URL in Settings first');
-    switchTab('more');
-    setTimeout(function(){showSub('pgSheetSetup','Sheets Setup')},100);
-    return;
+  function getColourRowsData() {
+    var rows = colourRowsDiv.querySelectorAll(".colourRow");
+    var result = [];
+    for (var i = 0; i < rows.length; i++) {
+      var colourName = rows[i].querySelector(".colourName").value.trim();
+      var colourCode = rows[i].querySelector(".colourCode").value.trim();
+      var colourQty = Number(rows[i].querySelector(".colourQty").value) || 0;
+      if (colourName) {
+        result.push({ colour: colourName, code: colourCode, qty: colourQty });
+      }
+    }
+    return result;
   }
-  showToast('Syncing to Google Sheets...',4000);
-  fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({inventory:getInventory(),sales:getSales(),pos:getPOs(),syncedAt:new Date().toISOString()})})
-    .then(function(){saveSetting('lastSync',Date.now());showToast('Synced to Google Sheets!')})
-    .catch(function(e){showToast('Sync error: '+e.message)});
-}
-function autoBackup(){
-  var url=getSettings().sheetUrl;if(!url)return;
-  fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({inventory:getInventory(),sales:getSales(),pos:getPOs(),syncedAt:new Date().toISOString()})}).then(function(){saveSetting('lastSync',Date.now())}).catch(function(){});
-}
-function copyScript(){
-  if(navigator.clipboard&&navigator.clipboard.writeText){
-    navigator.clipboard.writeText(GS_SCRIPT).then(function(){showToast('Script copied to clipboard!')}).catch(fallbackCopy);
-  }else{fallbackCopy()}
-}
-function fallbackCopy(){
-  var ta=document.createElement('textarea');ta.value=GS_SCRIPT;ta.style.position='fixed';ta.style.opacity='0';
-  document.body.appendChild(ta);ta.focus();ta.select();
-  try{document.execCommand('copy');showToast('Script copied!')}catch(e){showToast('Copy failed - please copy manually')}
-  document.body.removeChild(ta);
-}
-function exportCSV(){
-  var inv=getInventory();
-  var rows=[['Name','Model No','Size','Brand','Category','For','Frame Type','Colour','Colour Code','Colour Qty','Total Stock','Selling Price','Cost Price','Material','Barcode','Supplier','Location']];
-  inv.forEach(function(i){
-    var cols=i.colors&&i.colors.length?i.colors:[{name:'',code:'',qty:i.stock||0}];
-    cols.forEach(function(c){
-      rows.push([i.name,i.sku||'',i.size||'',i.brand||'',i.category||'',i.fFor||'',i.frameType||'',c.name||'',c.code||'',c.qty||0,i.stock||0,i.price||0,i.cost||0,i.material||'',i.barcode||'',i.supplier||'',i.location||'']);
+
+  addItemBtn.addEventListener("click", function() {
+    editingItemId = "";
+    document.getElementById("addItemModalTitle").textContent = "Add Item";
+    btnSaveItem.textContent = "Save Item";
+    resetForm();
+    addItemModal.classList.remove("hidden");
+  });
+  btnCancelAdd.addEventListener("click", function() {
+    addItemModal.classList.add("hidden");
+    resetForm();
+  });
+
+  function openEditModal(itemId) {
+    var item = null;
+    for (var i = 0; i < allItems.length; i++) {
+      if (allItems[i].id === itemId) { item = allItems[i]; break; }
+    }
+    if (!item) { return; }
+    editingItemId = itemId;
+    document.getElementById("addItemModalTitle").textContent = "Edit Item";
+    document.getElementById("formBusiness").value = item.business || "Eyeland";
+    document.getElementById("formItemName").value = item.itemName || "";
+    document.getElementById("formModel").value = item.model || "";
+    document.getElementById("formSize").value = item.size || "";
+    document.getElementById("formBrand").value = item.brand || "";
+    document.getElementById("formMaterial").value = item.material || "";
+    document.getElementById("formCategory").value = item.category || "";
+    document.getElementById("formFor").value = item.forWhom || "";
+    document.getElementById("formFrameType").value = item.frameType || "";
+    document.getElementById("formLowStock").value = (item.lowStock === undefined) ? 2 : item.lowStock;
+    document.getElementById("formPrice").value = item.price || "";
+    document.getElementById("formCostPrice").value = item.costPrice || "";
+    document.getElementById("formBarcode").value = item.barcode || "";
+    document.getElementById("formSupplier").value = item.supplier || "";
+    document.getElementById("formLocation").value = item.location || "";
+    document.getElementById("formNotes").value = item.notes || "";
+
+    colourRowsDiv.innerHTML = "";
+    if (item.colours && item.colours.length > 0) {
+      for (var j = 0; j < item.colours.length; j++) {
+        createColourRow(item.colours[j].colour, item.colours[j].code, item.colours[j].qty);
+      }
+    } else {
+      createColourRow("", "", "1");
+    }
+
+    uploadedPhotoUrl = item.photoUrl || "";
+    if (uploadedPhotoUrl) {
+      photoPreview.src = uploadedPhotoUrl;
+      photoPreview.style.display = "block";
+    } else {
+      photoPreview.style.display = "none";
+    }
+    uploadStatus.textContent = "";
+    btnSaveItem.textContent = "Update Item";
+    addItemModal.classList.remove("hidden");
+  }
+
+  function deleteItem(itemId) {
+    var item = null;
+    for (var i = 0; i < allItems.length; i++) {
+      if (allItems[i].id === itemId) { item = allItems[i]; break; }
+    }
+    var label = item ? item.itemName : "this item";
+    var sure = window.confirm("Delete " + label + "? This cannot be undone.");
+    if (!sure) { return; }
+    deleteDoc(doc(db, "items", itemId)).catch(function(err) {
+      alert("Delete failed, check internet connection");
+      console.error(err);
     });
-  });
-  var csv=rows.map(function(r){return r.map(function(c){return'"'+String(c).replace(/"/g,'""')+'"'}).join(',')}).join(String.fromCharCode(10));
-  var a=document.createElement('a');
-  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
-  a.download='optistock_inventory_'+todayISO()+'.csv';
-  document.body.appendChild(a);a.click();document.body.removeChild(a);
-  showToast('CSV downloaded!');
-}
-
-function renderMore(){
-  document.getElementById('poCount').textContent=getPOs().length+' orders';
-  document.getElementById('supplierCount').textContent=getSuppliers().length+' suppliers';
-}
-
-/* ==============================================
-   INIT
-============================================== */
-function initApp(){
-  switchTab('home');
-}
-
-window.onload=function(){
-  if(sessionStorage.getItem('unlocked')==='1'){
-    document.getElementById('pinScreen').style.display='none';
-    document.getElementById('app').style.display='flex';
-    initApp();
   }
-};
-window.addEventListener('popstate',function(){if(subStack.length>0)goBack()});
+
+  function resetForm() {
+    document.getElementById("formItemName").value = "";
+    document.getElementById("formModel").value = "";
+    document.getElementById("formSize").value = "";
+    document.getElementById("formBrand").value = "";
+    document.getElementById("formMaterial").value = "";
+    document.getElementById("formCategory").value = "";
+    document.getElementById("formFor").value = "";
+    document.getElementById("formFrameType").value = "";
+    document.getElementById("formLowStock").value = "2";
+    document.getElementById("formPrice").value = "";
+    document.getElementById("formCostPrice").value = "";
+    document.getElementById("formBarcode").value = "";
+    document.getElementById("formSupplier").value = "";
+    document.getElementById("formLocation").value = "";
+    document.getElementById("formNotes").value = "";
+    colourRowsDiv.innerHTML = "";
+    createColourRow("", "", "1");
+    formPhoto.value = "";
+    photoPreview.style.display = "none";
+    uploadStatus.textContent = "";
+    uploadedPhotoUrl = "";
+  }
+
+  formPhoto.addEventListener("change", function() {
+    var file = formPhoto.files[0];
+    if (!file) { return; }
+    photoPreview.src = URL.createObjectURL(file);
+    photoPreview.style.display = "block";
+    uploadStatus.textContent = "Uploading photo...";
+    uploadedPhotoUrl = "";
+
+    var formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", UPLOAD_PRESET);
+
+    var uploadUrl = "https://api.cloudinary.com/v1_1/" + CLOUD_NAME + "/image/upload";
+    fetch(uploadUrl, { method: "POST", body: formData })
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        if (data.secure_url) {
+          uploadedPhotoUrl = data.secure_url;
+          uploadStatus.textContent = "Photo uploaded";
+        } else {
+          uploadStatus.textContent = "Upload failed, try again";
+        }
+      })
+      .catch(function(err) {
+        uploadStatus.textContent = "Upload failed, check internet";
+        console.error(err);
+      });
+  });
+
+  // ---- Sell modal ----
+  var sellModal = document.getElementById("sellModal");
+  var sellItemLabel = document.getElementById("sellItemLabel");
+  var sellColourSelect = document.getElementById("sellColour");
+  var btnCancelSell = document.getElementById("btnCancelSell");
+  var btnConfirmSell = document.getElementById("btnConfirmSell");
+  var currentSellItemId = "";
+
+  function openSellModal(itemId) {
+    var item = null;
+    for (var i = 0; i < allItems.length; i++) {
+      if (allItems[i].id === itemId) { item = allItems[i]; break; }
+    }
+    if (!item) { return; }
+    currentSellItemId = itemId;
+    sellItemLabel.textContent = item.itemName + " (" + item.model + ")";
+
+    sellColourSelect.innerHTML = "";
+    var colours = item.colours || [];
+    for (var c = 0; c < colours.length; c++) {
+      var opt = document.createElement("option");
+      opt.value = colours[c].colour;
+      opt.textContent = colours[c].colour + " (Stock: " + colours[c].qty + ")";
+      sellColourSelect.appendChild(opt);
+    }
+
+    document.getElementById("sellOrderNo").value = "";
+    document.getElementById("sellCustName").value = "";
+    document.getElementById("sellCustPhone").value = "";
+    document.getElementById("sellQty").value = "1";
+    document.getElementById("sellPrice").value = item.price || "";
+    sellModal.classList.remove("hidden");
+  }
+
+  btnCancelSell.addEventListener("click", function() {
+    sellModal.classList.add("hidden");
+  });
+
+  btnConfirmSell.addEventListener("click", function() {
+    var item = null;
+    for (var i = 0; i < allItems.length; i++) {
+      if (allItems[i].id === currentSellItemId) { item = allItems[i]; break; }
+    }
+    if (!item) { return; }
+
+    var selectedColour = sellColourSelect.value;
+    var colours = item.colours || [];
+    var colourIndex = -1;
+    for (var ci = 0; ci < colours.length; ci++) {
+      if (colours[ci].colour === selectedColour) { colourIndex = ci; break; }
+    }
+    if (colourIndex === -1) {
+      alert("Please select a colour");
+      return;
+    }
+    var stockForColour = colours[colourIndex].qty;
+
+    var sellQty = Number(document.getElementById("sellQty").value) || 0;
+    if (sellQty <= 0 || sellQty > stockForColour) {
+      alert("Invalid quantity, stock available for " + selectedColour + ": " + stockForColour);
+      return;
+    }
+    var orderNo = document.getElementById("sellOrderNo").value.trim();
+    var custName = document.getElementById("sellCustName").value.trim();
+    var custPhone = document.getElementById("sellCustPhone").value.trim();
+    var salePrice = Number(document.getElementById("sellPrice").value) || 0;
+
+    btnConfirmSell.disabled = true;
+    btnConfirmSell.textContent = "Saving...";
+
+    var newColours = [];
+    var newTotalQty = 0;
+    for (var k = 0; k < colours.length; k++) {
+      var newQtyForColour = colours[k].qty;
+      if (k === colourIndex) { newQtyForColour = colours[k].qty - sellQty; }
+      newColours.push({ colour: colours[k].colour, code: colours[k].code, qty: newQtyForColour });
+      newTotalQty += newQtyForColour;
+    }
+
+    var itemRef = doc(db, "items", item.id);
+
+    updateDoc(itemRef, { colours: newColours, qty: newTotalQty })
+      .then(function() {
+        var saleRecord = {
+          itemId: item.id,
+          itemName: item.itemName,
+          model: item.model,
+          colour: selectedColour,
+          size: item.size,
+          business: item.business,
+          orderNo: orderNo,
+          custName: custName,
+          custPhone: custPhone,
+          qty: sellQty,
+          price: salePrice,
+          soldAt: Date.now()
+        };
+        return addDoc(collection(db, "sales"), saleRecord);
+      })
+      .then(function() {
+        btnConfirmSell.disabled = false;
+        btnConfirmSell.textContent = "Confirm Sale";
+        sellModal.classList.add("hidden");
+        sendWhatsAppInvoice(item, sellQty, salePrice, orderNo, custName, custPhone, selectedColour);
+      })
+      .catch(function(err) {
+        alert("Sale failed, check internet connection");
+        console.error(err);
+        btnConfirmSell.disabled = false;
+        btnConfirmSell.textContent = "Confirm Sale";
+      });
+  });
+
+  function sendWhatsAppInvoice(item, qty, price, orderNo, custName, custPhone, soldColour) {
+    if (!custPhone) { return; }
+    var total = qty * price;
+    var lines = [];
+    lines.push("Eyeland Opticians - Order Confirmation");
+    lines.push("Order No: " + orderNo);
+    lines.push("Customer: " + custName);
+    lines.push("Item: " + item.itemName + " (" + soldColour + ")");
+    lines.push("Qty: " + qty);
+    lines.push("Total: Rs. " + total);
+    lines.push("Thank you for shopping with us!");
+    var message = lines.join(String.fromCharCode(10));
+    var phoneClean = custPhone.replace(/[^0-9]/g, "");
+    if (phoneClean.length === 10) { phoneClean = "91" + phoneClean; }
+    var waUrl = "https://wa.me/" + phoneClean + "?text=" + encodeURIComponent(message);
+    window.open(waUrl, "_blank");
+  }
+
+  btnSaveItem.addEventListener("click", function() {
+    var itemName = document.getElementById("formItemName").value.trim();
+    if (!itemName) {
+      alert("Please enter an item name");
+      return;
+    }
+    var price = Number(document.getElementById("formPrice").value) || 0;
+    if (price <= 0) {
+      alert("Please enter a selling price");
+      return;
+    }
+    var colours = getColourRowsData();
+    if (colours.length === 0) {
+      alert("Please add at least one colour with quantity");
+      return;
+    }
+    var totalQty = 0;
+    for (var c = 0; c < colours.length; c++) { totalQty += colours[c].qty; }
+
+    var newItem = {
+      business: document.getElementById("formBusiness").value,
+      itemName: itemName,
+      model: document.getElementById("formModel").value.trim(),
+      size: document.getElementById("formSize").value.trim(),
+      brand: document.getElementById("formBrand").value.trim(),
+      material: document.getElementById("formMaterial").value.trim(),
+      category: document.getElementById("formCategory").value,
+      forWhom: document.getElementById("formFor").value,
+      frameType: document.getElementById("formFrameType").value,
+      lowStock: Number(document.getElementById("formLowStock").value) || 2,
+      price: price,
+      costPrice: Number(document.getElementById("formCostPrice").value) || 0,
+      colours: colours,
+      qty: totalQty,
+      barcode: document.getElementById("formBarcode").value.trim(),
+      supplier: document.getElementById("formSupplier").value.trim(),
+      location: document.getElementById("formLocation").value.trim(),
+      notes: document.getElementById("formNotes").value.trim(),
+      photoUrl: uploadedPhotoUrl
+    };
+    btnSaveItem.disabled = true;
+    var savePromise;
+    if (editingItemId) {
+      btnSaveItem.textContent = "Updating...";
+      savePromise = updateDoc(doc(db, "items", editingItemId), newItem);
+    } else {
+      btnSaveItem.textContent = "Saving...";
+      newItem.createdAt = Date.now();
+      savePromise = addDoc(collection(db, "items"), newItem);
+    }
+    savePromise
+      .then(function() {
+        addItemModal.classList.add("hidden");
+        resetForm();
+        editingItemId = "";
+        btnSaveItem.disabled = false;
+        btnSaveItem.textContent = "Save Item";
+      })
+      .catch(function(err) {
+        alert("Save failed, check internet connection");
+        console.error(err);
+        btnSaveItem.disabled = false;
+        btnSaveItem.textContent = editingItemId ? "Update Item" : "Save Item";
+      });
+  });
+
+  // ---- Camera / Temple Scan / Barcode Scan ----
+  var cameraModal = document.getElementById("cameraModal");
+  var camVideo = document.getElementById("camVideo");
+  var camCanvas = document.getElementById("camCanvas");
+  var btnCaptureShot = document.getElementById("btnCaptureShot");
+  var btnCloseCamera = document.getElementById("btnCloseCamera");
+  var scanLabel = document.getElementById("scanLabel");
+  var btnScanTemple = document.getElementById("btnScanTemple");
+  var btnScanBarcode = document.getElementById("btnScanBarcode");
+  var currentStream = null;
+  var scanMode = "";
+  var zxingReader = null;
+
+  function openCamera(mode) {
+    scanMode = mode;
+    scanLabel.textContent = mode === "temple" ? "Point at engraved temple text, then Capture" : "Point at barcode";
+    btnCaptureShot.classList.toggle("hidden", mode !== "temple");
+    cameraModal.classList.remove("hidden");
+
+    var constraints = { video: { facingMode: "environment" } };
+    navigator.mediaDevices.getUserMedia(constraints)
+      .then(function(stream) {
+        currentStream = stream;
+        camVideo.srcObject = stream;
+        if (mode === "barcode") {
+          startBarcodeScan();
+        }
+      })
+      .catch(function(err) {
+        alert("Camera access failed");
+        console.error(err);
+        closeCamera();
+      });
+  }
+
+  function closeCamera() {
+    if (currentStream) {
+      var tracks = currentStream.getTracks();
+      for (var i = 0; i < tracks.length; i++) { tracks[i].stop(); }
+      currentStream = null;
+    }
+    if (zxingReader) {
+      try { zxingReader.reset(); } catch (e) {}
+    }
+    cameraModal.classList.add("hidden");
+  }
+
+  btnScanTemple.addEventListener("click", function() { openCamera("temple"); });
+  btnScanBarcode.addEventListener("click", function() { openCamera("barcode"); });
+  var btnScanBarcodeField = document.getElementById("btnScanBarcodeField");
+  if (btnScanBarcodeField) {
+    btnScanBarcodeField.addEventListener("click", function() { openCamera("barcode"); });
+  }
+  btnCloseCamera.addEventListener("click", closeCamera);
+
+  function startBarcodeScan() {
+    if (typeof ZXing === "undefined") {
+      alert("Barcode scanner not loaded, check internet");
+      return;
+    }
+    zxingReader = new ZXing.BrowserMultiFormatReader();
+    zxingReader.decodeFromConstraints({ video: { facingMode: "environment" } }, camVideo, function(result, err) {
+      if (result) {
+        document.getElementById("formBarcode").value = result.getText();
+        closeCamera();
+      }
+    });
+  }
+
+  btnCaptureShot.addEventListener("click", function() {
+    if (scanMode !== "temple") { return; }
+    var w = 1280;
+    var h = (camVideo.videoHeight / camVideo.videoWidth) * w;
+    camCanvas.width = w;
+    camCanvas.height = h;
+    var ctx = camCanvas.getContext("2d");
+    ctx.drawImage(camVideo, 0, 0, w, h);
+
+    var imgData = ctx.getImageData(0, 0, w, h);
+    var d = imgData.data;
+    var contrast = 1.9;
+    var intercept = 128 * (1 - contrast);
+    for (var i = 0; i < d.length; i += 4) {
+      var gray = (d[i] * 0.3 + d[i + 1] * 0.59 + d[i + 2] * 0.11);
+      gray = gray * contrast + intercept;
+      if (gray < 0) { gray = 0; }
+      if (gray > 255) { gray = 255; }
+      d[i] = gray; d[i + 1] = gray; d[i + 2] = gray;
+    }
+    ctx.putImageData(imgData, 0, 0);
+
+    var dataUrl = camCanvas.toDataURL("image/jpeg", 0.85);
+    closeCamera();
+    runTempleScan(dataUrl);
+  });
+
+  function extractModelCode(rawText) {
+    if (!rawText) { return ""; }
+    var cleaned = rawText.trim();
+    var sizePattern = /\s*\d{2}.\d{2}.\d{2,3}\s*$/;
+    cleaned = cleaned.replace(sizePattern, "");
+    return cleaned.trim();
+  }
+
+  function runTempleScan(dataUrl) {
+    var groqKey = localStorage.getItem("optistock_groq");
+    if (!groqKey) {
+      alert("Please set your Groq API key in Settings first");
+      return;
+    }
+    document.getElementById("formModel").value = "Scanning...";
+    var base64Data = dataUrl.split(",")[1];
+
+    fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + groqKey
+      },
+      body: JSON.stringify({
+        model: "meta-llama/llama-4-scout-17b-16e-instruct",
+        messages: [
+          {
+            role: "user",
+            content: [
+              { type: "text", text: "This is an eyeglass temple arm with engraved text. The engraving usually contains a model number (letters and digits, e.g. RB2140 or similar brand-style codes) followed by separate lens size numbers (e.g. 52-18-140 or 52 18 140) and sometimes a colour code. Reply with ONLY the model number part, excluding the lens size numbers and excluding the colour code. If unsure which part is the size, exclude any number group that looks like three short numbers separated by dashes or spaces. Reply with nothing except the model code itself, no explanation." },
+              { type: "image_url", image_url: { url: "data:image/jpeg;base64," + base64Data } }
+            ]
+          }
+        ]
+      })
+    })
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        var rawText = "";
+        if (data.choices && data.choices[0] && data.choices[0].message) {
+          rawText = data.choices[0].message.content;
+        }
+        var modelCode = extractModelCode(rawText);
+        document.getElementById("formModel").value = modelCode || "";
+        if (!modelCode) {
+          alert("Could not read temple text, please type manually");
+        }
+      })
+      .catch(function(err) {
+        document.getElementById("formModel").value = "";
+        alert("Scan failed, check internet connection");
+        console.error(err);
+      });
+  }
+
+  // ---- Settings ----
+  var btnSettings = document.getElementById("btnSettings");
+  var settingsModal = document.getElementById("settingsModal");
+  var settingsGroqKey = document.getElementById("settingsGroqKey");
+  var btnCloseSettings = document.getElementById("btnCloseSettings");
+  var btnSaveSettings = document.getElementById("btnSaveSettings");
+
+  btnSettings.addEventListener("click", function() {
+    settingsGroqKey.value = localStorage.getItem("optistock_groq") || "";
+    document.getElementById("settingsSheetsUrl").value = localStorage.getItem("optistock_sheets_url") || "";
+    document.getElementById("syncSheetsStatus").textContent = "";
+    settingsModal.classList.remove("hidden");
+  });
+  btnCloseSettings.addEventListener("click", function() {
+    settingsModal.classList.add("hidden");
+  });
+  btnSaveSettings.addEventListener("click", function() {
+    var groqVal = document.getElementById("settingsGroqKey").value.trim();
+    var sheetsVal = document.getElementById("settingsSheetsUrl").value.trim();
+    localStorage.setItem("optistock_groq", groqVal);
+    localStorage.setItem("optistock_sheets_url", sheetsVal);
+    settingsModal.classList.add("hidden");
+    alert("Settings saved");
+  });
+
+  document.getElementById("btnSyncSheets").addEventListener("click", function() {
+    var sheetsUrl = document.getElementById("settingsSheetsUrl").value.trim() || localStorage.getItem("optistock_sheets_url") || "";
+    if (!sheetsUrl) {
+      alert("Please enter your Apps Script URL in Settings first");
+      return;
+    }
+    var statusDiv = document.getElementById("syncSheetsStatus");
+    statusDiv.textContent = "Syncing...";
+
+    var rows = [];
+    rows.push([
+      "Name", "Model No", "Size", "Brand", "Category", "For", "Frame Type",
+      "Colour", "Colour Code", "Colour Qty", "Total Stock",
+      "Selling Price", "Cost Price", "Material", "Barcode", "Supplier", "Location", "Updated"
+    ].join(","));
+
+    for (var i = 0; i < allItems.length; i++) {
+      var it = allItems[i];
+      var colours = it.colours || [];
+      if (colours.length === 0) {
+        colours = [{ colour: "", code: "", qty: it.qty || 0 }];
+      }
+      for (var c = 0; c < colours.length; c++) {
+        var row = [
+          it.itemName || "",
+          it.model || "",
+          it.size || "",
+          it.brand || "",
+          it.category || "",
+          it.forWhom || "",
+          it.frameType || "",
+          colours[c].colour || "",
+          colours[c].code || "",
+          colours[c].qty || 0,
+          it.qty || 0,
+          it.price || 0,
+          it.costPrice || 0,
+          it.material || "",
+          it.barcode || "",
+          it.supplier || "",
+          it.location || "",
+          new Date().toLocaleString()
+        ];
+        rows.push(row.map(function(val) {
+          var s = String(val).replace(/"/g, '""');
+          if (s.indexOf(",") !== -1 || s.indexOf('"') !== -1) { s = '"' + s + '"'; }
+          return s;
+        }).join(","));
+      }
+    }
+
+    var csvData = rows.join(String.fromCharCode(10));
+
+    fetch(sheetsUrl, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "syncInventory", csv: csvData })
+    })
+      .then(function() {
+        statusDiv.textContent = "Synced! Check your Google Sheet to verify.";
+      })
+      .catch(function(err) {
+        statusDiv.textContent = "Sync failed: " + err.message;
+      });
+  });
+
+  // ---- Section tabs (Inventory / Purchase Orders / Sales) ----
+  var currentSection = "inventory";
+  var tabInventory = document.getElementById("tabInventory");
+  var tabPO = document.getElementById("tabPO");
+  var tabSales = document.getElementById("tabSales");
+  var addPoBtn = document.getElementById("addPoBtn");
+
+  function setSection(section) {
+    currentSection = section;
+    tabInventory.classList.toggle("active", section === "inventory");
+    tabPO.classList.toggle("active", section === "po");
+    tabSales.classList.toggle("active", section === "sales");
+    addItemBtn.classList.toggle("hidden", section !== "inventory");
+    addPoBtn.classList.toggle("hidden", section !== "po");
+    if (section === "inventory") {
+      renderInventory();
+    } else if (section === "po") {
+      renderPOs();
+    } else {
+      renderSales();
+    }
+  }
+  tabInventory.addEventListener("click", function() { setSection("inventory"); });
+  tabPO.addEventListener("click", function() { setSection("po"); });
+  tabSales.addEventListener("click", function() { setSection("sales"); });
+  tabInventory.classList.add("active");
+
+  // ---- Sales History ----
+  var allSales = [];
+  function startSalesSync() {
+    var salesRef = collection(db, "sales");
+    onSnapshot(salesRef, function(snapshot) {
+      allSales = [];
+      snapshot.forEach(function(docSnap) {
+        var data = docSnap.data();
+        data.id = docSnap.id;
+        allSales.push(data);
+      });
+      if (currentSection === "sales") { renderSales(); }
+    }, function(error) { console.error(error); });
+  }
+
+  function renderSales() {
+    var content = document.getElementById("mainContent");
+    var filtered = allSales;
+    if (currentBusiness !== "All" && currentBusiness !== "Both") {
+      filtered = allSales.filter(function(s) { return s.business === currentBusiness; });
+    }
+    filtered.sort(function(a, b) { return b.soldAt - a.soldAt; });
+
+    var searchBox = "<input type=" + String.fromCharCode(34) + "text" + String.fromCharCode(34) + " id=" + String.fromCharCode(34) + "salesSearch" + String.fromCharCode(34) + " placeholder=" + String.fromCharCode(34) + "Search by order no, customer, or model" + String.fromCharCode(34) + " style=" + String.fromCharCode(34) + "width:100%;padding:10px;border:1px solid #ccc;border-radius:6px;margin-bottom:12px;" + String.fromCharCode(34) + ">";
+
+    if (filtered.length === 0) {
+      content.innerHTML = searchBox + "<p style=" + String.fromCharCode(34) + "color:#999;text-align:center;margin-top:30px;" + String.fromCharCode(34) + ">No sales yet.</p>";
+      wireSalesSearch();
+      return;
+    }
+
+    var html = searchBox + "<div id=" + String.fromCharCode(34) + "salesList" + String.fromCharCode(34) + ">";
+    for (var i = 0; i < filtered.length; i++) {
+      var s = filtered[i];
+      var d = new Date(s.soldAt);
+      html += "<div class=" + String.fromCharCode(34) + "poCard" + String.fromCharCode(34) + ">";
+      html += "<div class=" + String.fromCharCode(34) + "poSupplier" + String.fromCharCode(34) + ">" + escapeHtml(s.model) + " - " + escapeHtml(s.colour) + "</div>";
+      html += "<div class=" + String.fromCharCode(34) + "poMeta" + String.fromCharCode(34) + ">Order " + escapeHtml(s.orderNo) + " | " + escapeHtml(s.custName) + " | " + escapeHtml(s.custPhone) + "</div>";
+      html += "<div class=" + String.fromCharCode(34) + "poMeta" + String.fromCharCode(34) + ">Qty " + escapeHtml(s.qty) + " | Rs. " + escapeHtml(s.price) + " | " + d.toLocaleDateString() + "</div>";
+      html += "</div>";
+    }
+    html += "</div>";
+    content.innerHTML = html;
+    wireSalesSearch();
+  }
+
+  function wireSalesSearch() {
+    var searchInput = document.getElementById("salesSearch");
+    if (!searchInput) { return; }
+    searchInput.addEventListener("keyup", function() {
+      var term = searchInput.value.toLowerCase();
+      var cards = document.querySelectorAll("#salesList .poCard");
+      for (var i = 0; i < cards.length; i++) {
+        var text = cards[i].textContent.toLowerCase();
+        cards[i].style.display = text.indexOf(term) !== -1 ? "block" : "none";
+      }
+    });
+  }
+
+  // ---- Purchase Orders ----
+  var allPOs = [];
+  var poModal = document.getElementById("poModal");
+  var btnCancelPo = document.getElementById("btnCancelPo");
+  var btnSavePo = document.getElementById("btnSavePo");
+
+  function startPOSync() {
+    var poRef = collection(db, "purchaseOrders");
+    onSnapshot(poRef, function(snapshot) {
+      allPOs = [];
+      snapshot.forEach(function(docSnap) {
+        var data = docSnap.data();
+        data.id = docSnap.id;
+        allPOs.push(data);
+      });
+      if (currentSection === "po") { renderPOs(); }
+    }, function(error) {
+      console.error(error);
+    });
+  }
+
+  function renderPOs() {
+    var content = document.getElementById("mainContent");
+    var filtered = allPOs;
+    if (currentBusiness !== "All" && currentBusiness !== "Both") {
+      filtered = allPOs.filter(function(po) { return po.business === currentBusiness; });
+    }
+    if (filtered.length === 0) {
+      content.innerHTML = "<p style=" + String.fromCharCode(34) + "color:#999;text-align:center;margin-top:30px;" + String.fromCharCode(34) + ">No purchase orders yet.</p>";
+      return;
+    }
+    filtered.sort(function(a, b) { return b.createdAt - a.createdAt; });
+    var html = "";
+    for (var i = 0; i < filtered.length; i++) {
+      var po = filtered[i];
+      var statusClass = po.status === "received" ? "received" : "pending";
+      html += "<div class=" + String.fromCharCode(34) + "poCard" + String.fromCharCode(34) + ">";
+      html += "<div class=" + String.fromCharCode(34) + "poSupplier" + String.fromCharCode(34) + ">" + escapeHtml(po.supplier) + "</div>";
+      html += "<div class=" + String.fromCharCode(34) + "poMeta" + String.fromCharCode(34) + ">" + escapeHtml(po.items) + "</div>";
+      html += "<div class=" + String.fromCharCode(34) + "poMeta" + String.fromCharCode(34) + ">Cost: Rs. " + escapeHtml(po.cost) + " | " + escapeHtml(po.business) + "</div>";
+      html += "<span class=" + String.fromCharCode(34) + "poStatus " + statusClass + String.fromCharCode(34) + " data-id=" + String.fromCharCode(34) + po.id + String.fromCharCode(34) + ">" + (po.status === "received" ? "Received" : "Pending - tap to mark received") + "</span>";
+      html += "</div>";
+    }
+    content.innerHTML = html;
+    var statusTags = document.querySelectorAll(".poStatus");
+    for (var k = 0; k < statusTags.length; k++) {
+      statusTags[k].addEventListener("click", function(e) {
+        var poId = e.target.getAttribute("data-id");
+        var poRef = doc(db, "purchaseOrders", poId);
+        updateDoc(poRef, { status: "received" }).catch(function(err) { console.error(err); });
+      });
+    }
+  }
+
+  addPoBtn.addEventListener("click", function() {
+    document.getElementById("poSupplier").value = "";
+    document.getElementById("poItems").value = "";
+    document.getElementById("poCost").value = "";
+    poModal.classList.remove("hidden");
+  });
+  btnCancelPo.addEventListener("click", function() {
+    poModal.classList.add("hidden");
+  });
+  btnSavePo.addEventListener("click", function() {
+    var supplier = document.getElementById("poSupplier").value.trim();
+    if (!supplier) {
+      alert("Please enter a supplier name");
+      return;
+    }
+    var newPO = {
+      business: document.getElementById("poBusiness").value,
+      supplier: supplier,
+      items: document.getElementById("poItems").value.trim(),
+      cost: Number(document.getElementById("poCost").value) || 0,
+      status: "pending",
+      createdAt: Date.now()
+    };
+    btnSavePo.disabled = true;
+    addDoc(collection(db, "purchaseOrders"), newPO)
+      .then(function() {
+        poModal.classList.add("hidden");
+        btnSavePo.disabled = false;
+      })
+      .catch(function(err) {
+        alert("Save failed, check internet connection");
+        console.error(err);
+        btnSavePo.disabled = false;
+      });
+  });
+
+  startPOSync();
+  startSalesSync();
+
 </script>
+
 </body>
 </html>

@@ -9,19 +9,16 @@
   body { font-family: Arial, sans-serif; background: #f2f2f2; color: #222; }
   .hidden { display: none !important; }
 
-  /* PIN screen */
   #pinScreen { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #1a1a2e; }
   #pinScreen h1 { color: #fff; margin-bottom: 20px; font-size: 24px; }
   #pinInput { font-size: 28px; letter-spacing: 8px; text-align: center; width: 220px; padding: 12px; border-radius: 8px; border: none; margin-bottom: 16px; }
   #pinSubmit { font-size: 18px; padding: 12px 30px; border-radius: 8px; border: none; background: #4cafef; color: #fff; }
   #pinError { color: #ff6b6b; margin-top: 10px; height: 20px; }
 
-  /* Top bar */
   #topBar { background: #1a1a2e; color: #fff; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; }
   #topBar .title { font-size: 18px; font-weight: bold; }
   #syncStatus { font-size: 12px; color: #aaa; }
 
-  /* Business switch */
   #bizSwitch { display: flex; background: #fff; border-bottom: 1px solid #ddd; }
   #bizSwitch button { flex: 1; padding: 12px 4px; border: none; background: #fff; font-size: 14px; color: #555; border-bottom: 3px solid transparent; }
   #bizSwitch button.active { color: #1a1a2e; font-weight: bold; border-bottom: 3px solid #4cafef; }
@@ -31,15 +28,12 @@
   #sectionTabs button.active { background: #1a1a2e; color: #fff; font-weight: bold; }
 
   #settingsModal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: flex-end; z-index: 80; }
-  #settingsModal .sheet { background: #fff; width: 100%; border-radius: 16px 16px 0 0; padding: 18px; }
-  #settingsModal label { display: block; font-size: 13px; color: #555; margin-top: 10px; margin-bottom: 4px; }
-  #settingsModal input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; }
-  #settingsModal .modalButtons { display: flex; gap: 10px; margin-top: 18px; }
-  #settingsModal .modalButtons button { flex: 1; padding: 12px; border-radius: 8px; border: none; font-size: 15px; }
-  #btnCloseSettings { background: #eee; color: #333; }
-  #btnSaveSettings { background: #4cafef; color: #fff; }
+  #settingsModal .sheet { background: #fff; width: 100%; border-radius: 16px 16px 0 0; padding: 18px; max-height: 92vh; overflow-y: auto; }
+  #settingsModal label { display: block; font-size: 13px; color: #555; margin-top: 14px; margin-bottom: 4px; }
+  #settingsModal input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; margin-bottom: 6px; }
+  .settingsSaveBtn { width: 100%; padding: 14px; border: none; border-radius: 8px; background: #4cafef; color: #fff; font-size: 16px; font-weight: bold; margin-bottom: 4px; cursor: pointer; }
+  .settingsStatusMsg { font-size: 13px; color: #2ecc71; min-height: 18px; margin-bottom: 6px; }
 
-  /* Purchase Orders */
   .poCard { background: #fff; border-radius: 8px; padding: 12px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
   .poCard .poSupplier { font-weight: bold; font-size: 15px; }
   .poCard .poMeta { font-size: 13px; color: #666; margin-top: 2px; }
@@ -69,7 +63,6 @@
   .itemCard .itemMeta { font-size: 13px; color: #666; }
   .itemCard .itemBizTag { font-size: 11px; padding: 2px 6px; border-radius: 4px; background: #e0f0ff; color: #1a1a2e; display: inline-block; margin-top: 4px; }
 
-  /* Add item modal */
   #addItemModal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: flex-end; z-index: 50; }
   #addItemModal .sheet { background: #fff; width: 100%; max-height: 90vh; overflow-y: auto; border-radius: 16px 16px 0 0; padding: 18px; }
   #addItemModal h2 { margin-bottom: 14px; }
@@ -160,21 +153,17 @@
 <div id="addItemModal" class="hidden">
   <div class="sheet">
     <h2 id="addItemModalTitle">Add Item</h2>
-
     <label>Business</label>
     <select id="formBusiness">
       <option value="Eyeland">Eyeland</option>
       <option value="EYECROX">EYECROX</option>
     </select>
-
     <label>Frame Photo</label>
     <input type="file" id="formPhoto" accept="image/*" capture="environment">
     <div id="uploadStatus"></div>
     <img id="photoPreview">
-
     <label>Item Name *</label>
     <input type="text" id="formItemName" placeholder="e.g. Ray-Ban Aviator Gold">
-
     <div class="formRow2">
       <div>
         <label>Model No</label>
@@ -185,12 +174,10 @@
         <input type="text" id="formSize" placeholder="e.g. 52-18-140">
       </div>
     </div>
-
     <div class="scanButtons">
       <button type="button" id="btnScanTemple">Scan Temple</button>
       <button type="button" id="btnScanBarcode">Scan Barcode</button>
     </div>
-
     <div class="formRow2">
       <div>
         <label>Brand</label>
@@ -207,7 +194,6 @@
         </select>
       </div>
     </div>
-
     <div class="formRow2">
       <div>
         <label>Category</label>
@@ -233,7 +219,6 @@
         </select>
       </div>
     </div>
-
     <div class="formRow2">
       <div>
         <label>Frame Type</label>
@@ -251,7 +236,6 @@
         <input type="number" id="formLowStock" placeholder="2" value="2">
       </div>
     </div>
-
     <label style="margin-top:16px;">Pricing (same for all colours)</label>
     <div class="formRow2">
       <div>
@@ -263,17 +247,14 @@
         <input type="number" id="formCostPrice" placeholder="e.g. 1200">
       </div>
     </div>
-
     <label style="margin-top:16px;">Colours &amp; Quantity</label>
     <div id="colourRows"></div>
     <button type="button" id="btnAddColour" class="addColourBtn">+ Add Colour</button>
-
     <label style="margin-top:16px;">Barcode</label>
     <div class="barcodeRow">
       <input type="text" id="formBarcode" placeholder="Scan or type barcode">
       <button type="button" id="btnScanBarcodeField">&#128247;</button>
     </div>
-
     <div class="formRow2">
       <div>
         <label>Supplier</label>
@@ -284,10 +265,8 @@
         <input type="text" id="formLocation" placeholder="e.g. Rack A-1">
       </div>
     </div>
-
     <label>Notes</label>
     <input type="text" id="formNotes" placeholder="Extra notes...">
-
     <div class="modalButtons">
       <button id="btnCancelAdd">Cancel</button>
       <button id="btnSaveItem">Save Item</button>
@@ -299,25 +278,18 @@
   <div class="sheet">
     <h2>Sell Item</h2>
     <p id="sellItemLabel" style="color:#555;margin-top:6px;"></p>
-
     <label>Colour</label>
     <select id="sellColour"></select>
-
     <label>Order No.</label>
     <input type="text" id="sellOrderNo" placeholder="e.g. 101">
-
     <label>Customer Name</label>
     <input type="text" id="sellCustName" placeholder="Customer name">
-
     <label>Customer WhatsApp Number</label>
     <input type="text" id="sellCustPhone" placeholder="10-digit number" inputmode="numeric">
-
     <label>Quantity Sold</label>
     <input type="number" id="sellQty" value="1" min="1">
-
     <label>Sale Price</label>
     <input type="number" id="sellPrice" placeholder="e.g. 1500">
-
     <div class="modalButtons">
       <button id="btnCancelSell">Cancel</button>
       <button id="btnConfirmSell">Confirm Sale</button>
@@ -335,57 +307,47 @@
   </div>
 </div>
 
+<!-- SETTINGS MODAL - fully redesigned for Android -->
 <div id="settingsModal" class="hidden">
   <div class="sheet">
-    <h2>Settings</h2>
+    <h2 style="margin-bottom:10px;">Settings</h2>
 
     <label>Groq API Key (for Temple Scan)</label>
-    <div style="display:flex;gap:6px;margin-top:4px;">
-      <input type="text" id="settingsGroqKey" placeholder="Paste Groq key" style="flex:1;">
-      <button id="btnSaveGroq" style="padding:10px 14px;border:none;border-radius:6px;background:#4cafef;color:#fff;font-size:14px;white-space:nowrap;">Save</button>
-    </div>
-    <div id="groqStatus" style="font-size:12px;color:#2ecc71;margin-top:2px;height:16px;"></div>
+    <input type="text" id="settingsGroqKey" placeholder="Paste Groq key here">
+    <button class="settingsSaveBtn" id="btnSaveGroq">Save Groq Key</button>
+    <div class="settingsStatusMsg" id="groqStatus"></div>
 
-    <label style="margin-top:14px;">Delete Password</label>
-    <div style="display:flex;gap:6px;margin-top:4px;">
-      <input type="password" id="settingsDeletePin" placeholder="Set delete password" style="flex:1;">
-      <button id="btnSaveDeletePin" style="padding:10px 14px;border:none;border-radius:6px;background:#4cafef;color:#fff;font-size:14px;white-space:nowrap;">Save</button>
-    </div>
-    <div id="deletePinStatus" style="font-size:12px;color:#2ecc71;margin-top:2px;height:16px;"></div>
+    <label>Delete Password</label>
+    <input type="password" id="settingsDeletePin" placeholder="Set delete password">
+    <button class="settingsSaveBtn" id="btnSaveDeletePin">Save Delete Password</button>
+    <div class="settingsStatusMsg" id="deletePinStatus"></div>
 
-    <label style="margin-top:14px;">Google Sheets Apps Script URL</label>
-    <div style="display:flex;gap:6px;margin-top:4px;">
-      <input type="text" id="settingsSheetsUrl" placeholder="Paste Apps Script URL" style="flex:1;">
-      <button id="btnSaveSheetsUrl" style="padding:10px 14px;border:none;border-radius:6px;background:#4cafef;color:#fff;font-size:14px;white-space:nowrap;">Save</button>
-    </div>
-    <div id="sheetsUrlStatus" style="font-size:12px;color:#2ecc71;margin-top:2px;height:16px;"></div>
+    <label>Google Sheets Apps Script URL</label>
+    <input type="text" id="settingsSheetsUrl" placeholder="Paste Apps Script URL here">
+    <button class="settingsSaveBtn" id="btnSaveSheetsUrl">Save Sheets URL</button>
+    <div class="settingsStatusMsg" id="sheetsUrlStatus"></div>
 
-    <button id="btnSyncSheets" style="width:100%;padding:12px;border-radius:8px;border:none;background:#2ecc71;color:#fff;font-size:15px;margin-top:14px;">Sync to Google Sheets Now</button>
-    <div id="syncSheetsStatus" style="font-size:12px;color:#888;margin-top:4px;min-height:16px;"></div>
+    <button id="btnSyncSheets" style="width:100%;padding:14px;border-radius:8px;border:none;background:#2ecc71;color:#fff;font-size:16px;font-weight:bold;margin-top:10px;">Sync to Google Sheets Now</button>
+    <div id="syncSheetsStatus" style="font-size:13px;color:#888;margin-top:6px;min-height:18px;"></div>
 
-    <button id="btnCloseSettings" style="width:100%;padding:12px;border-radius:8px;border:none;background:#eee;color:#333;font-size:15px;margin-top:14px;">Close</button>
+    <button id="btnCloseSettings" style="width:100%;padding:14px;border-radius:8px;border:none;background:#eee;color:#333;font-size:16px;margin-top:10px;">Close</button>
   </div>
 </div>
 
 <div id="poModal" class="hidden">
   <div class="sheet">
     <h2>New Purchase Order</h2>
-
     <label>Business</label>
     <select id="poBusiness">
       <option value="Eyeland">Eyeland</option>
       <option value="EYECROX">EYECROX</option>
     </select>
-
     <label>Supplier Name</label>
     <input type="text" id="poSupplier" placeholder="e.g. Lajpat Rai Market vendor">
-
     <label>Items / Notes</label>
     <textarea id="poItems" placeholder="List model codes, quantities, etc."></textarea>
-
     <label>Expected Cost</label>
     <input type="number" id="poCost" placeholder="e.g. 15000">
-
     <div class="modalButtons">
       <button id="btnCancelPo">Cancel</button>
       <button id="btnSavePo">Save Order</button>
@@ -411,10 +373,8 @@
   var app = initializeApp(firebaseConfig);
   var db = getFirestore(app);
 
-  // Cloudinary config (used later for photo uploads)
   var CLOUD_NAME = "dilg3bid3";
   var UPLOAD_PRESET = "opticalinventory";
-
   var APP_PIN = "1122";
   var currentBusiness = "All";
 
@@ -617,36 +577,29 @@
   function createColourRow(colourVal, codeVal, qtyVal) {
     var row = document.createElement("div");
     row.className = "colourRow";
-
     var colourInput = document.createElement("input");
     colourInput.type = "text";
     colourInput.placeholder = "Colour";
     colourInput.className = "colourName";
     colourInput.value = colourVal || "";
-
     var codeInput = document.createElement("input");
     codeInput.type = "text";
     codeInput.placeholder = "Code";
     codeInput.className = "colourCode";
     codeInput.value = codeVal || "";
-
     var qtyInput = document.createElement("input");
     qtyInput.type = "number";
     qtyInput.placeholder = "Qty";
     qtyInput.className = "colourQty";
     qtyInput.value = (qtyVal === undefined || qtyVal === null) ? "1" : qtyVal;
     qtyInput.min = "0";
-
     var removeBtn = document.createElement("button");
     removeBtn.type = "button";
     removeBtn.className = "btnRemoveColour";
     removeBtn.textContent = "\u00d7";
     removeBtn.addEventListener("click", function() {
-      if (colourRowsDiv.children.length > 1) {
-        colourRowsDiv.removeChild(row);
-      }
+      if (colourRowsDiv.children.length > 1) { colourRowsDiv.removeChild(row); }
     });
-
     row.appendChild(colourInput);
     row.appendChild(codeInput);
     row.appendChild(qtyInput);
@@ -654,9 +607,7 @@
     colourRowsDiv.appendChild(row);
   }
 
-  btnAddColour.addEventListener("click", function() {
-    createColourRow("", "", "1");
-  });
+  btnAddColour.addEventListener("click", function() { createColourRow("", "", "1"); });
 
   function getColourRowsData() {
     var rows = colourRowsDiv.querySelectorAll(".colourRow");
@@ -665,9 +616,7 @@
       var colourName = rows[i].querySelector(".colourName").value.trim();
       var colourCode = rows[i].querySelector(".colourCode").value.trim();
       var colourQty = Number(rows[i].querySelector(".colourQty").value) || 0;
-      if (colourName) {
-        result.push({ colour: colourName, code: colourCode, qty: colourQty });
-      }
+      if (colourName) { result.push({ colour: colourName, code: colourCode, qty: colourQty }); }
     }
     return result;
   }
@@ -708,7 +657,6 @@
     document.getElementById("formSupplier").value = item.supplier || "";
     document.getElementById("formLocation").value = item.location || "";
     document.getElementById("formNotes").value = item.notes || "";
-
     colourRowsDiv.innerHTML = "";
     if (item.colours && item.colours.length > 0) {
       for (var j = 0; j < item.colours.length; j++) {
@@ -717,7 +665,6 @@
     } else {
       createColourRow("", "", "1");
     }
-
     uploadedPhotoUrl = item.photoUrl || "";
     if (uploadedPhotoUrl) {
       photoPreview.src = uploadedPhotoUrl;
@@ -784,11 +731,9 @@
     photoPreview.style.display = "block";
     uploadStatus.textContent = "Uploading photo...";
     uploadedPhotoUrl = "";
-
     var formData = new FormData();
     formData.append("file", file);
     formData.append("upload_preset", UPLOAD_PRESET);
-
     var uploadUrl = "https://api.cloudinary.com/v1_1/" + CLOUD_NAME + "/image/upload";
     fetch(uploadUrl, { method: "POST", body: formData })
       .then(function(res) { return res.json(); })
@@ -822,7 +767,6 @@
     if (!item) { return; }
     currentSellItemId = itemId;
     sellItemLabel.textContent = item.itemName + " (" + item.model + ")";
-
     sellColourSelect.innerHTML = "";
     var colours = item.colours || [];
     for (var c = 0; c < colours.length; c++) {
@@ -831,7 +775,6 @@
       opt.textContent = colours[c].colour + " (Stock: " + colours[c].qty + ")";
       sellColourSelect.appendChild(opt);
     }
-
     document.getElementById("sellOrderNo").value = "";
     document.getElementById("sellCustName").value = "";
     document.getElementById("sellCustPhone").value = "";
@@ -840,9 +783,7 @@
     sellModal.classList.remove("hidden");
   }
 
-  btnCancelSell.addEventListener("click", function() {
-    sellModal.classList.add("hidden");
-  });
+  btnCancelSell.addEventListener("click", function() { sellModal.classList.add("hidden"); });
 
   btnConfirmSell.addEventListener("click", function() {
     var item = null;
@@ -850,19 +791,14 @@
       if (allItems[i].id === currentSellItemId) { item = allItems[i]; break; }
     }
     if (!item) { return; }
-
     var selectedColour = sellColourSelect.value;
     var colours = item.colours || [];
     var colourIndex = -1;
     for (var ci = 0; ci < colours.length; ci++) {
       if (colours[ci].colour === selectedColour) { colourIndex = ci; break; }
     }
-    if (colourIndex === -1) {
-      alert("Please select a colour");
-      return;
-    }
+    if (colourIndex === -1) { alert("Please select a colour"); return; }
     var stockForColour = colours[colourIndex].qty;
-
     var sellQty = Number(document.getElementById("sellQty").value) || 0;
     if (sellQty <= 0 || sellQty > stockForColour) {
       alert("Invalid quantity, stock available for " + selectedColour + ": " + stockForColour);
@@ -872,10 +808,8 @@
     var custName = document.getElementById("sellCustName").value.trim();
     var custPhone = document.getElementById("sellCustPhone").value.trim();
     var salePrice = Number(document.getElementById("sellPrice").value) || 0;
-
     btnConfirmSell.disabled = true;
     btnConfirmSell.textContent = "Saving...";
-
     var newColours = [];
     var newTotalQty = 0;
     for (var k = 0; k < colours.length; k++) {
@@ -884,24 +818,14 @@
       newColours.push({ colour: colours[k].colour, code: colours[k].code, qty: newQtyForColour });
       newTotalQty += newQtyForColour;
     }
-
     var itemRef = doc(db, "items", item.id);
-
     updateDoc(itemRef, { colours: newColours, qty: newTotalQty })
       .then(function() {
         var saleRecord = {
-          itemId: item.id,
-          itemName: item.itemName,
-          model: item.model,
-          colour: selectedColour,
-          size: item.size,
-          business: item.business,
-          orderNo: orderNo,
-          custName: custName,
-          custPhone: custPhone,
-          qty: sellQty,
-          price: salePrice,
-          soldAt: Date.now()
+          itemId: item.id, itemName: item.itemName, model: item.model,
+          colour: selectedColour, size: item.size, business: item.business,
+          orderNo: orderNo, custName: custName, custPhone: custPhone,
+          qty: sellQty, price: salePrice, soldAt: Date.now()
         };
         return addDoc(collection(db, "sales"), saleRecord);
       })
@@ -939,23 +863,13 @@
 
   btnSaveItem.addEventListener("click", function() {
     var itemName = document.getElementById("formItemName").value.trim();
-    if (!itemName) {
-      alert("Please enter an item name");
-      return;
-    }
+    if (!itemName) { alert("Please enter an item name"); return; }
     var price = Number(document.getElementById("formPrice").value) || 0;
-    if (price <= 0) {
-      alert("Please enter a selling price");
-      return;
-    }
+    if (price <= 0) { alert("Please enter a selling price"); return; }
     var colours = getColourRowsData();
-    if (colours.length === 0) {
-      alert("Please add at least one colour with quantity");
-      return;
-    }
+    if (colours.length === 0) { alert("Please add at least one colour with quantity"); return; }
     var totalQty = 0;
     for (var c = 0; c < colours.length; c++) { totalQty += colours[c].qty; }
-
     var newItem = {
       business: document.getElementById("formBusiness").value,
       itemName: itemName,
@@ -1021,15 +935,12 @@
     scanLabel.textContent = mode === "temple" ? "Point at engraved temple text, then Capture" : "Point at barcode";
     btnCaptureShot.classList.toggle("hidden", mode !== "temple");
     cameraModal.classList.remove("hidden");
-
     var constraints = { video: { facingMode: "environment" } };
     navigator.mediaDevices.getUserMedia(constraints)
       .then(function(stream) {
         currentStream = stream;
         camVideo.srcObject = stream;
-        if (mode === "barcode") {
-          startBarcodeScan();
-        }
+        if (mode === "barcode") { startBarcodeScan(); }
       })
       .catch(function(err) {
         alert("Camera access failed");
@@ -1059,10 +970,7 @@
   btnCloseCamera.addEventListener("click", closeCamera);
 
   function startBarcodeScan() {
-    if (typeof ZXing === "undefined") {
-      alert("Barcode scanner not loaded, check internet");
-      return;
-    }
+    if (typeof ZXing === "undefined") { alert("Barcode scanner not loaded, check internet"); return; }
     zxingReader = new ZXing.BrowserMultiFormatReader();
     zxingReader.decodeFromConstraints({ video: { facingMode: "environment" } }, camVideo, function(result, err) {
       if (result) {
@@ -1080,7 +988,6 @@
     camCanvas.height = h;
     var ctx = camCanvas.getContext("2d");
     ctx.drawImage(camVideo, 0, 0, w, h);
-
     var imgData = ctx.getImageData(0, 0, w, h);
     var d = imgData.data;
     var contrast = 1.9;
@@ -1093,7 +1000,6 @@
       d[i] = gray; d[i + 1] = gray; d[i + 2] = gray;
     }
     ctx.putImageData(imgData, 0, 0);
-
     var dataUrl = camCanvas.toDataURL("image/jpeg", 0.85);
     closeCamera();
     runTempleScan(dataUrl);
@@ -1109,30 +1015,21 @@
 
   function runTempleScan(dataUrl) {
     var groqKey = localStorage.getItem("optistock_groq");
-    if (!groqKey) {
-      alert("Please set your Groq API key in Settings first");
-      return;
-    }
+    if (!groqKey) { alert("Please set your Groq API key in Settings first"); return; }
     document.getElementById("formModel").value = "Scanning...";
     var base64Data = dataUrl.split(",")[1];
-
     fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + groqKey
-      },
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + groqKey },
       body: JSON.stringify({
         model: "meta-llama/llama-4-scout-17b-16e-instruct",
-        messages: [
-          {
-            role: "user",
-            content: [
-              { type: "text", text: "This is an eyeglass temple arm with engraved text. The engraving usually contains a model number (letters and digits, e.g. RB2140 or similar brand-style codes) followed by separate lens size numbers (e.g. 52-18-140 or 52 18 140) and sometimes a colour code. Reply with ONLY the model number part, excluding the lens size numbers and excluding the colour code. If unsure which part is the size, exclude any number group that looks like three short numbers separated by dashes or spaces. Reply with nothing except the model code itself, no explanation." },
-              { type: "image_url", image_url: { url: "data:image/jpeg;base64," + base64Data } }
-            ]
-          }
-        ]
+        messages: [{
+          role: "user",
+          content: [
+            { type: "text", text: "This is an eyeglass temple arm with engraved text. The engraving usually contains a model number (letters and digits, e.g. RB2140 or similar brand-style codes) followed by separate lens size numbers (e.g. 52-18-140 or 52 18 140) and sometimes a colour code. Reply with ONLY the model number part, excluding the lens size numbers and excluding the colour code. If unsure which part is the size, exclude any number group that looks like three short numbers separated by dashes or spaces. Reply with nothing except the model code itself, no explanation." },
+            { type: "image_url", image_url: { url: "data:image/jpeg;base64," + base64Data } }
+          ]
+        }]
       })
     })
       .then(function(res) { return res.json(); })
@@ -1143,9 +1040,7 @@
         }
         var modelCode = extractModelCode(rawText);
         document.getElementById("formModel").value = modelCode || "";
-        if (!modelCode) {
-          alert("Could not read temple text, please type manually");
-        }
+        if (!modelCode) { alert("Could not read temple text, please type manually"); }
       })
       .catch(function(err) {
         document.getElementById("formModel").value = "";
@@ -1154,19 +1049,31 @@
       });
   }
 
-  // ---- Settings ----
+  // ---- SETTINGS - fixed for Android ----
   var btnSettings = document.getElementById("btnSettings");
   var settingsModal = document.getElementById("settingsModal");
-  var settingsGroqKey = document.getElementById("settingsGroqKey");
   var btnCloseSettings = document.getElementById("btnCloseSettings");
 
+  function saveWithFeedback(key, inputId, statusId, label) {
+    var val = document.getElementById(inputId).value.trim();
+    if (!val) { alert("Please enter " + label); return; }
+    localStorage.setItem(key, val);
+    var statusEl = document.getElementById(statusId);
+    statusEl.textContent = "Saved!";
+    statusEl.style.color = "#2ecc71";
+    setTimeout(function() { statusEl.textContent = ""; }, 3000);
+  }
+
   btnSettings.addEventListener("click", function() {
-    settingsGroqKey.value = localStorage.getItem("optistock_groq") || "";
+    document.getElementById("settingsGroqKey").value = localStorage.getItem("optistock_groq") || "";
     document.getElementById("settingsDeletePin").value = "";
     document.getElementById("settingsSheetsUrl").value = localStorage.getItem("optistock_sheets_url") || "";
-    document.getElementById("groqStatus").textContent = localStorage.getItem("optistock_groq") ? "Saved" : "";
-    document.getElementById("deletePinStatus").textContent = localStorage.getItem("optistock_delete_pin") ? "Password set" : "";
-    document.getElementById("sheetsUrlStatus").textContent = localStorage.getItem("optistock_sheets_url") ? "Saved" : "";
+    var groqStatus = document.getElementById("groqStatus");
+    var deletePinStatus = document.getElementById("deletePinStatus");
+    var sheetsUrlStatus = document.getElementById("sheetsUrlStatus");
+    groqStatus.textContent = localStorage.getItem("optistock_groq") ? "Previously saved" : "";
+    deletePinStatus.textContent = localStorage.getItem("optistock_delete_pin") ? "Previously saved" : "";
+    sheetsUrlStatus.textContent = localStorage.getItem("optistock_sheets_url") ? "Previously saved" : "";
     document.getElementById("syncSheetsStatus").textContent = "";
     settingsModal.classList.remove("hidden");
   });
@@ -1175,83 +1082,56 @@
     settingsModal.classList.add("hidden");
   });
 
-  document.getElementById("btnSaveGroq").addEventListener("click", function() {
-    var val = document.getElementById("settingsGroqKey").value.trim();
-    if (!val) { alert("Please enter your Groq API key"); return; }
-    localStorage.setItem("optistock_groq", val);
-    document.getElementById("groqStatus").textContent = "Saved!";
-  });
+  // Save Groq Key - click AND touchstart for Android reliability
+  var btnSaveGroq = document.getElementById("btnSaveGroq");
+  function doSaveGroq(e) {
+    e.preventDefault();
+    saveWithFeedback("optistock_groq", "settingsGroqKey", "groqStatus", "your Groq API key");
+  }
+  btnSaveGroq.addEventListener("click", doSaveGroq);
+  btnSaveGroq.addEventListener("touchstart", doSaveGroq);
 
-  document.getElementById("btnSaveDeletePin").addEventListener("click", function() {
-    var val = document.getElementById("settingsDeletePin").value.trim();
-    if (!val) { alert("Please enter a delete password"); return; }
-    localStorage.setItem("optistock_delete_pin", val);
-    document.getElementById("deletePinStatus").textContent = "Password saved!";
-  });
+  // Save Delete PIN
+  var btnSaveDeletePin = document.getElementById("btnSaveDeletePin");
+  function doSaveDeletePin(e) {
+    e.preventDefault();
+    saveWithFeedback("optistock_delete_pin", "settingsDeletePin", "deletePinStatus", "a delete password");
+  }
+  btnSaveDeletePin.addEventListener("click", doSaveDeletePin);
+  btnSaveDeletePin.addEventListener("touchstart", doSaveDeletePin);
 
-  document.getElementById("btnSaveSheetsUrl").addEventListener("click", function() {
-    var val = document.getElementById("settingsSheetsUrl").value.trim();
-    if (!val) { alert("Please paste your Apps Script URL"); return; }
-    localStorage.setItem("optistock_sheets_url", val);
-    document.getElementById("sheetsUrlStatus").textContent = "Saved!";
-  });
+  // Save Sheets URL
+  var btnSaveSheetsUrl = document.getElementById("btnSaveSheetsUrl");
+  function doSaveSheetsUrl(e) {
+    e.preventDefault();
+    saveWithFeedback("optistock_sheets_url", "settingsSheetsUrl", "sheetsUrlStatus", "your Apps Script URL");
+  }
+  btnSaveSheetsUrl.addEventListener("click", doSaveSheetsUrl);
+  btnSaveSheetsUrl.addEventListener("touchstart", doSaveSheetsUrl);
 
-  // Also save on input change (as user types/pastes)
-  document.getElementById("settingsGroqKey").addEventListener("change", function() {
-    var val = this.value.trim();
-    if (val) { localStorage.setItem("optistock_groq", val); document.getElementById("groqStatus").textContent = "Auto-saved"; }
-  });
-  document.getElementById("settingsSheetsUrl").addEventListener("change", function() {
-    var val = this.value.trim();
-    if (val) { localStorage.setItem("optistock_sheets_url", val); document.getElementById("sheetsUrlStatus").textContent = "Auto-saved"; }
-  });
-  document.getElementById("settingsDeletePin").addEventListener("change", function() {
-    var val = this.value.trim();
-    if (val) { localStorage.setItem("optistock_delete_pin", val); document.getElementById("deletePinStatus").textContent = "Auto-saved"; }
-  });
-
+  // Sync to Google Sheets
   document.getElementById("btnSyncSheets").addEventListener("click", function() {
     var sheetsUrl = document.getElementById("settingsSheetsUrl").value.trim() || localStorage.getItem("optistock_sheets_url") || "";
     if (sheetsUrl) { localStorage.setItem("optistock_sheets_url", sheetsUrl); }
-    if (!sheetsUrl) {
-      alert("Please enter your Apps Script URL in Settings first");
-      return;
-    }
+    if (!sheetsUrl) { alert("Please enter your Apps Script URL and tap Save first"); return; }
     var statusDiv = document.getElementById("syncSheetsStatus");
     statusDiv.textContent = "Syncing...";
+    statusDiv.style.color = "#888";
 
     var rows = [];
-    rows.push([
-      "Name", "Model No", "Size", "Brand", "Category", "For", "Frame Type",
-      "Colour", "Colour Code", "Colour Qty", "Total Stock",
-      "Selling Price", "Cost Price", "Material", "Barcode", "Supplier", "Location", "Updated"
-    ].join(","));
+    rows.push(["Name","Model No","Size","Brand","Category","For","Frame Type","Colour","Colour Code","Colour Qty","Total Stock","Selling Price","Cost Price","Material","Barcode","Supplier","Location","Updated"].join(","));
 
     for (var i = 0; i < allItems.length; i++) {
       var it = allItems[i];
       var colours = it.colours || [];
-      if (colours.length === 0) {
-        colours = [{ colour: "", code: "", qty: it.qty || 0 }];
-      }
+      if (colours.length === 0) { colours = [{ colour: "", code: "", qty: it.qty || 0 }]; }
       for (var c = 0; c < colours.length; c++) {
         var row = [
-          it.itemName || "",
-          it.model || "",
-          it.size || "",
-          it.brand || "",
-          it.category || "",
-          it.forWhom || "",
-          it.frameType || "",
-          colours[c].colour || "",
-          colours[c].code || "",
-          colours[c].qty || 0,
-          it.qty || 0,
-          it.price || 0,
-          it.costPrice || 0,
-          it.material || "",
-          it.barcode || "",
-          it.supplier || "",
-          it.location || "",
+          it.itemName || "", it.model || "", it.size || "", it.brand || "",
+          it.category || "", it.forWhom || "", it.frameType || "",
+          colours[c].colour || "", colours[c].code || "", colours[c].qty || 0,
+          it.qty || 0, it.price || 0, it.costPrice || 0, it.material || "",
+          it.barcode || "", it.supplier || "", it.location || "",
           new Date().toLocaleString()
         ];
         rows.push(row.map(function(val) {
@@ -1263,7 +1143,6 @@
     }
 
     var csvData = rows.join(String.fromCharCode(10));
-
     fetch(sheetsUrl, {
       method: "POST",
       mode: "no-cors",
@@ -1271,14 +1150,16 @@
       body: JSON.stringify({ action: "syncInventory", csv: csvData })
     })
       .then(function() {
-        statusDiv.textContent = "Synced! Check your Google Sheet to verify.";
+        statusDiv.textContent = "Synced! Check your Google Sheet.";
+        statusDiv.style.color = "#2ecc71";
       })
       .catch(function(err) {
         statusDiv.textContent = "Sync failed: " + err.message;
+        statusDiv.style.color = "#e74c3c";
       });
   });
 
-  // ---- Section tabs (Inventory / Purchase Orders / Sales) ----
+  // ---- Section tabs ----
   var currentSection = "inventory";
   var tabInventory = document.getElementById("tabInventory");
   var tabPO = document.getElementById("tabPO");
@@ -1292,13 +1173,9 @@
     tabSales.classList.toggle("active", section === "sales");
     addItemBtn.classList.toggle("hidden", section !== "inventory");
     addPoBtn.classList.toggle("hidden", section !== "po");
-    if (section === "inventory") {
-      renderInventory();
-    } else if (section === "po") {
-      renderPOs();
-    } else {
-      renderSales();
-    }
+    if (section === "inventory") { renderInventory(); }
+    else if (section === "po") { renderPOs(); }
+    else { renderSales(); }
   }
   tabInventory.addEventListener("click", function() { setSection("inventory"); });
   tabPO.addEventListener("click", function() { setSection("po"); });
@@ -1327,23 +1204,20 @@
       filtered = allSales.filter(function(s) { return s.business === currentBusiness; });
     }
     filtered.sort(function(a, b) { return b.soldAt - a.soldAt; });
-
-    var searchBox = "<input type=" + String.fromCharCode(34) + "text" + String.fromCharCode(34) + " id=" + String.fromCharCode(34) + "salesSearch" + String.fromCharCode(34) + " placeholder=" + String.fromCharCode(34) + "Search by order no, customer, or model" + String.fromCharCode(34) + " style=" + String.fromCharCode(34) + "width:100%;padding:10px;border:1px solid #ccc;border-radius:6px;margin-bottom:12px;" + String.fromCharCode(34) + ">";
-
+    var searchBox = "<input type='text' id='salesSearch' placeholder='Search by order no, customer, or model' style='width:100%;padding:10px;border:1px solid #ccc;border-radius:6px;margin-bottom:12px;'>";
     if (filtered.length === 0) {
-      content.innerHTML = searchBox + "<p style=" + String.fromCharCode(34) + "color:#999;text-align:center;margin-top:30px;" + String.fromCharCode(34) + ">No sales yet.</p>";
+      content.innerHTML = searchBox + "<p style='color:#999;text-align:center;margin-top:30px;'>No sales yet.</p>";
       wireSalesSearch();
       return;
     }
-
-    var html = searchBox + "<div id=" + String.fromCharCode(34) + "salesList" + String.fromCharCode(34) + ">";
+    var html = searchBox + "<div id='salesList'>";
     for (var i = 0; i < filtered.length; i++) {
       var s = filtered[i];
       var d = new Date(s.soldAt);
-      html += "<div class=" + String.fromCharCode(34) + "poCard" + String.fromCharCode(34) + ">";
-      html += "<div class=" + String.fromCharCode(34) + "poSupplier" + String.fromCharCode(34) + ">" + escapeHtml(s.model) + " - " + escapeHtml(s.colour) + "</div>";
-      html += "<div class=" + String.fromCharCode(34) + "poMeta" + String.fromCharCode(34) + ">Order " + escapeHtml(s.orderNo) + " | " + escapeHtml(s.custName) + " | " + escapeHtml(s.custPhone) + "</div>";
-      html += "<div class=" + String.fromCharCode(34) + "poMeta" + String.fromCharCode(34) + ">Qty " + escapeHtml(s.qty) + " | Rs. " + escapeHtml(s.price) + " | " + d.toLocaleDateString() + "</div>";
+      html += "<div class='poCard'>";
+      html += "<div class='poSupplier'>" + escapeHtml(s.model) + " - " + escapeHtml(s.colour) + "</div>";
+      html += "<div class='poMeta'>Order " + escapeHtml(s.orderNo) + " | " + escapeHtml(s.custName) + " | " + escapeHtml(s.custPhone) + "</div>";
+      html += "<div class='poMeta'>Qty " + escapeHtml(s.qty) + " | Rs. " + escapeHtml(s.price) + " | " + d.toLocaleDateString() + "</div>";
       html += "</div>";
     }
     html += "</div>";
@@ -1380,9 +1254,7 @@
         allPOs.push(data);
       });
       if (currentSection === "po") { renderPOs(); }
-    }, function(error) {
-      console.error(error);
-    });
+    }, function(error) { console.error(error); });
   }
 
   function renderPOs() {
@@ -1392,7 +1264,7 @@
       filtered = allPOs.filter(function(po) { return po.business === currentBusiness; });
     }
     if (filtered.length === 0) {
-      content.innerHTML = "<p style=" + String.fromCharCode(34) + "color:#999;text-align:center;margin-top:30px;" + String.fromCharCode(34) + ">No purchase orders yet.</p>";
+      content.innerHTML = "<p style='color:#999;text-align:center;margin-top:30px;'>No purchase orders yet.</p>";
       return;
     }
     filtered.sort(function(a, b) { return b.createdAt - a.createdAt; });
@@ -1400,11 +1272,11 @@
     for (var i = 0; i < filtered.length; i++) {
       var po = filtered[i];
       var statusClass = po.status === "received" ? "received" : "pending";
-      html += "<div class=" + String.fromCharCode(34) + "poCard" + String.fromCharCode(34) + ">";
-      html += "<div class=" + String.fromCharCode(34) + "poSupplier" + String.fromCharCode(34) + ">" + escapeHtml(po.supplier) + "</div>";
-      html += "<div class=" + String.fromCharCode(34) + "poMeta" + String.fromCharCode(34) + ">" + escapeHtml(po.items) + "</div>";
-      html += "<div class=" + String.fromCharCode(34) + "poMeta" + String.fromCharCode(34) + ">Cost: Rs. " + escapeHtml(po.cost) + " | " + escapeHtml(po.business) + "</div>";
-      html += "<span class=" + String.fromCharCode(34) + "poStatus " + statusClass + String.fromCharCode(34) + " data-id=" + String.fromCharCode(34) + po.id + String.fromCharCode(34) + ">" + (po.status === "received" ? "Received" : "Pending - tap to mark received") + "</span>";
+      html += "<div class='poCard'>";
+      html += "<div class='poSupplier'>" + escapeHtml(po.supplier) + "</div>";
+      html += "<div class='poMeta'>" + escapeHtml(po.items) + "</div>";
+      html += "<div class='poMeta'>Cost: Rs. " + escapeHtml(po.cost) + " | " + escapeHtml(po.business) + "</div>";
+      html += "<span class='poStatus " + statusClass + "' data-id='" + po.id + "'>" + (po.status === "received" ? "Received" : "Pending - tap to mark received") + "</span>";
       html += "</div>";
     }
     content.innerHTML = html;
@@ -1424,15 +1296,10 @@
     document.getElementById("poCost").value = "";
     poModal.classList.remove("hidden");
   });
-  btnCancelPo.addEventListener("click", function() {
-    poModal.classList.add("hidden");
-  });
+  btnCancelPo.addEventListener("click", function() { poModal.classList.add("hidden"); });
   btnSavePo.addEventListener("click", function() {
     var supplier = document.getElementById("poSupplier").value.trim();
-    if (!supplier) {
-      alert("Please enter a supplier name");
-      return;
-    }
+    if (!supplier) { alert("Please enter a supplier name"); return; }
     var newPO = {
       business: document.getElementById("poBusiness").value,
       supplier: supplier,
@@ -1458,6 +1325,5 @@
   startSalesSync();
 
 </script>
-
 </body>
 </html>

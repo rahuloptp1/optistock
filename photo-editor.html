@@ -131,6 +131,15 @@
 
 <div class="settings-drawer" id="settingsDrawer">
   <div class="settings-grid">
+    <div class="field" style="grid-column:1/-1; border:2px solid var(--accent); padding:14px; background:var(--paper);">
+      <label>Hugging Face API Token (free — get one at huggingface.co/settings/tokens)</label>
+      <input type="text" id="apiToken" placeholder="hf_xxxxxxxxxxxxxxxxxxxx">
+      <div style="display:flex; gap:8px; margin-top:8px;">
+        <button id="testConnectionBtn" type="button" style="padding:8px 14px; border:2px solid var(--ink); background:var(--ink); color:#fff; font-family:var(--mono); font-size:11px; cursor:pointer;">Test Connection</button>
+        <span id="testResult" style="font-family:var(--mono); font-size:11px; align-self:center;"></span>
+      </div>
+      <div class="note">Sign up free (no card needed), create a "Read" token, paste it here. This is stored only in your browser and sent directly to Hugging Face's servers — never to us. Processing happens on their computers, so your phone/laptop's power doesn't matter.</div>
+    </div>
     <div class="field">
       <label>Preview Background</label>
       <div class="swatches">
@@ -185,7 +194,38 @@
 </div>
 
 <script type="module">
-import { removeBackground } from "https://esm.sh/@imgly/background-removal@1.5.8";
+// Uses Hugging Face's free hosted AI model (runs on their servers, not this
+// device) — this removes the laptop's hardware/memory as a bottleneck.
+async function removeBackgroundViaAPI(file, token){
+  const endpoint = "https://api-inference.huggingface.co/models/briaai/RMBG-1.4";
+  let attempt = 0;
+  while(attempt < 4){
+    const resp = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Authorization": "Bearer " + token,
+        "Content-Type": file.type || "image/jpeg"
+      },
+      body: file
+    });
+    if(resp.ok){
+      return await resp.blob();
+    }
+    let bodyText = "";
+    try{ bodyText = await resp.text(); }catch(e){}
+    let parsed = null;
+    try{ parsed = JSON.parse(bodyText); }catch(e){}
+    if(resp.status === 503 && parsed && parsed.error){
+      // Model is cold-starting on Hugging Face's side — wait and retry.
+      const wait = Math.min(20000, Math.round((parsed.estimated_time || 8) * 1000));
+      await new Promise(r => setTimeout(r, wait));
+      attempt++;
+      continue;
+    }
+    throw new Error("HTTP " + resp.status + ": " + (parsed && parsed.error ? parsed.error : bodyText || "Unknown error"));
+  }
+  throw new Error("Model did not finish loading after several retries. Try again in a minute.");
+}
 
 const PRESETS = [
   { key:'shopify',     label:'Shopify Product',      w:2048, h:2048, fill:0.70, bg:'#FAFAFA' },
@@ -209,6 +249,34 @@ const clearBtn = document.getElementById('clearBtn');
 const settingsToggle = document.getElementById('settingsToggle');
 const settingsDrawer = document.getElementById('settingsDrawer');
 const statusBanner = document.getElementById('statusBanner');
+const apiTokenInput = document.getElementById('apiToken');
+const testConnectionBtn = document.getElementById('testConnectionBtn');
+const testResult = document.getElementById('testResult');
+
+testConnectionBtn.onclick = async () => {
+  const token = apiTokenInput.value.trim();
+  if(!token){
+    testResult.textContent = '✗ Paste your API token first';
+    testResult.style.color = '#a3462f';
+    return;
+  }
+  testResult.textContent = 'Testing…';
+  testResult.style.color = '#444';
+  try{
+    // 1x1 white pixel PNG as a minimal real test image
+    const tinyPngBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+    const byteStr = atob(tinyPngBase64);
+    const bytes = new Uint8Array(byteStr.length);
+    for(let i=0;i<byteStr.length;i++) bytes[i] = byteStr.charCodeAt(i);
+    const testFile = new Blob([bytes], { type: 'image/png' });
+    await removeBackgroundViaAPI(testFile, token);
+    testResult.textContent = '✓ Connected — token works';
+    testResult.style.color = '#2f4b3c';
+  } catch(err){
+    testResult.textContent = '✗ ' + err.message;
+    testResult.style.color = '#a3462f';
+  }
+};
 const presetGrid = document.getElementById('presetGrid');
 const customToggle = document.getElementById('customToggle');
 const customW = document.getElementById('customW');
@@ -328,7 +396,7 @@ function renderGrid(){
     } else {
       const placeholder = document.createElement('div');
       placeholder.style.cssText = 'display:flex;align-items:center;justify-content:center;height:100%;color:#999;font-family:monospace;font-size:11px;text-align:center;padding:8px;';
-      placeholder.textContent = item.status === 'processing' ? 'Processing…' : (item.status === 'error' ? 'Failed — retry' : 'Not processed yet');
+      placeholder.textContent = item.status === 'processing' ? 'Processing…' : (item.status === 'error' ? ('✗ ' + (item.errorMessage || 'Failed — retry')) : 'Not processed yet');
       procWrap.appendChild(placeholder);
     }
     compare.appendChild(origWrap);
@@ -507,21 +575,20 @@ function generatePresetCanvas(cutoutImg, bbox, preset, bgOverride, position){
 }
 
 processBtn.onclick = async () => {
+  const token = apiTokenInput.value.trim();
+  if(!token){
+    alert('Paste your Hugging Face API token in Settings first, then tap Test Connection to confirm it works.');
+    return;
+  }
   processBtn.disabled = true;
-  let modelWarmed = false;
 
   for(const item of items){
     if(item.cutoutImg) continue;
     item.status = 'processing';
+    item.errorMessage = null;
     renderGrid();
-    if(!modelWarmed){
-      statusBanner.textContent = 'Downloading AI model (one-time, ~20-40s)…';
-      statusBanner.classList.add('show');
-    }
     try{
-      const resultBlob = await removeBackground(item.file);
-      modelWarmed = true;
-      statusBanner.classList.remove('show');
+      const resultBlob = await removeBackgroundViaAPI(item.file, token);
       const url = URL.createObjectURL(resultBlob);
       const cutoutImg = await loadImage(url);
       item.cutoutImg = cutoutImg;
@@ -535,6 +602,7 @@ processBtn.onclick = async () => {
     } catch(err){
       console.error(err);
       item.status = 'error';
+      item.errorMessage = err.message;
     }
     renderGrid();
   }

@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EYECROX Photo Editor</title>
+<style>
+  :root{
+    --ink:#1a1d21; --paper:#f6f5f2; --line:#dcd9d2;
+    --accent:#2f4b3c; --warn:#a3462f; --mono:'Courier New', monospace;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; font-family: Georgia, 'Times New Roman', serif; background:var(--paper); color:var(--ink); }
+  header{
+    padding:14px 16px; border-bottom:2px solid var(--ink);
+    display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+    position:sticky; top:0; background:var(--paper); z-index:20;
+  }
+  header .title h1{ margin:0; font-size:19px; }
+  header .title p{ margin:2px 0 0; font-family:var(--mono); font-size:10px; color:#666; text-transform:uppercase; letter-spacing:0.5px; }
+  .toolbar{ display:flex; gap:8px; flex-wrap:wrap; }
+  .toolbar button, .toolbar label.btn{
+    padding:9px 14px; border:2px solid var(--ink); background:var(--ink); color:#fff;
+    font-family:var(--mono); font-size:11px; text-transform:uppercase; letter-spacing:0.5px; cursor:pointer; white-space:nowrap;
+  }
+  .toolbar button.secondary, .toolbar label.btn.secondary{ background:#fff; color:var(--ink); }
+  .toolbar button:disabled{ opacity:0.35; cursor:not-allowed; }
+  #fileInput{ display:none; }
+
+  .settings-drawer{ border-bottom:2px solid var(--ink); background:#fff; overflow:hidden; max-height:0; transition:max-height .25s ease; }
+  .settings-drawer.open{ max-height:1400px; }
+  .settings-grid{ display:grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap:18px; padding:18px 16px; }
+  .field label{ display:block; font-size:11px; font-family:var(--mono); margin-bottom:6px; color:#444; text-transform:uppercase; letter-spacing:0.5px; }
+  .field .note{ font-family:var(--mono); font-size:10px; color:#888; line-height:1.5; margin-top:4px; }
+  .swatches{ display:flex; gap:8px; margin-top:2px; }
+  .swatch{ width:26px;height:26px; border:2px solid var(--line); cursor:pointer; }
+  .swatch.active{ border-color:var(--accent); }
+  select, input[type=number], input[type=text]{ width:100%; padding:8px; font-family:var(--mono); font-size:12px; border:1px solid var(--line); }
+  .upload-zone{ border:2px dashed var(--line); padding:16px; text-align:center; cursor:pointer; font-family:var(--mono); font-size:11px; color:#666; }
+  .upload-zone:hover{ border-color:var(--accent); }
+
+  .preset-list{ grid-column:1/-1; border-top:1px solid var(--line); padding-top:14px; }
+  .preset-list h3{ font-size:12px; font-family:var(--mono); text-transform:uppercase; letter-spacing:0.5px; color:var(--accent); margin:0 0 10px; }
+  .preset-grid{ display:grid; grid-template-columns: repeat(auto-fill, minmax(220px,1fr)); gap:10px; }
+  .preset-item{ display:flex; align-items:flex-start; gap:8px; border:1px solid var(--line); padding:8px 10px; font-family:var(--mono); font-size:11px; }
+  .preset-item input{ width:auto; margin-top:2px; }
+  .preset-item .pname{ font-weight:bold; }
+  .preset-item .pdim{ color:#888; display:block; font-size:10px; }
+  .custom-dims{ display:flex; gap:8px; margin-top:8px; }
+  .custom-dims input{ width:80px; }
+  .banner-pos{ margin-top:8px; }
+
+  .status-banner{ background:#fff9e8; border-bottom:1px solid #e8d999; padding:10px 16px; font-family:var(--mono); font-size:11px; color:#6b5b1e; display:none; }
+  .status-banner.show{ display:block; }
+
+  .stage{ padding:16px; }
+  .empty-state{ margin-top:15vh; text-align:center; color:#999; font-family:var(--mono); font-size:13px; line-height:1.8; }
+  .view-toggle{ display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; }
+  .view-toggle button{ padding:7px 12px; font-family:var(--mono); font-size:11px; text-transform:uppercase; letter-spacing:0.5px; border:1px solid var(--ink); background:#fff; cursor:pointer; }
+  .view-toggle button.active{ background:var(--ink); color:#fff; }
+
+  .grid{ display:grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap:18px; }
+  .grid.compact{ grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+  .card{ border:1px solid var(--line); background:#fff; }
+  .card .compare{ display:grid; grid-template-columns:1fr 1fr; cursor:pointer; }
+  .card .compare > div{
+    position:relative; aspect-ratio:1/1;
+    background:
+      linear-gradient(45deg,#eee 25%,transparent 25%), linear-gradient(-45deg,#eee 25%,transparent 25%),
+      linear-gradient(45deg,transparent 75%,#eee 75%), linear-gradient(-45deg,transparent 75%,#eee 75%);
+    background-size:16px 16px; background-position:0 0,0 8px,8px -8px,-8px 0px;
+    overflow:hidden; display:flex; align-items:center; justify-content:center;
+  }
+  .card canvas, .card img{ width:100%; height:100%; object-fit:contain; display:block; }
+  .card .label{ position:absolute; top:6px; left:6px; font-family:var(--mono); font-size:10px; background:rgba(0,0,0,0.65); color:#fff; padding:3px 7px; letter-spacing:0.5px; z-index:2; }
+  .card .namefield{ padding:8px 12px 0; }
+  .card .namefield input{ font-size:11px; }
+  .card .warnings{ padding:6px 12px 0; }
+  .card .warnings .w-item{ font-family:var(--mono); font-size:10px; color:var(--warn); margin-bottom:3px; }
+  .card .warnings .w-ok{ font-family:var(--mono); font-size:10px; color:var(--accent); margin-bottom:3px; }
+  .card .meta{ padding:10px 12px; display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--line); gap:8px; flex-wrap:wrap; }
+  .card .meta span.fname{ font-family:var(--mono); font-size:10px; color:#888; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .card .meta .actions{ display:flex; gap:10px; align-items:center; flex-shrink:0; }
+  .card .meta a{ font-family:var(--mono); font-size:11px; text-transform:uppercase; color:var(--accent); text-decoration:none; border-bottom:1px solid var(--accent); cursor:pointer; }
+  .card .meta button.remove{ padding:4px 8px; background:transparent; color:var(--warn); border:1px solid var(--warn); font-size:10px; font-family:var(--mono); cursor:pointer; }
+
+  .lightbox{ display:none; position:fixed; inset:0; background:rgba(20,20,18,0.94); z-index:100; flex-direction:column; }
+  .lightbox.open{ display:flex; }
+  .lightbox-top{ display:flex; justify-content:space-between; align-items:center; padding:12px 16px; color:#fff; font-family:var(--mono); font-size:12px; }
+  .lightbox-top button{ background:transparent; border:1px solid #fff; color:#fff; padding:6px 12px; font-family:var(--mono); font-size:11px; cursor:pointer; }
+  .lightbox-body{ flex:1; display:grid; grid-template-columns:1fr 1fr; gap:2px; overflow:hidden; padding:0 8px 8px; }
+  .lightbox-body > div{
+    position:relative; display:flex; align-items:center; justify-content:center;
+    background:
+      linear-gradient(45deg,#333 25%,transparent 25%), linear-gradient(-45deg,#333 25%,transparent 25%),
+      linear-gradient(45deg,transparent 75%,#333 75%), linear-gradient(-45deg,transparent 75%,#333 75%);
+    background-size:20px 20px; background-position:0 0,0 10px,10px -10px,-10px 0px; background-color:#1a1a1a; overflow:hidden;
+  }
+  .lightbox-body img, .lightbox-body canvas{ max-width:100%; max-height:100%; object-fit:contain; }
+  .lightbox-body .lb-label{ position:absolute; top:10px; left:10px; font-family:var(--mono); font-size:11px; background:rgba(0,0,0,0.6); color:#fff; padding:4px 8px; }
+  .lightbox-nav{ display:flex; justify-content:space-between; padding:10px 16px 16px; }
+  .lightbox-nav button{ background:transparent; border:1px solid #fff; color:#fff; padding:8px 16px; font-family:var(--mono); font-size:11px; cursor:pointer; }
+
+  .phase2-note{ font-family:var(--mono); font-size:10px; color:#999; padding:10px 16px; border-top:1px dashed var(--line); }
+
+  @media (max-width: 640px){
+    .grid{ grid-template-columns: 1fr; }
+    header{ flex-direction:column; align-items:flex-start; }
+    .lightbox-body{ grid-template-columns:1fr; grid-template-rows:1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="title">
+    <h1>EYECROX Photo Editor</h1>
+    <p>AI background removal, smart crop &amp; multi-platform export — free, runs on your device</p>
+  </div>
+  <div class="toolbar">
+    <label class="btn" for="fileInput">Add Photos</label>
+    <input type="file" id="fileInput" accept="image/*" multiple>
+    <button id="settingsToggle" class="secondary">Settings</button>
+    <button id="processBtn" disabled>Process All</button>
+    <button id="exportBtn" class="secondary" disabled>Export Selected Presets</button>
+    <button id="clearBtn" class="secondary">Clear</button>
+  </div>
+</header>
+
+<div class="status-banner" id="statusBanner"></div>
+
+<div class="settings-drawer" id="settingsDrawer">
+  <div class="settings-grid">
+    <div class="field">
+      <label>Preview Background</label>
+      <div class="swatches">
+        <div class="swatch active" data-color="#ffffff" style="background:#ffffff" title="Pure white"></div>
+        <div class="swatch" data-color="#f4f4f2" style="background:#f4f4f2" title="Off-white"></div>
+        <div class="swatch" data-color="transparent" style="background:repeating-conic-gradient(#ccc 0 25%, #fff 0 50%) 0 0/10px 10px" title="Transparent PNG"></div>
+      </div>
+      <div class="note">Applies to the on-screen preview and to exports if you pick Transparent. Otherwise each platform preset uses its own required background (usually pure white).</div>
+    </div>
+
+    <div class="preset-list">
+      <h3>Export Presets — check all you need</h3>
+      <div class="preset-grid" id="presetGrid"></div>
+      <div class="field" style="margin-top:10px;">
+        <label><input type="checkbox" id="customToggle" style="width:auto;"> Custom size</label>
+        <div class="custom-dims">
+          <input type="number" id="customW" placeholder="Width px">
+          <input type="number" id="customH" placeholder="Height px">
+        </div>
+      </div>
+    </div>
+
+    <div class="field" style="grid-column:1/-1;">
+      <div class="upload-zone" id="dropZone">Or drop photos here anywhere on the page</div>
+      <div class="note" style="margin-top:8px;">Uses IMG.LY's open-source AI model — real image segmentation, keeps your original product pixels exactly (no recoloring). First photo takes 20-40s while the model downloads (one-time, then cached). Needs internet for that first download only. Must be opened from a real web address (e.g. GitHub Pages) — opening the file directly from Downloads will block the AI model.</div>
+    </div>
+  </div>
+</div>
+
+<div class="stage">
+  <div class="empty-state" id="emptyState">
+    Add photos using the button above to begin.<br>
+    Each photo is processed by a real AI segmentation model,<br>
+    then auto-cropped and centered for whichever platforms you select.
+  </div>
+  <div class="view-toggle" id="viewToggle" style="display:none;">
+    <button class="active" data-mode="large">Large view</button>
+    <button data-mode="compact">Compact grid</button>
+  </div>
+  <div class="grid" id="grid" style="display:none;"></div>
+</div>
+
+<div class="phase2-note">Phase 2 (not in this build): manual restore/erase brush, edge-refine slider, shadow-strength slider, drag-to-reposition. Flag if you want these built next.</div>
+
+<div class="lightbox" id="lightbox">
+  <div class="lightbox-top"><span id="lbTitle">—</span><button id="lbClose">Close ✕</button></div>
+  <div class="lightbox-body">
+    <div><span class="lb-label">BEFORE</span><img id="lbBefore"></div>
+    <div><span class="lb-label">AFTER</span><div id="lbAfterWrap"></div></div>
+  </div>
+  <div class="lightbox-nav"><button id="lbPrev">← Previous</button><button id="lbNext">Next →</button></div>
+</div>
+
+<script type="module">
+import { removeBackground } from "https://esm.sh/@imgly/background-removal@1.5.8";
+
+const PRESETS = [
+  { key:'shopify',     label:'Shopify Product',      w:2048, h:2048, fill:0.70, bg:'#FAFAFA' },
+  { key:'amazon',       label:'Amazon Main',          w:2000, h:2000, fill:0.85, bg:'#FFFFFF' },
+  { key:'flipkart',     label:'Flipkart Main',        w:2000, h:2000, fill:0.80, bg:'#FFFFFF' },
+  { key:'nykaa_sq',     label:'Nykaa / Fashion 1:1',  w:1600, h:1600, fill:0.72, bg:'#FAFAFA' },
+  { key:'nykaa_45',     label:'Nykaa / Fashion 4:5',  w:1080, h:1350, fill:0.68, bg:'#FAFAFA' },
+  { key:'ig_carousel',  label:'Instagram Carousel',   w:1080, h:1350, fill:0.65, bg:'#FFFFFF' },
+  { key:'ig_square',    label:'Instagram Square',     w:1080, h:1080, fill:0.68, bg:'#FFFFFF' },
+  { key:'banner',       label:'Website Banner 16:9',  w:1920, h:1080, fill:0.42, bg:'#FFFFFF', positionable:true },
+];
+
+const fileInput = document.getElementById('fileInput');
+const dropZone = document.getElementById('dropZone');
+const grid = document.getElementById('grid');
+const emptyState = document.getElementById('emptyState');
+const viewToggle = document.getElementById('viewToggle');
+const processBtn = document.getElementById('processBtn');
+const exportBtn = document.getElementById('exportBtn');
+const clearBtn = document.getElementById('clearBtn');
+const settingsToggle = document.getElementById('settingsToggle');
+const settingsDrawer = document.getElementById('settingsDrawer');
+const statusBanner = document.getElementById('statusBanner');
+const presetGrid = document.getElementById('presetGrid');
+const customToggle = document.getElementById('customToggle');
+const customW = document.getElementById('customW');
+const customH = document.getElementById('customH');
+
+const lightbox = document.getElementById('lightbox');
+const lbTitle = document.getElementById('lbTitle');
+const lbBefore = document.getElementById('lbBefore');
+const lbAfterWrap = document.getElementById('lbAfterWrap');
+const lbClose = document.getElementById('lbClose');
+const lbPrev = document.getElementById('lbPrev');
+const lbNext = document.getElementById('lbNext');
+
+let previewBg = '#ffffff';
+let items = [];
+let gridMode = 'large';
+let lbIndex = 0;
+
+// Build preset checkboxes
+PRESETS.forEach(p => {
+  const posControl = p.positionable ? `
+    <select data-banner-pos="${p.key}" style="margin-top:6px;">
+      <option value="center">Product: Center</option>
+      <option value="left">Product: Left</option>
+      <option value="right">Product: Right</option>
+    </select>` : '';
+  const div = document.createElement('label');
+  div.className = 'preset-item';
+  div.innerHTML = `<input type="checkbox" data-preset="${p.key}">
+    <span><span class="pname">${p.label}</span><span class="pdim">${p.w}×${p.h}px</span>${posControl}</span>`;
+  presetGrid.appendChild(div);
+});
+
+settingsToggle.onclick = () => settingsDrawer.classList.toggle('open');
+
+document.querySelectorAll('.swatch').forEach(sw => {
+  sw.onclick = () => {
+    document.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
+    sw.classList.add('active');
+    previewBg = sw.dataset.color;
+  };
+});
+
+viewToggle.querySelectorAll('button').forEach(btn => {
+  btn.onclick = () => {
+    viewToggle.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    gridMode = btn.dataset.mode;
+    grid.classList.toggle('compact', gridMode === 'compact');
+  };
+});
+
+dropZone.onclick = () => fileInput.click();
+document.body.ondragover = (e) => e.preventDefault();
+document.body.ondrop = (e) => { e.preventDefault(); handleFiles(e.dataTransfer.files); };
+fileInput.onchange = (e) => handleFiles(e.target.files);
+
+function sanitizeName(s){
+  return s.replace(/\.[^/.]+$/, '').replace(/[^a-zA-Z0-9]+/g, '').slice(0, 30) || 'product';
+}
+
+function handleFiles(fileList){
+  Array.from(fileList).forEach(file => {
+    if(!file.type.startsWith('image/')) return;
+    const id = 'img_' + Date.now() + '_' + Math.random().toString(36).slice(2,7);
+    items.push({
+      id, name: file.name, file,
+      previewUrl: URL.createObjectURL(file),
+      productName: sanitizeName(file.name),
+      cutoutImg: null, bbox: null, sourceW: 0, sourceH: 0,
+      processedCanvas: null, status: 'pending', warnings: []
+    });
+  });
+  renderGrid();
+}
+
+function renderGrid(){
+  if(items.length === 0){
+    emptyState.style.display = 'block';
+    viewToggle.style.display = 'none';
+    grid.style.display = 'none';
+    processBtn.disabled = true;
+    exportBtn.disabled = true;
+    return;
+  }
+  emptyState.style.display = 'none';
+  viewToggle.style.display = 'flex';
+  grid.style.display = 'grid';
+  processBtn.disabled = false;
+
+  const anyProcessed = items.some(i => i.cutoutImg);
+  exportBtn.disabled = !anyProcessed;
+
+  grid.innerHTML = '';
+  items.forEach((item, idx) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+
+    const compare = document.createElement('div');
+    compare.className = 'compare';
+    compare.onclick = () => openLightbox(idx);
+
+    const origWrap = document.createElement('div');
+    const origImg = document.createElement('img');
+    origImg.src = item.previewUrl;
+    origWrap.appendChild(origImg);
+    const origLabel = document.createElement('div');
+    origLabel.className = 'label'; origLabel.textContent = 'BEFORE';
+    origWrap.appendChild(origLabel);
+
+    const procWrap = document.createElement('div');
+    const procLabel = document.createElement('div');
+    procLabel.className = 'label'; procLabel.textContent = 'AFTER';
+    procWrap.appendChild(procLabel);
+    if(item.processedCanvas){
+      procWrap.appendChild(cloneCanvas(item.processedCanvas));
+    } else {
+      const placeholder = document.createElement('div');
+      placeholder.style.cssText = 'display:flex;align-items:center;justify-content:center;height:100%;color:#999;font-family:monospace;font-size:11px;text-align:center;padding:8px;';
+      placeholder.textContent = item.status === 'processing' ? 'Processing…' : (item.status === 'error' ? 'Failed — retry' : 'Not processed yet');
+      procWrap.appendChild(placeholder);
+    }
+    compare.appendChild(origWrap);
+    compare.appendChild(procWrap);
+    card.appendChild(compare);
+
+    const nameField = document.createElement('div');
+    nameField.className = 'namefield';
+    const nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.value = item.productName;
+    nameInput.placeholder = 'Product name (used in filename)';
+    nameInput.onclick = (e) => e.stopPropagation();
+    nameInput.oninput = () => { item.productName = sanitizeName(nameInput.value) || 'product'; };
+    nameField.appendChild(nameInput);
+    card.appendChild(nameField);
+
+    if(item.warnings && item.warnings.length){
+      const wWrap = document.createElement('div');
+      wWrap.className = 'warnings';
+      item.warnings.forEach(w => {
+        const el = document.createElement('div');
+        el.className = 'w-item';
+        el.textContent = '⚠ ' + w;
+        wWrap.appendChild(el);
+      });
+      card.appendChild(wWrap);
+    } else if(item.cutoutImg){
+      const wWrap = document.createElement('div');
+      wWrap.className = 'warnings';
+      const el = document.createElement('div');
+      el.className = 'w-ok';
+      el.textContent = '✓ Color unchanged, no crop issues detected';
+      wWrap.appendChild(el);
+      card.appendChild(wWrap);
+    }
+
+    const meta = document.createElement('div');
+    meta.className = 'meta';
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'fname';
+    nameSpan.textContent = item.name;
+    meta.appendChild(nameSpan);
+
+    const actions = document.createElement('div');
+    actions.className = 'actions';
+    if(item.cutoutImg){
+      const dlLink = document.createElement('a');
+      dlLink.textContent = 'Quick Download';
+      dlLink.onclick = (e) => { e.preventDefault(); e.stopPropagation(); downloadCanvas(item.processedCanvas, item.productName + '_preview'); };
+      actions.appendChild(dlLink);
+    }
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'remove';
+    removeBtn.textContent = 'Remove';
+    removeBtn.onclick = (e) => { e.stopPropagation(); items = items.filter(i => i.id !== item.id); renderGrid(); };
+    actions.appendChild(removeBtn);
+
+    meta.appendChild(actions);
+    card.appendChild(meta);
+    grid.appendChild(card);
+  });
+}
+
+function cloneCanvas(src){
+  const c = document.createElement('canvas');
+  c.width = src.width; c.height = src.height;
+  c.getContext('2d').drawImage(src, 0, 0);
+  return c;
+}
+
+function openLightbox(idx){
+  lbIndex = idx;
+  showLightboxItem();
+  lightbox.classList.add('open');
+}
+function showLightboxItem(){
+  const item = items[lbIndex];
+  lbTitle.textContent = item.name + '  (' + (lbIndex+1) + ' / ' + items.length + ')';
+  lbBefore.src = item.previewUrl;
+  lbAfterWrap.innerHTML = '';
+  if(item.processedCanvas){
+    lbAfterWrap.appendChild(cloneCanvas(item.processedCanvas));
+  } else {
+    const p = document.createElement('div');
+    p.style.cssText = 'color:#999;font-family:monospace;font-size:12px;';
+    p.textContent = item.status === 'processing' ? 'Processing…' : 'Not processed yet';
+    lbAfterWrap.appendChild(p);
+  }
+}
+lbClose.onclick = () => lightbox.classList.remove('open');
+lbPrev.onclick = () => { lbIndex = (lbIndex - 1 + items.length) % items.length; showLightboxItem(); };
+lbNext.onclick = () => { lbIndex = (lbIndex + 1) % items.length; showLightboxItem(); };
+lightbox.onclick = (e) => { if(e.target === lightbox) lightbox.classList.remove('open'); };
+
+function loadImage(src){
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
+}
+
+// Scan the transparent cutout's alpha channel to find the product's tight
+// bounding box. This is what powers "smart crop" — no manual cropping needed.
+function computeBBox(img){
+  const c = document.createElement('canvas');
+  c.width = img.naturalWidth; c.height = img.naturalHeight;
+  const ctx = c.getContext('2d');
+  ctx.drawImage(img, 0, 0);
+  const data = ctx.getImageData(0, 0, c.width, c.height).data;
+  let minX = c.width, minY = c.height, maxX = 0, maxY = 0;
+  const ALPHA_THRESHOLD = 12;
+  for(let y = 0; y < c.height; y += 2){       // step by 2 for speed, fine for bbox purposes
+    for(let x = 0; x < c.width; x += 2){
+      const a = data[(y * c.width + x) * 4 + 3];
+      if(a > ALPHA_THRESHOLD){
+        if(x < minX) minX = x;
+        if(x > maxX) maxX = x;
+        if(y < minY) minY = y;
+        if(y > maxY) maxY = y;
+      }
+    }
+  }
+  if(maxX <= minX || maxY <= minY){
+    return { x:0, y:0, w:c.width, h:c.height, touchesEdge:false };
+  }
+  const touchesEdge = (minX <= 2 || minY <= 2 || maxX >= c.width-3 || maxY >= c.height-3);
+  return { x:minX, y:minY, w:(maxX-minX), h:(maxY-minY), touchesEdge };
+}
+
+function computeWarnings(item, biggestPresetDim){
+  const warnings = [];
+  if(item.bbox && item.bbox.touchesEdge){
+    warnings.push('Product may be tightly cropped in the original photo — check edges.');
+  }
+  if(biggestPresetDim && item.bbox){
+    const neededScale = biggestPresetDim / Math.max(item.bbox.w, item.bbox.h);
+    if(neededScale > 2.2){
+      warnings.push('Original photo resolution is low for the largest preset selected — image may look soft when enlarged.');
+    }
+  }
+  return warnings;
+}
+
+// Crop the cutout to its bounding box, then fit it into a target canvas at
+// the given fill ratio, centered (or left/right for the banner). Because we
+// only ever draw the AI's original transparent cutout — never repaint pixels
+// — the product's color, texture, and edges are mathematically identical to
+// the source photo at every export size.
+function generatePresetCanvas(cutoutImg, bbox, preset, bgOverride, position){
+  const tight = document.createElement('canvas');
+  tight.width = bbox.w; tight.height = bbox.h;
+  tight.getContext('2d').drawImage(cutoutImg, bbox.x, bbox.y, bbox.w, bbox.h, 0, 0, bbox.w, bbox.h);
+
+  const isTransparent = (bgOverride === 'transparent');
+  const bgColor = isTransparent ? null : (bgOverride || preset.bg);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = preset.w; canvas.height = preset.h;
+  const ctx = canvas.getContext('2d');
+  if(bgColor){ ctx.fillStyle = bgColor; ctx.fillRect(0, 0, preset.w, preset.h); }
+
+  const scale = preset.fill * Math.min(preset.w / bbox.w, preset.h / bbox.h);
+  const dw = bbox.w * scale, dh = bbox.h * scale;
+  let dx = (preset.w - dw) / 2;
+  const dy = (preset.h - dh) / 2;
+  if(position === 'left') dx = preset.w * 0.08;
+  if(position === 'right') dx = preset.w - dw - preset.w * 0.08;
+
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(tight, dx, dy, dw, dh);
+  return canvas;
+}
+
+processBtn.onclick = async () => {
+  processBtn.disabled = true;
+  let modelWarmed = false;
+
+  for(const item of items){
+    if(item.cutoutImg) continue;
+    item.status = 'processing';
+    renderGrid();
+    if(!modelWarmed){
+      statusBanner.textContent = 'Downloading AI model (one-time, ~20-40s)…';
+      statusBanner.classList.add('show');
+    }
+    try{
+      const resultBlob = await removeBackground(item.file);
+      modelWarmed = true;
+      statusBanner.classList.remove('show');
+      const url = URL.createObjectURL(resultBlob);
+      const cutoutImg = await loadImage(url);
+      item.cutoutImg = cutoutImg;
+      item.bbox = computeBBox(cutoutImg);
+      item.processedCanvas = generatePresetCanvas(
+        cutoutImg, item.bbox,
+        { w:1000, h:1000, fill:0.72, bg:'#FFFFFF' },
+        previewBg, 'center'
+      );
+      item.status = 'done';
+    } catch(err){
+      console.error(err);
+      item.status = 'error';
+    }
+    renderGrid();
+  }
+
+  const selectedPresetKeys = Array.from(document.querySelectorAll('#presetGrid input[type=checkbox]:checked')).map(cb => cb.dataset.preset);
+  const biggestDim = selectedPresetKeys.length
+    ? Math.max(...selectedPresetKeys.map(k => { const p = PRESETS.find(pp=>pp.key===k); return p ? Math.max(p.w,p.h) : 0; }))
+    : 0;
+  items.forEach(item => {
+    if(item.bbox) item.warnings = computeWarnings(item, biggestDim);
+  });
+
+  statusBanner.classList.remove('show');
+  processBtn.disabled = false;
+  renderGrid();
+};
+
+function downloadCanvas(canvas, filename){
+  const link = document.createElement('a');
+  link.download = filename + '.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+
+exportBtn.onclick = async () => {
+  const checked = Array.from(document.querySelectorAll('#presetGrid input[type=checkbox]:checked')).map(cb => cb.dataset.preset);
+  const useCustom = customToggle.checked && parseInt(customW.value) > 0 && parseInt(customH.value) > 0;
+
+  const jobs = [];
+  items.forEach(item => {
+    if(!item.cutoutImg) return;
+    checked.forEach(key => {
+      const preset = PRESETS.find(p => p.key === key);
+      if(!preset) return;
+      let position = 'center';
+      if(preset.positionable){
+        const sel = document.querySelector(`select[data-banner-pos="${key}"]`);
+        if(sel) position = sel.value;
+      }
+      jobs.push({ item, preset, position, sizeLabel: preset.w + 'x' + preset.h });
+    });
+    if(useCustom){
+      const custom = { key:'custom', w:parseInt(customW.value), h:parseInt(customH.value), fill:0.72, bg:'#FFFFFF' };
+      jobs.push({ item, preset: custom, position:'center', sizeLabel: custom.w + 'x' + custom.h });
+    }
+  });
+
+  if(jobs.length === 0){
+    alert('Select at least one preset (or enable Custom size) before exporting.');
+    return;
+  }
+
+  jobs.forEach((job, idx) => {
+    setTimeout(() => {
+      const canvas = generatePresetCanvas(job.item.cutoutImg, job.item.bbox, job.preset, null, job.position);
+      const filename = `EYECROX_${job.item.productName}_${job.preset.key}_${job.sizeLabel}`;
+      downloadCanvas(canvas, filename);
+    }, idx * 350);
+  });
+};
+
+clearBtn.onclick = () => {
+  items = [];
+  renderGrid();
+  fileInput.value = '';
+};
+</script>
+
+</body>
+</html>

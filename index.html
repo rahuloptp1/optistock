@@ -1109,7 +1109,7 @@
   btnSaveSheetsUrl.addEventListener("click", doSaveSheetsUrl);
   btnSaveSheetsUrl.addEventListener("touchstart", doSaveSheetsUrl);
 
-  // Sync to Google Sheets - chunked to handle 691+ items
+  // Sync to Google Sheets - JSON rows chunked
   document.getElementById("btnSyncSheets").addEventListener("click", function() {
     var sheetsUrl = document.getElementById("settingsSheetsUrl").value.trim() || localStorage.getItem("optistock_sheets_url") || "";
     if (sheetsUrl) { localStorage.setItem("optistock_sheets_url", sheetsUrl); }
@@ -1118,7 +1118,6 @@
     statusDiv.textContent = "Preparing data...";
     statusDiv.style.color = "#888";
 
-    // Build all rows first
     var allRows = [];
     var header = ["Name","Model No","Size","Brand","Category","For","Frame Type","Colour","Colour Code","Colour Qty","Total Stock","Selling Price","Cost Price","Material","Barcode","Supplier","Location","Business","Updated"];
     allRows.push(header);
@@ -1129,18 +1128,17 @@
       if (colours.length === 0) { colours = [{ colour: "", code: "", qty: it.qty || 0 }]; }
       for (var c = 0; c < colours.length; c++) {
         allRows.push([
-          it.itemName || "", it.model || "", it.size || "", it.brand || "",
-          it.category || "", it.forWhom || "", it.frameType || "",
-          colours[c].colour || "", colours[c].code || "", colours[c].qty || 0,
-          it.qty || 0, it.price || 0, it.costPrice || 0, it.material || "",
-          it.barcode || "", it.supplier || "", it.location || "",
-          it.business || "", new Date().toLocaleString()
+          String(it.itemName || ""), String(it.model || ""), String(it.size || ""), String(it.brand || ""),
+          String(it.category || ""), String(it.forWhom || ""), String(it.frameType || ""),
+          String(colours[c].colour || ""), String(colours[c].code || ""), Number(colours[c].qty || 0),
+          Number(it.qty || 0), Number(it.price || 0), Number(it.costPrice || 0), String(it.material || ""),
+          String(it.barcode || ""), String(it.supplier || ""), String(it.location || ""),
+          String(it.business || ""), new Date().toLocaleString()
         ]);
       }
     }
 
-    // Send in chunks of 150 rows
-    var CHUNK_SIZE = 150;
+    var CHUNK_SIZE = 100;
     var totalChunks = Math.ceil(allRows.length / CHUNK_SIZE);
     var currentChunk = 0;
 
@@ -1151,24 +1149,13 @@
       var end = Math.min(start + CHUNK_SIZE, allRows.length);
       var chunkRows = allRows.slice(start, end);
 
-      var csvLines = [];
-      for (var r = 0; r < chunkRows.length; r++) {
-        var rowCsv = chunkRows[r].map(function(val) {
-          var s = String(val).replace(/"/g, '""');
-          if (s.indexOf(",") !== -1 || s.indexOf('"') !== -1 || s.indexOf("\n") !== -1) { s = '"' + s + '"'; }
-          return s;
-        }).join(",");
-        csvLines.push(rowCsv);
-      }
-      var csvData = csvLines.join(String.fromCharCode(10));
-
       fetch(sheetsUrl, {
         method: "POST",
         mode: "no-cors",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "syncInventory",
-          csv: csvData,
+          rows: chunkRows,
           chunkIndex: chunkIndex,
           totalChunks: totalChunks
         })
@@ -1177,7 +1164,7 @@
           currentChunk++;
           if (currentChunk < totalChunks) {
             statusDiv.textContent = "Syncing chunk " + (currentChunk + 1) + " of " + totalChunks + "...";
-            setTimeout(function() { sendChunk(currentChunk); }, 1500);
+            setTimeout(function() { sendChunk(currentChunk); }, 2000);
           } else {
             statusDiv.textContent = "All " + allRows.length + " rows synced! Check your Google Sheet.";
             statusDiv.style.color = "#2ecc71";

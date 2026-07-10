@@ -132,13 +132,13 @@
 <div class="settings-drawer" id="settingsDrawer">
   <div class="settings-grid">
     <div class="field" style="grid-column:1/-1; border:2px solid var(--accent); padding:14px; background:var(--paper);">
-      <label>Hugging Face API Token (free — get one at huggingface.co/settings/tokens)</label>
-      <input type="text" id="apiToken" placeholder="hf_xxxxxxxxxxxxxxxxxxxx">
+      <label>remove.bg API Key (free — 50 images/month, get one at remove.bg/api)</label>
+      <input type="text" id="apiToken" placeholder="paste your API key here">
       <div style="display:flex; gap:8px; margin-top:8px;">
         <button id="testConnectionBtn" type="button" style="padding:8px 14px; border:2px solid var(--ink); background:var(--ink); color:#fff; font-family:var(--mono); font-size:11px; cursor:pointer;">Test Connection</button>
         <span id="testResult" style="font-family:var(--mono); font-size:11px; align-self:center;"></span>
       </div>
-      <div class="note">Sign up free (no card needed), create a "Read" token, paste it here. This is stored only in your browser and sent directly to Hugging Face's servers — never to us. Processing happens on their computers, so your phone/laptop's power doesn't matter.</div>
+      <div class="note">Sign up free at remove.bg (no card needed for the free tier), go to remove.bg/api, copy your API key, paste it here. Stored only in your browser, sent directly to remove.bg — never to us. Processing happens on their servers.</div>
     </div>
     <div class="field">
       <label>Preview Background</label>
@@ -194,37 +194,29 @@
 </div>
 
 <script type="module">
-// Uses Hugging Face's free hosted AI model (runs on their servers, not this
-// device) — this removes the laptop's hardware/memory as a bottleneck.
-async function removeBackgroundViaAPI(file, token){
-  const endpoint = "https://api-inference.huggingface.co/models/briaai/RMBG-1.4";
-  let attempt = 0;
-  while(attempt < 4){
-    const resp = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        "Authorization": "Bearer " + token,
-        "Content-Type": file.type || "image/jpeg"
-      },
-      body: file
-    });
-    if(resp.ok){
-      return await resp.blob();
-    }
-    let bodyText = "";
-    try{ bodyText = await resp.text(); }catch(e){}
-    let parsed = null;
-    try{ parsed = JSON.parse(bodyText); }catch(e){}
-    if(resp.status === 503 && parsed && parsed.error){
-      // Model is cold-starting on Hugging Face's side — wait and retry.
-      const wait = Math.min(20000, Math.round((parsed.estimated_time || 8) * 1000));
-      await new Promise(r => setTimeout(r, wait));
-      attempt++;
-      continue;
-    }
-    throw new Error("HTTP " + resp.status + ": " + (parsed && parsed.error ? parsed.error : bodyText || "Unknown error"));
+// remove.bg officially supports direct browser calls (documented CORS
+// support) — unlike Hugging Face's public API, which blocks most browser
+// requests. This runs on their servers, so device power still doesn't matter.
+async function removeBackgroundViaAPI(file, apiKey){
+  const formData = new FormData();
+  formData.append("size", "auto");
+  formData.append("image_file", file);
+
+  const resp = await fetch("https://api.remove.bg/v1.0/removebg", {
+    method: "POST",
+    headers: { "X-Api-Key": apiKey },
+    body: formData
+  });
+
+  if(resp.ok){
+    return await resp.blob();
   }
-  throw new Error("Model did not finish loading after several retries. Try again in a minute.");
+  let bodyText = "";
+  try{ bodyText = await resp.text(); }catch(e){}
+  let parsed = null;
+  try{ parsed = JSON.parse(bodyText); }catch(e){}
+  const msg = parsed && parsed.errors && parsed.errors[0] ? parsed.errors[0].title : (bodyText || resp.statusText);
+  throw new Error("HTTP " + resp.status + ": " + msg);
 }
 
 const PRESETS = [
@@ -577,7 +569,7 @@ function generatePresetCanvas(cutoutImg, bbox, preset, bgOverride, position){
 processBtn.onclick = async () => {
   const token = apiTokenInput.value.trim();
   if(!token){
-    alert('Paste your Hugging Face API token in Settings first, then tap Test Connection to confirm it works.');
+    alert('Paste your remove.bg API key in Settings first, then tap Test Connection to confirm it works.');
     return;
   }
   processBtn.disabled = true;

@@ -336,6 +336,8 @@
     <input type="text" id="settingsSheetsUrl" placeholder="Paste Apps Script URL here">
     <button class="settingsSaveBtn" id="btnSaveSheetsUrl">Save Sheets URL</button>
     <div class="settingsStatusMsg" id="sheetsUrlStatus"></div>
+    <button class="settingsSaveBtn" id="btnTestSheets">Test Sheets connection</button>
+    <div id="sheetsTestStatus" role="status" style="font-size:13px;white-space:pre-wrap;overflow-wrap:anywhere;"></div>
 
     <button id="btnSyncSheets" style="width:100%;padding:14px;border-radius:8px;border:none;background:#2ecc71;color:#fff;font-size:16px;font-weight:bold;margin-top:10px;">Sync everything to Sheet now</button>
     <div id="syncSheetsStatus" role="status" style="font-size:13px;color:#888;margin-top:6px;min-height:18px;"></div>
@@ -1152,13 +1154,14 @@
     document.getElementById("settingsGroqKey").value = localStorage.getItem("optistock_groq") || "";
     document.getElementById("settingsGroqVisionModel").value = getGroqVisionModel();
     document.getElementById("settingsDeletePin").value = "";
-    document.getElementById("settingsSheetsUrl").value = localStorage.getItem("optistock_sheets_url") || "";
+    document.getElementById("settingsSheetsUrl").value = getSavedSheetsUrl();
     var groqStatus = document.getElementById("groqStatus");
     var deletePinStatus = document.getElementById("deletePinStatus");
     var sheetsUrlStatus = document.getElementById("sheetsUrlStatus");
     groqStatus.textContent = localStorage.getItem("optistock_groq") ? "Previously saved" : "";
     deletePinStatus.textContent = localStorage.getItem("optistock_delete_pin") ? "Previously saved" : "";
-    sheetsUrlStatus.textContent = localStorage.getItem("optistock_sheets_url") ? "Previously saved" : "";
+    var savedSheetsUrl = getSavedSheetsUrl();
+    sheetsUrlStatus.textContent = savedSheetsUrl ? (sheetsUrlWarning(savedSheetsUrl) || "Previously saved") : "";
     settingsModal.classList.remove("hidden");
   });
 
@@ -1196,6 +1199,13 @@
   var btnSaveSheetsUrl = document.getElementById("btnSaveSheetsUrl");
   function doSaveSheetsUrl(e) {
     e.preventDefault();
+    var input = document.getElementById("settingsSheetsUrl");
+    input.value = cleanSheetsUrl(input.value);
+    var warning = sheetsUrlWarning(input.value);
+    if (warning) {
+      document.getElementById("sheetsUrlStatus").textContent = warning;
+      return;
+    }
     saveWithFeedback("optistock_sheets_url", "settingsSheetsUrl", "sheetsUrlStatus", "your Apps Script URL");
     scheduleSheetRetry(0);
   }
@@ -1221,16 +1231,31 @@
 
   function scheduleSheetRetry(delay) {
     clearTimeout(sheetsRetryTimer);
-    if (!sheetsBusy && localStorage.getItem("optistock_sheets_url")) {
+    if (!sheetsBusy && getSavedSheetsUrl()) {
       sheetsRetryTimer = setTimeout(syncPendingSheetItems, delay);
     }
   }
 
-  function sendSheetBatch(savedUrl, changes) {
+  function cleanSheetsUrl(url) {
+    return url.replace(/\s+/g, "");
+  }
+
+  function getSavedSheetsUrl() {
+    return cleanSheetsUrl(localStorage.getItem("optistock_sheets_url") || "");
+  }
+
+  function sheetsUrlWarning(url) {
+    if (!/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(url.split("#")[0])) {
+      return "Use a Google Apps Script web app URL like https://script.google.com/macros/s/…/exec, followed by # and your token.";
+    }
+    return "";
+  }
+
+  function postToSheets(savedUrl, action, changes, readReply) {
     var endpoint = new URL(savedUrl);
     var token = endpoint.hash.slice(1);
     endpoint.hash = "";
-    var payload = JSON.stringify({ action: "optistockInventoryBackup", token: token, changes: changes });
+    var payload = JSON.stringify({ action: action, token: token, changes: changes });
     var controller = new AbortController();
     var timeout = setTimeout(function() { controller.abort(); }, 45000);
     return fetch(endpoint.toString(), {
@@ -1243,7 +1268,13 @@
     }).catch(function() {
       if (controller.signal.aborted) { throw new Error("The Google Sheets web app did not respond within 45 seconds"); }
       throw new Error("Could not read a confirmation from the Google Sheets web app. Check the connection and that the saved /exec URL opens without signing in.");
-    }).then(function(response) {
+    }).then(readReply).finally(function() {
+      clearTimeout(timeout);
+    });
+  }
+
+  function sendSheetBatch(savedUrl, changes) {
+    return postToSheets(savedUrl, "optistockInventoryBackup", changes, function(response) {
       if (!response.ok) { throw new Error("Google Sheets returned HTTP " + response.status); }
       return response.json().catch(function() {
         throw new Error("The web app did not return a sync confirmation. Check the deployment URL and access settings.");
@@ -1252,10 +1283,45 @@
       if (!result || result.ok !== true || result.count !== changes.length) {
         throw new Error(result && result.error || "The Sheet did not confirm every item");
       }
-    }).finally(function() {
-      clearTimeout(timeout);
     });
   }
+
+  var testSheetsButton = document.getElementById("btnTestSheets");
+  var sheetsTestStatus = document.getElementById("sheetsTestStatus");
+  testSheetsButton.addEventListener("click", function() {
+    var storedUrl = localStorage.getItem("optistock_sheets_url") || "";
+    var savedUrl = cleanSheetsUrl(storedUrl);
+    var details = "Saved URL length: " + storedUrl.length + " characters";
+    if (storedUrl !== savedUrl) { details += " (" + savedUrl.length + " after removing spaces and newlines)"; }
+    details += "\nEnds with /exec before #: " + (/\/exec$/.test(savedUrl.split("#")[0]) ? "Yes" : "No");
+    var warning = sheetsUrlWarning(savedUrl);
+    if (warning) {
+      sheetsTestStatus.textContent = details + "\n" + warning;
+      return;
+    }
+
+    testSheetsButton.disabled = true;
+    sheetsTestStatus.textContent = details + "\nSending test POST…";
+    // The deployed backup script rejects this action without writing to the Sheet.
+    postToSheets(savedUrl, "testSheetsConnection", [], function(response) {
+      details += "\nHTTP status: " + response.status + "\nFinal URL: " + (response.url || "Unavailable");
+      return response.text().then(function(reply) {
+        var contentType = response.headers.get("Content-Type") || "";
+        if (/text\/html/i.test(contentType) || /^\s*<(?:!doctype\s+html|html\b|head\b|body\b)/i.test(reply)) {
+          details += "\nGoogle returned an HTML page instead of the script's JSON reply. It may be a sign-in or error page.";
+        } else if (reply.indexOf('"Invalid backup batch"') !== -1) {
+          details += "\nThe script replied. ‘Invalid backup batch’ is expected for this test, which sends no inventory.";
+        }
+        details += "\nRaw reply (first 300 characters):\n" + (reply.slice(0, 300) || "(empty)");
+        sheetsTestStatus.textContent = details;
+      });
+    }).catch(function(err) {
+      sheetsTestStatus.textContent = details + "\n" + err.message +
+        "\nIf the browser blocks the response, its HTTP status, final URL and reply are unavailable.";
+    }).finally(function() {
+      testSheetsButton.disabled = false;
+    });
+  });
 
   function sheetChange(itemDoc) {
     return { id: itemDoc.id, item: itemDoc.exists() ? itemDoc.data() : null };
@@ -1267,7 +1333,7 @@
   }
 
   function syncPendingSheetItems() {
-    var sheetsUrl = localStorage.getItem("optistock_sheets_url");
+    var sheetsUrl = getSavedSheetsUrl();
     if (sheetsBusy || !sheetsUrl) { return; }
     sheetsBusy = true;
     syncSheetsButton.disabled = true;
@@ -1287,7 +1353,7 @@
         return sendSheetBatch(sheetsUrl, changes);
       }).then(function() {
         sentBatch = true;
-        if (sheetsUrl !== localStorage.getItem("optistock_sheets_url")) { return; }
+        if (sheetsUrl !== getSavedSheetsUrl()) { return; }
         entries.forEach(function(entry) {
           if (localStorage.getItem(entry.key) === entry.version) { localStorage.removeItem(entry.key); }
         });
@@ -1306,7 +1372,7 @@
   }
 
   syncSheetsButton.addEventListener("click", function() {
-    var sheetsUrl = localStorage.getItem("optistock_sheets_url");
+    var sheetsUrl = getSavedSheetsUrl();
     if (!sheetsUrl) { alert("Please enter your Apps Script URL and tap Save first"); return; }
     if (sheetsBusy) { return; }
     clearTimeout(sheetsRetryTimer);

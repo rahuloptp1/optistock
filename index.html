@@ -53,11 +53,15 @@
   #btnSavePo { background: #e67e22; color: #fff; }
 
   #mainContent { padding: 14px; padding-bottom: 80px; }
+  #invSearch { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; margin-bottom: 8px; }
+  #catChips { display: flex; gap: 6px; overflow-x: auto; padding: 4px 0 8px; }
+  .catChip { background: #eee; color: #555; border: none; padding: 6px 14px; border-radius: 20px; font-size: 13px; white-space: nowrap; }
+  .catChip.active { background: #1a1a2e; color: #fff; }
 
   #addItemBtn { position: fixed; bottom: 20px; right: 20px; width: 56px; height: 56px; border-radius: 50%; background: #4cafef; color: #fff; font-size: 28px; border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
 
   .itemCard { background: #fff; border-radius: 8px; padding: 10px; margin-bottom: 10px; display: flex; gap: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
-  .itemCard img { width: 64px; height: 64px; object-fit: cover; border-radius: 6px; background: #eee; }
+  .itemCard img { flex-shrink: 0; width: 64px; height: 64px; object-fit: cover; border-radius: 6px; background: #eee; }
   .itemCard .itemInfo { flex: 1; }
   .itemCard .itemModel { font-weight: bold; font-size: 15px; }
   .itemCard .itemMeta { font-size: 13px; color: #666; }
@@ -160,7 +164,8 @@
     </select>
     <label>Frame Photo</label>
     <input type="file" id="formPhoto" accept="image/*" capture="environment">
-    <div id="uploadStatus"></div>
+    <div id="uploadStatus" role="status"></div>
+    <button type="button" id="discardPhotoUpload" class="hidden">Discard new photo</button>
     <img id="photoPreview">
     <label>Item Name *</label>
     <input type="text" id="formItemName" placeholder="e.g. Ray-Ban Aviator Gold">
@@ -459,25 +464,42 @@
       });
     }
 
-    var categories = ["All", "Optical Frame", "Sunglasses", "Reading Glass", "Contact Lens", "Lens", "Accessory"];
-    var chips = "<div id='catChips' style='display:flex;gap:6px;overflow-x:auto;padding:4px 0 8px;'>";
-    for (var ci = 0; ci < categories.length; ci++) {
-      var isActive = inventoryCategory === categories[ci];
-      var chipStyle = isActive
-        ? "background:#1a1a2e;color:#fff;border:none;padding:6px 14px;border-radius:20px;font-size:13px;white-space:nowrap;"
-        : "background:#eee;color:#555;border:none;padding:6px 14px;border-radius:20px;font-size:13px;white-space:nowrap;";
-      chips += "<button class='catChip' data-cat='" + categories[ci] + "' style='" + chipStyle + "'>" + categories[ci] + "</button>";
-    }
-    chips += "</div>";
+    var results = document.getElementById("inventoryResults");
+    if (!results) {
+      content.innerHTML = "<input type='text' id='invSearch' placeholder='Search name, model, brand, size...'>" +
+        "<div id='catChips'></div><div id='inventoryResults'></div>";
+      var invSearch = document.getElementById("invSearch");
+      invSearch.value = inventorySearch;
+      invSearch.addEventListener("input", function() {
+        inventorySearch = invSearch.value;
+        renderInventory();
+      });
 
-    var searchBox = "<input type='text' id='invSearch' placeholder='Search name, model, brand, size...' value='" + escapeHtml(inventorySearch) + "' style='width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:15px;margin-bottom:8px;'>";
+      var categories = ["All", "Optical Frame", "Sunglasses", "Reading Glass", "Contact Lens", "Lens", "Accessory"];
+      var chipsContainer = document.getElementById("catChips");
+      for (var ci = 0; ci < categories.length; ci++) {
+        var chip = document.createElement("button");
+        chip.className = "catChip";
+        chip.textContent = categories[ci];
+        chip.addEventListener("click", function() {
+          inventoryCategory = this.textContent;
+          renderInventory();
+        });
+        chipsContainer.appendChild(chip);
+      }
+      results = document.getElementById("inventoryResults");
+    }
+
+    var chips = content.querySelectorAll(".catChip");
+    for (var ci = 0; ci < chips.length; ci++) {
+      chips[ci].classList.toggle("active", chips[ci].textContent === inventoryCategory);
+    }
 
     if (filtered.length === 0) {
-      content.innerHTML = searchBox + chips + "<p style='color:#999;text-align:center;margin-top:30px;'>No items found.</p>";
-      wireInventoryControls();
+      results.innerHTML = "<p style='color:#999;text-align:center;margin-top:30px;'>No items found.</p>";
       return;
     }
-    var html = searchBox + chips;
+    var html = "";
     for (var i = 0; i < filtered.length; i++) {
       var it = filtered[i];
       var photoSrc = it.photoUrl ? it.photoUrl : "";
@@ -506,7 +528,7 @@
       }
       html += "<div class='itemCard'>";
       if (photoSrc) {
-        html += "<img src='" + photoSrc + "' alt=''>";
+        html += '<img src="' + escapeHtml(photoSrc) + '" alt="Frame photo">';
       } else {
         html += "<div style='width:64px;height:64px;background:#eee;border-radius:6px;flex-shrink:0;'></div>";
       }
@@ -522,38 +544,24 @@
       html += "<button class='btnDelete' data-id='" + it.id + "'>Delete</button>";
       html += "</div></div></div>";
     }
-    content.innerHTML = html;
-    wireInventoryControls();
+    results.innerHTML = html;
+    wireInventoryActions(results);
   }
 
-  function wireInventoryControls() {
-    var invSearch = document.getElementById("invSearch");
-    if (invSearch) {
-      invSearch.addEventListener("input", function() {
-        inventorySearch = invSearch.value;
-        renderInventory();
-      });
-    }
-    var chips = document.querySelectorAll(".catChip");
-    for (var ci = 0; ci < chips.length; ci++) {
-      chips[ci].addEventListener("click", function(e) {
-        inventoryCategory = e.target.getAttribute("data-cat");
-        renderInventory();
-      });
-    }
-    var sellButtons = document.querySelectorAll(".btnSell");
+  function wireInventoryActions(results) {
+    var sellButtons = results.querySelectorAll(".btnSell");
     for (var k = 0; k < sellButtons.length; k++) {
       sellButtons[k].addEventListener("click", function(e) {
         openSellModal(e.target.getAttribute("data-id"));
       });
     }
-    var editButtons = document.querySelectorAll(".btnEdit");
+    var editButtons = results.querySelectorAll(".btnEdit");
     for (var m = 0; m < editButtons.length; m++) {
       editButtons[m].addEventListener("click", function(e) {
         openEditModal(e.target.getAttribute("data-id"));
       });
     }
-    var deleteButtons = document.querySelectorAll(".btnDelete");
+    var deleteButtons = results.querySelectorAll(".btnDelete");
     for (var n = 0; n < deleteButtons.length; n++) {
       deleteButtons[n].addEventListener("click", function(e) {
         deleteItem(e.target.getAttribute("data-id"));
@@ -569,6 +577,8 @@
   var formPhoto = document.getElementById("formPhoto");
   var photoPreview = document.getElementById("photoPreview");
   var uploadStatus = document.getElementById("uploadStatus");
+  var discardPhotoUpload = document.getElementById("discardPhotoUpload");
+  var photoUpload = null;
   var colourRowsDiv = document.getElementById("colourRows");
   var btnAddColour = document.getElementById("btnAddColour");
   var uploadedPhotoUrl = "";
@@ -666,13 +676,7 @@
       createColourRow("", "", "1");
     }
     uploadedPhotoUrl = item.photoUrl || "";
-    if (uploadedPhotoUrl) {
-      photoPreview.src = uploadedPhotoUrl;
-      photoPreview.style.display = "block";
-    } else {
-      photoPreview.style.display = "none";
-    }
-    uploadStatus.textContent = "";
+    resetPhotoUpload();
     btnSaveItem.textContent = "Update Item";
     addItemModal.classList.remove("hidden");
   }
@@ -718,37 +722,67 @@
     document.getElementById("formNotes").value = "";
     colourRowsDiv.innerHTML = "";
     createColourRow("", "", "1");
-    formPhoto.value = "";
-    photoPreview.style.display = "none";
-    uploadStatus.textContent = "";
     uploadedPhotoUrl = "";
+    resetPhotoUpload();
   }
 
-  formPhoto.addEventListener("change", function() {
-    var file = formPhoto.files[0];
-    if (!file) { return; }
-    photoPreview.src = URL.createObjectURL(file);
-    photoPreview.style.display = "block";
-    uploadStatus.textContent = "Uploading photo...";
-    uploadedPhotoUrl = "";
+  function showPhotoPreview(src) {
+    if (photoPreview.src.indexOf("blob:") === 0) {
+      URL.revokeObjectURL(photoPreview.src);
+    }
+    if (src) {
+      photoPreview.src = src;
+    } else {
+      photoPreview.removeAttribute("src");
+    }
+    photoPreview.style.display = src ? "block" : "none";
+  }
+
+  function resetPhotoUpload() {
+    photoUpload = null;
+    formPhoto.value = "";
+    uploadStatus.textContent = "";
+    discardPhotoUpload.classList.add("hidden");
+    showPhotoPreview(uploadedPhotoUrl);
+  }
+
+  discardPhotoUpload.addEventListener("click", resetPhotoUpload);
+
+  function uploadPhoto(file, previewSrc) {
+    var upload = { pending: true };
+    photoUpload = upload;
+    showPhotoPreview(previewSrc);
+    uploadStatus.textContent = "Uploading photo… Wait for it to finish before saving.";
+    discardPhotoUpload.classList.remove("hidden");
+
     var formData = new FormData();
     formData.append("file", file);
     formData.append("upload_preset", UPLOAD_PRESET);
     var uploadUrl = "https://api.cloudinary.com/v1_1/" + CLOUD_NAME + "/image/upload";
     fetch(uploadUrl, { method: "POST", body: formData })
-      .then(function(res) { return res.json(); })
-      .then(function(data) {
-        if (data.secure_url) {
-          uploadedPhotoUrl = data.secure_url;
-          uploadStatus.textContent = "Photo uploaded";
-        } else {
-          uploadStatus.textContent = "Upload failed, try again";
-        }
+      .then(function(res) {
+        if (!res.ok) { throw new Error("Photo upload failed"); }
+        return res.json();
       })
-      .catch(function(err) {
-        uploadStatus.textContent = "Upload failed, check internet";
-        console.error(err);
+      .then(function(data) {
+        if (photoUpload !== upload) { return; }
+        if (!data.secure_url) { throw new Error("Missing photo link"); }
+        uploadedPhotoUrl = data.secure_url;
+        resetPhotoUpload();
+        uploadStatus.textContent = "Photo uploaded";
+      })
+      .catch(function() {
+        if (photoUpload !== upload) { return; }
+        upload.pending = false;
+        uploadStatus.textContent = "Photo upload failed. Choose the photo again or discard the new photo.";
       });
+  }
+
+  formPhoto.addEventListener("change", function() {
+    var file = formPhoto.files[0];
+    if (!file) { return; }
+    formPhoto.value = "";
+    uploadPhoto(file, URL.createObjectURL(file));
   });
 
   // ---- Sell modal ----
@@ -862,6 +896,11 @@
   }
 
   btnSaveItem.addEventListener("click", function() {
+    if (photoUpload) {
+      alert(photoUpload.pending ? "Wait for the photo to finish uploading before saving." :
+        "Upload the photo again or discard the new photo before saving.");
+      return;
+    }
     var itemName = document.getElementById("formItemName").value.trim();
     if (!itemName) { alert("Please enter an item name"); return; }
     var price = Number(document.getElementById("formPrice").value) || 0;
@@ -988,6 +1027,10 @@
     camCanvas.height = h;
     var ctx = camCanvas.getContext("2d");
     ctx.drawImage(camVideo, 0, 0, w, h);
+    if (!uploadedPhotoUrl && !photoUpload && !addItemModal.classList.contains("hidden")) {
+      var framePhoto = camCanvas.toDataURL("image/jpeg", 0.85);
+      uploadPhoto(framePhoto, framePhoto);
+    }
     var imgData = ctx.getImageData(0, 0, w, h);
     var d = imgData.data;
     var contrast = 1.9;

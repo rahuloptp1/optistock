@@ -1,5 +1,6 @@
 # Rules for this repo
 
+- Push every change directly to the main branch. Do not create branches or pull requests.
 - Owner is not a coder. Explain every change in plain, simple English.
 - App is a single index.html file (HTML + CSS + JS together). Do not split into multiple files.
 - JavaScript: use var only. No const, no let, no arrow functions, no template literals.

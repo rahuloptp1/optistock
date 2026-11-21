@@ -1021,15 +1021,23 @@
 
   btnCaptureShot.addEventListener("click", function() {
     if (scanMode !== "temple") { return; }
+    if (camVideo.readyState < 2 || !camVideo.videoWidth || !camVideo.videoHeight) {
+      scanLabel.textContent = "Wait for the camera preview, then tap Capture.";
+      return;
+    }
     var w = 1280;
-    var h = (camVideo.videoHeight / camVideo.videoWidth) * w;
+    var h = Math.max(1, Math.round((camVideo.videoHeight / camVideo.videoWidth) * w));
     camCanvas.width = w;
     camCanvas.height = h;
     var ctx = camCanvas.getContext("2d");
     ctx.drawImage(camVideo, 0, 0, w, h);
+    var framePhoto = "";
     if (!uploadedPhotoUrl && !photoUpload && !addItemModal.classList.contains("hidden")) {
-      var framePhoto = camCanvas.toDataURL("image/jpeg", 0.85);
-      uploadPhoto(framePhoto, framePhoto);
+      try {
+        framePhoto = camCanvas.toDataURL("image/jpeg", 0.85);
+      } catch (err) {
+        uploadStatus.textContent = "Could not capture the frame photo. Use the Frame Photo field to add one.";
+      }
     }
     var imgData = ctx.getImageData(0, 0, w, h);
     var d = imgData.data;
@@ -1046,6 +1054,7 @@
     var dataUrl = camCanvas.toDataURL("image/jpeg", 0.85);
     closeCamera();
     runTempleScan(dataUrl);
+    if (framePhoto) { uploadPhoto(framePhoto, framePhoto); }
   });
 
   function extractModelCode(rawText) {
@@ -1057,10 +1066,12 @@
   }
 
   function runTempleScan(dataUrl) {
-    var groqKey = localStorage.getItem("optistock_groq");
+    var groqKey = (localStorage.getItem("optistock_groq") || "").trim();
     if (!groqKey) { alert("Please set your Groq API key in Settings first"); return; }
-    document.getElementById("formModel").value = "Scanning...";
-    var base64Data = dataUrl.split(",")[1];
+    var modelInput = document.getElementById("formModel");
+    var previousModel = modelInput.value;
+    modelInput.value = "Scanning...";
+    var scanError = "Scan failed. Check your internet connection and try again.";
     fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": "Bearer " + groqKey },
@@ -1070,25 +1081,34 @@
           role: "user",
           content: [
             { type: "text", text: "This is an eyeglass temple arm with engraved text. The engraving usually contains a model number (letters and digits, e.g. RB2140 or similar brand-style codes) followed by separate lens size numbers (e.g. 52-18-140 or 52 18 140) and sometimes a colour code. Reply with ONLY the model number part, excluding the lens size numbers and excluding the colour code. If unsure which part is the size, exclude any number group that looks like three short numbers separated by dashes or spaces. Reply with nothing except the model code itself, no explanation." },
-            { type: "image_url", image_url: { url: "data:image/jpeg;base64," + base64Data } }
+            { type: "image_url", image_url: { url: dataUrl } }
           ]
         }]
       })
     })
-      .then(function(res) { return res.json(); })
+      .then(function(res) {
+        if (res.ok) { return res.json(); }
+        if (res.status === 401 || res.status === 403) {
+          scanError = "Groq rejected the request. Check your Groq API key and account access in Settings.";
+        } else if (res.status === 429) {
+          scanError = "Groq's usage limit was reached. Wait a moment and try again.";
+        } else {
+          scanError = "Groq could not process the scan (HTTP " + res.status + "). Try again or enter the model number manually.";
+        }
+        throw new Error("Groq scan request failed");
+      })
       .then(function(data) {
         var rawText = "";
         if (data.choices && data.choices[0] && data.choices[0].message) {
           rawText = data.choices[0].message.content;
         }
         var modelCode = extractModelCode(rawText);
-        document.getElementById("formModel").value = modelCode || "";
+        modelInput.value = modelCode || previousModel;
         if (!modelCode) { alert("Could not read temple text, please type manually"); }
       })
-      .catch(function(err) {
-        document.getElementById("formModel").value = "";
-        alert("Scan failed, check internet connection");
-        console.error(err);
+      .catch(function() {
+        modelInput.value = previousModel;
+        alert(scanError);
       });
   }
 

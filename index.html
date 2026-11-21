@@ -1199,6 +1199,59 @@
   btnSaveDeletePin.addEventListener("click", doSaveDeletePin);
   btnSaveDeletePin.addEventListener("touchstart", doSaveDeletePin);
 
+  // Older OptiStock versions stored inventory and base64 photos on this site.
+  // Archive only those known keys, and remove them only after IndexedDB commits.
+  function moveLegacyInventoryCache() {
+    return new Promise(function(resolve) {
+      try {
+        var entries = ["opti_v3", "optistock_v4", "deleted_v1"].map(function(key) {
+          return { key: key, value: localStorage.getItem(key) };
+        }).filter(function(entry) {
+          return entry.value && (entry.value.length >= 65536 || /data:image\/[^;,]+;base64,/i.test(entry.value));
+        });
+        if (!entries.length || !window.indexedDB) { resolve(); return; }
+
+        var open = window.indexedDB.open("optistock-legacy-cache", 1);
+        open.onupgradeneeded = function() {
+          open.result.createObjectStore("archives", { autoIncrement: true });
+        };
+        open.onerror = open.onblocked = function() { resolve(); };
+        open.onsuccess = function() {
+          var archive = open.result;
+          var transaction;
+          try {
+            transaction = archive.transaction("archives", "readwrite");
+          } catch (err) {
+            archive.close();
+            resolve();
+            return;
+          }
+          transaction.onabort = function() {
+            archive.close();
+            resolve();
+          };
+          transaction.oncomplete = function() {
+            archive.close();
+            // Another tab may have written new data while the archive was being saved.
+            try {
+              entries.forEach(function(entry) {
+                if (localStorage.getItem(entry.key) === entry.value) { localStorage.removeItem(entry.key); }
+              });
+            } catch (err) {
+              // Keep any entries the browser would not let us remove.
+            }
+            resolve();
+          };
+          entries.forEach(function(entry) { transaction.objectStore("archives").add(entry); });
+        };
+      } catch (err) {
+        resolve();
+      }
+    });
+  }
+
+  var legacyInventoryCacheReady = moveLegacyInventoryCache();
+
   // Save Sheets URL
   var btnSaveSheetsUrl = document.getElementById("btnSaveSheetsUrl");
   btnSaveSheetsUrl.addEventListener("click", function() {
@@ -1213,18 +1266,23 @@
     }
     var endpoint = url.split("#")[0];
     var token = tokenInput.value.trim() || (url.indexOf("#") === -1 ? "" : url.slice(url.indexOf("#") + 1));
-    try {
-      localStorage.setItem("optistock_sheets_url", endpoint);
-      localStorage.setItem("optistock_sheets_token", token);
-    } catch (err) {
-      status.textContent = "Could not save both Sheets settings. Check that Chrome allows this site to save data, then try again.";
-      return;
-    }
-    input.value = endpoint;
-    tokenInput.value = token;
-    status.textContent = "Saved ✓ — length " + endpoint.length + ", ends with /exec: " +
-      (/\/exec$/.test(endpoint) ? "Yes" : "No") + ". Last 10 characters: " + endpoint.slice(-10);
-    scheduleSheetRetry(0);
+    btnSaveSheetsUrl.disabled = true;
+    legacyInventoryCacheReady.then(function() {
+      try {
+        localStorage.setItem("optistock_sheets_url", endpoint);
+        localStorage.setItem("optistock_sheets_token", token);
+      } catch (err) {
+        status.textContent = "Could not save both Sheets settings (" + err.name + ").";
+        return;
+      }
+      input.value = endpoint;
+      tokenInput.value = token;
+      status.textContent = "Saved ✓ — length " + endpoint.length + ", ends with /exec: " +
+        (/\/exec$/.test(endpoint) ? "Yes" : "No") + ". Last 10 characters: " + endpoint.slice(-10);
+      scheduleSheetRetry(0);
+    }).finally(function() {
+      btnSaveSheetsUrl.disabled = false;
+    });
   });
 
   // Google Sheets is a backup. Fetch current inventory from Firebase before sending it.

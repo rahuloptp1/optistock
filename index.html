@@ -337,8 +337,8 @@
     <button class="settingsSaveBtn" id="btnSaveSheetsUrl">Save Sheets URL</button>
     <div class="settingsStatusMsg" id="sheetsUrlStatus"></div>
 
-    <button id="btnSyncSheets" style="width:100%;padding:14px;border-radius:8px;border:none;background:#2ecc71;color:#fff;font-size:16px;font-weight:bold;margin-top:10px;">Sync to Google Sheets Now</button>
-    <div id="syncSheetsStatus" style="font-size:13px;color:#888;margin-top:6px;min-height:18px;"></div>
+    <button id="btnSyncSheets" style="width:100%;padding:14px;border-radius:8px;border:none;background:#2ecc71;color:#fff;font-size:16px;font-weight:bold;margin-top:10px;">Sync everything to Sheet now</button>
+    <div id="syncSheetsStatus" role="status" style="font-size:13px;color:#888;margin-top:6px;min-height:18px;"></div>
 
     <button id="btnCloseSettings" style="width:100%;padding:14px;border-radius:8px;border:none;background:#eee;color:#333;font-size:16px;margin-top:10px;">Close</button>
   </div>
@@ -369,7 +369,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
-  import { getFirestore, collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+  import { getFirestore, collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc, getDocFromServer, getDocsFromServer } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
   var firebaseConfig = {
     apiKey: "AIzaSyDyaJYJQqQpQlJMI_VlJgecwdbRxudgGbo",
@@ -703,7 +703,9 @@
     var label = item ? item.itemName : "this item";
     var sure = window.confirm("Delete " + label + "? This cannot be undone.");
     if (!sure) { return; }
-    deleteDoc(doc(db, "items", itemId)).catch(function(err) {
+    deleteDoc(doc(db, "items", itemId)).then(function() {
+      queueSheetItem(itemId);
+    }).catch(function(err) {
       alert("Delete failed, check internet connection");
       console.error(err);
     });
@@ -860,6 +862,7 @@
     var itemRef = doc(db, "items", item.id);
     updateDoc(itemRef, { colours: newColours, qty: newTotalQty })
       .then(function() {
+        queueSheetItem(item.id);
         var saleRecord = {
           itemId: item.id, itemName: item.itemName, model: item.model,
           colour: selectedColour, size: item.size, business: item.business,
@@ -937,6 +940,7 @@
     };
     btnSaveItem.disabled = true;
     var savePromise;
+    var savedItemId = editingItemId;
     if (editingItemId) {
       btnSaveItem.textContent = "Updating...";
       savePromise = updateDoc(doc(db, "items", editingItemId), newItem);
@@ -946,7 +950,8 @@
       savePromise = addDoc(collection(db, "items"), newItem);
     }
     savePromise
-      .then(function() {
+      .then(function(createdItem) {
+        queueSheetItem(savedItemId || createdItem.id);
         addItemModal.classList.add("hidden");
         resetForm();
         editingItemId = "";
@@ -1154,7 +1159,6 @@
     groqStatus.textContent = localStorage.getItem("optistock_groq") ? "Previously saved" : "";
     deletePinStatus.textContent = localStorage.getItem("optistock_delete_pin") ? "Previously saved" : "";
     sheetsUrlStatus.textContent = localStorage.getItem("optistock_sheets_url") ? "Previously saved" : "";
-    document.getElementById("syncSheetsStatus").textContent = "";
     settingsModal.classList.remove("hidden");
   });
 
@@ -1193,79 +1197,148 @@
   function doSaveSheetsUrl(e) {
     e.preventDefault();
     saveWithFeedback("optistock_sheets_url", "settingsSheetsUrl", "sheetsUrlStatus", "your Apps Script URL");
+    scheduleSheetRetry(0);
   }
   btnSaveSheetsUrl.addEventListener("click", doSaveSheetsUrl);
   btnSaveSheetsUrl.addEventListener("touchstart", doSaveSheetsUrl);
 
-  // Sync to Google Sheets - JSON rows chunked
-  document.getElementById("btnSyncSheets").addEventListener("click", function() {
-    var sheetsUrl = document.getElementById("settingsSheetsUrl").value.trim() || localStorage.getItem("optistock_sheets_url") || "";
-    if (sheetsUrl) { localStorage.setItem("optistock_sheets_url", sheetsUrl); }
-    if (!sheetsUrl) { alert("Please enter your Apps Script URL and tap Save first"); return; }
-    var statusDiv = document.getElementById("syncSheetsStatus");
-    statusDiv.textContent = "Preparing data...";
-    statusDiv.style.color = "#888";
+  // Google Sheets is a backup. Fetch current inventory from Firebase before sending it.
+  var sheetsBatchSize = 100;
+  var sheetsQueuePrefix = "optistock_sheet_pending:";
+  var sheetsBusy = false;
+  var sheetsRetryTimer;
+  var syncSheetsButton = document.getElementById("btnSyncSheets");
+  var syncSheetsStatus = document.getElementById("syncSheetsStatus");
 
-    var allRows = [];
-    var header = ["Name","Model No","Size","Brand","Category","For","Frame Type","Colour","Colour Code","Colour Qty","Total Stock","Selling Price","Cost Price","Material","Barcode","Supplier","Location","Business","Updated"];
-    allRows.push(header);
+  function queueSheetItem(itemId) {
+    try {
+      localStorage.setItem(sheetsQueuePrefix + itemId, crypto.randomUUID());
+      scheduleSheetRetry(0);
+    } catch (err) {
+      syncSheetsStatus.textContent = "Inventory saved in Firebase, but this browser could not queue the Sheet backup. Run a full sync.";
+    }
+  }
 
-    for (var i = 0; i < allItems.length; i++) {
-      var it = allItems[i];
-      var colours = it.colours || [];
-      if (colours.length === 0) { colours = [{ colour: "", code: "", qty: it.qty || 0 }]; }
-      for (var c = 0; c < colours.length; c++) {
-        allRows.push([
-          String(it.itemName || ""), String(it.model || ""), String(it.size || ""), String(it.brand || ""),
-          String(it.category || ""), String(it.forWhom || ""), String(it.frameType || ""),
-          String(colours[c].colour || ""), String(colours[c].code || ""), Number(colours[c].qty || 0),
-          Number(it.qty || 0), Number(it.price || 0), Number(it.costPrice || 0), String(it.material || ""),
-          String(it.barcode || ""), String(it.supplier || ""), String(it.location || ""),
-          String(it.business || ""), new Date().toLocaleString()
-        ]);
+  function scheduleSheetRetry(delay) {
+    clearTimeout(sheetsRetryTimer);
+    if (!sheetsBusy && localStorage.getItem("optistock_sheets_url")) {
+      sheetsRetryTimer = setTimeout(syncPendingSheetItems, delay);
+    }
+  }
+
+  function sendSheetBatch(savedUrl, changes) {
+    var endpoint = new URL(savedUrl);
+    var token = endpoint.hash.slice(1);
+    endpoint.hash = "";
+    return fetch(endpoint.toString(), {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=UTF-8" },
+      body: JSON.stringify({ action: "optistockInventoryBackup", token: token, changes: changes }),
+      signal: AbortSignal.timeout(45000)
+    }).then(function(response) {
+      if (!response.ok) { throw new Error("Google Sheets returned HTTP " + response.status); }
+      return response.json().catch(function() {
+        throw new Error("The web app did not return a sync confirmation. Check the deployment URL and access settings.");
+      });
+    }).then(function(result) {
+      if (!result || result.ok !== true || result.count !== changes.length) {
+        throw new Error(result && result.error || "The Sheet did not confirm every item");
       }
-    }
+    });
+  }
 
-    var CHUNK_SIZE = 100;
-    var totalChunks = Math.ceil(allRows.length / CHUNK_SIZE);
-    var currentChunk = 0;
+  function sheetChange(itemDoc) {
+    return { id: itemDoc.id, item: itemDoc.exists() ? itemDoc.data() : null };
+  }
 
-    statusDiv.textContent = "Syncing chunk 1 of " + totalChunks + "...";
+  function withSheetBackupLock(task) {
+    if (navigator.locks) { return navigator.locks.request("optistock-sheet-backup", task); }
+    return Promise.resolve().then(task);
+  }
 
-    function sendChunk(chunkIndex) {
-      var start = chunkIndex * CHUNK_SIZE;
-      var end = Math.min(start + CHUNK_SIZE, allRows.length);
-      var chunkRows = allRows.slice(start, end);
-
-      fetch(sheetsUrl, {
-        method: "POST",
-        mode: "no-cors",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "syncInventory",
-          rows: chunkRows,
-          chunkIndex: chunkIndex,
-          totalChunks: totalChunks
-        })
-      })
-        .then(function() {
-          currentChunk++;
-          if (currentChunk < totalChunks) {
-            statusDiv.textContent = "Syncing chunk " + (currentChunk + 1) + " of " + totalChunks + "...";
-            setTimeout(function() { sendChunk(currentChunk); }, 2000);
-          } else {
-            statusDiv.textContent = "All " + allRows.length + " rows synced! Check your Google Sheet.";
-            statusDiv.style.color = "#2ecc71";
-          }
-        })
-        .catch(function(err) {
-          statusDiv.textContent = "Sync failed at chunk " + (currentChunk + 1) + ": " + err.message;
-          statusDiv.style.color = "#e74c3c";
+  function syncPendingSheetItems() {
+    var sheetsUrl = localStorage.getItem("optistock_sheets_url");
+    if (sheetsBusy || !sheetsUrl) { return; }
+    sheetsBusy = true;
+    syncSheetsButton.disabled = true;
+    var nextDelay = 0;
+    var sentBatch = false;
+    withSheetBackupLock(function() {
+      var keys = Object.keys(localStorage).filter(function(key) {
+        return key.indexOf(sheetsQueuePrefix) === 0;
+      }).slice(0, sheetsBatchSize);
+      if (!keys.length) { return; }
+      var entries = keys.map(function(key) {
+        return { key: key, version: localStorage.getItem(key) };
+      });
+      return Promise.all(entries.map(function(entry) {
+        return getDocFromServer(doc(db, "items", entry.key.slice(sheetsQueuePrefix.length))).then(sheetChange);
+      })).then(function(changes) {
+        return sendSheetBatch(sheetsUrl, changes);
+      }).then(function() {
+        sentBatch = true;
+        if (sheetsUrl !== localStorage.getItem("optistock_sheets_url")) { return; }
+        entries.forEach(function(entry) {
+          if (localStorage.getItem(entry.key) === entry.version) { localStorage.removeItem(entry.key); }
         });
-    }
+        if (syncSheetsStatus.textContent.indexOf("Backup waiting:") === 0) {
+          syncSheetsStatus.textContent = "Sheet backup connection restored.";
+        }
+      });
+    }).catch(function(err) {
+      nextDelay = 30000;
+      syncSheetsStatus.textContent = "Backup waiting: " + err.message + ". Will retry.";
+    }).finally(function() {
+      sheetsBusy = false;
+      syncSheetsButton.disabled = false;
+      if (sentBatch || nextDelay) { scheduleSheetRetry(nextDelay); }
+    });
+  }
 
-    sendChunk(0);
+  syncSheetsButton.addEventListener("click", function() {
+    var sheetsUrl = localStorage.getItem("optistock_sheets_url");
+    if (!sheetsUrl) { alert("Please enter your Apps Script URL and tap Save first"); return; }
+    if (sheetsBusy) { return; }
+    clearTimeout(sheetsRetryTimer);
+    sheetsBusy = true;
+    syncSheetsButton.disabled = true;
+    syncSheetsStatus.textContent = "Reading inventory from Firebase...";
+    var synced = 0;
+    var total = 0;
+
+    withSheetBackupLock(function() {
+      return getDocsFromServer(collection(db, "items")).then(function(snapshot) {
+        var items = snapshot.docs;
+        total = items.length;
+        function sendNextBatch() {
+          syncSheetsStatus.textContent = "Synced " + synced + " of " + total;
+          if (synced === total) { return; }
+          var batch = items.slice(synced, synced + sheetsBatchSize).map(sheetChange);
+          return sendSheetBatch(sheetsUrl, batch).then(function() {
+            synced += batch.length;
+            return sendNextBatch();
+          });
+        }
+        return sendNextBatch();
+      });
+    }).then(function() {
+      syncSheetsStatus.textContent = "Synced " + synced + " of " + total + " items. Full backup complete.";
+    }).catch(function(err) {
+      syncSheetsStatus.textContent = "Full backup stopped. Synced " + synced + " of " + total + ". " + err.message;
+    }).finally(function() {
+      sheetsBusy = false;
+      syncSheetsButton.disabled = false;
+      scheduleSheetRetry(0);
+    });
   });
+
+  window.addEventListener("online", function() { scheduleSheetRetry(0); });
+  window.addEventListener("storage", function(event) {
+    if (event.key && event.newValue && event.key.indexOf(sheetsQueuePrefix) === 0) {
+      scheduleSheetRetry(0);
+    }
+  });
+  scheduleSheetRetry(0);
 
   // ---- Section tabs ----
   var currentSection = "inventory";

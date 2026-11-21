@@ -30,7 +30,8 @@
   #settingsModal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: flex-end; z-index: 80; }
   #settingsModal .sheet { background: #fff; width: 100%; border-radius: 16px 16px 0 0; padding: 18px; max-height: 92vh; overflow-y: auto; }
   #settingsModal label { display: block; font-size: 13px; color: #555; margin-top: 14px; margin-bottom: 4px; }
-  #settingsModal input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; margin-bottom: 6px; }
+  #settingsModal input, #settingsSheetsUrl { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; margin-bottom: 6px; }
+  #settingsSheetsUrl { font-size: 16px; overflow-wrap: anywhere; }
   .settingsSaveBtn { width: 100%; padding: 14px; border: none; border-radius: 8px; background: #4cafef; color: #fff; font-size: 16px; font-weight: bold; margin-bottom: 4px; cursor: pointer; }
   .settingsStatusMsg { font-size: 13px; color: #2ecc71; min-height: 18px; margin-bottom: 6px; }
 
@@ -332,10 +333,12 @@
     <button class="settingsSaveBtn" id="btnSaveDeletePin">Save Delete Password</button>
     <div class="settingsStatusMsg" id="deletePinStatus"></div>
 
-    <label>Google Sheets Apps Script URL</label>
-    <input type="text" id="settingsSheetsUrl" placeholder="Paste Apps Script URL here">
-    <button class="settingsSaveBtn" id="btnSaveSheetsUrl">Save Sheets URL</button>
-    <div class="settingsStatusMsg" id="sheetsUrlStatus"></div>
+    <label for="settingsSheetsUrl">Google Sheets Apps Script URL</label>
+    <textarea id="settingsSheetsUrl" rows="3" autocapitalize="none" spellcheck="false" placeholder="Paste Apps Script URL here"></textarea>
+    <label for="settingsSheetsToken">Backup token</label>
+    <input type="password" id="settingsSheetsToken" autocomplete="off" placeholder="Paste your backup token">
+    <button class="settingsSaveBtn" id="btnSaveSheetsUrl">Save Sheets URL and token</button>
+    <div class="settingsStatusMsg" id="sheetsUrlStatus" role="status"></div>
     <button class="settingsSaveBtn" id="btnTestSheets">Test Sheets connection</button>
     <div id="sheetsTestStatus" role="status" style="font-size:13px;white-space:pre-wrap;overflow-wrap:anywhere;"></div>
 
@@ -1154,14 +1157,15 @@
     document.getElementById("settingsGroqKey").value = localStorage.getItem("optistock_groq") || "";
     document.getElementById("settingsGroqVisionModel").value = getGroqVisionModel();
     document.getElementById("settingsDeletePin").value = "";
-    document.getElementById("settingsSheetsUrl").value = getSavedSheetsUrl();
+    var savedSheetsUrl = getSavedSheetsUrl();
+    document.getElementById("settingsSheetsUrl").value = savedSheetsUrl.split("#")[0];
+    document.getElementById("settingsSheetsToken").value = getSheetsBackupToken(savedSheetsUrl);
     var groqStatus = document.getElementById("groqStatus");
     var deletePinStatus = document.getElementById("deletePinStatus");
     var sheetsUrlStatus = document.getElementById("sheetsUrlStatus");
     groqStatus.textContent = localStorage.getItem("optistock_groq") ? "Previously saved" : "";
     deletePinStatus.textContent = localStorage.getItem("optistock_delete_pin") ? "Previously saved" : "";
-    var savedSheetsUrl = getSavedSheetsUrl();
-    sheetsUrlStatus.textContent = savedSheetsUrl ? (sheetsUrlWarning(savedSheetsUrl) || "Previously saved") : "";
+    sheetsUrlStatus.textContent = savedSheetsUrl ? (sheetsUrlWarning(savedSheetsUrl) || sheetsUrlSummary(savedSheetsUrl)) : "";
     settingsModal.classList.remove("hidden");
   });
 
@@ -1200,13 +1204,21 @@
   function doSaveSheetsUrl(e) {
     e.preventDefault();
     var input = document.getElementById("settingsSheetsUrl");
-    input.value = cleanSheetsUrl(input.value);
-    var warning = sheetsUrlWarning(input.value);
+    var tokenInput = document.getElementById("settingsSheetsToken");
+    var status = document.getElementById("sheetsUrlStatus");
+    var url = cleanSheetsUrl(input.value);
+    var warning = sheetsUrlWarning(url);
     if (warning) {
-      document.getElementById("sheetsUrlStatus").textContent = warning;
+      status.textContent = warning;
       return;
     }
-    saveWithFeedback("optistock_sheets_url", "settingsSheetsUrl", "sheetsUrlStatus", "your Apps Script URL");
+    var endpoint = url.split("#")[0];
+    var token = tokenInput.value.trim() || (url.indexOf("#") === -1 ? "" : url.slice(url.indexOf("#") + 1));
+    localStorage.setItem("optistock_sheets_url", endpoint);
+    localStorage.setItem("optistock_sheets_token", token);
+    input.value = endpoint;
+    tokenInput.value = token;
+    status.textContent = sheetsUrlSummary(getSavedSheetsUrl());
     scheduleSheetRetry(0);
   }
   btnSaveSheetsUrl.addEventListener("click", doSaveSheetsUrl);
@@ -1244,16 +1256,27 @@
     return cleanSheetsUrl(localStorage.getItem("optistock_sheets_url") || "");
   }
 
+  function sheetsUrlSummary(url) {
+    var endpoint = url.split("#")[0];
+    return "Saved URL length: " + endpoint.length + " characters. Last 10 characters: " + endpoint.slice(-10);
+  }
+
+  function getSheetsBackupToken(url) {
+    var token = (localStorage.getItem("optistock_sheets_token") || "").trim();
+    var fragmentIndex = url.indexOf("#");
+    return token || (fragmentIndex === -1 ? "" : url.slice(fragmentIndex + 1));
+  }
+
   function sheetsUrlWarning(url) {
     if (!/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(url.split("#")[0])) {
-      return "Use a Google Apps Script web app URL like https://script.google.com/macros/s/…/exec, followed by # and your token.";
+      return "Use a Google Apps Script web app URL like https://script.google.com/macros/s/…/exec. Paste the token in the Backup token field.";
     }
     return "";
   }
 
   function postToSheets(savedUrl, action, changes, readReply) {
     var endpoint = new URL(savedUrl);
-    var token = endpoint.hash.slice(1);
+    var token = getSheetsBackupToken(savedUrl);
     endpoint.hash = "";
     var payload = JSON.stringify({ action: action, token: token, changes: changes });
     var controller = new AbortController();

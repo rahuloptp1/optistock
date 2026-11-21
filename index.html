@@ -1230,11 +1230,19 @@
     var endpoint = new URL(savedUrl);
     var token = endpoint.hash.slice(1);
     endpoint.hash = "";
+    var payload = JSON.stringify({ action: "optistockInventoryBackup", token: token, changes: changes });
+    var controller = new AbortController();
+    var timeout = setTimeout(function() { controller.abort(); }, 45000);
     return fetch(endpoint.toString(), {
       method: "POST",
-      headers: { "Content-Type": "text/plain;charset=UTF-8" },
-      body: JSON.stringify({ action: "optistockInventoryBackup", token: token, changes: changes }),
-      signal: AbortSignal.timeout(45000)
+      mode: "cors",
+      credentials: "omit",
+      redirect: "follow",
+      body: new Blob([payload], { type: "text/plain;charset=utf-8" }),
+      signal: controller.signal
+    }).catch(function() {
+      if (controller.signal.aborted) { throw new Error("The Google Sheets web app did not respond within 45 seconds"); }
+      throw new Error("Could not read a confirmation from the Google Sheets web app. Check the connection and that the saved /exec URL opens without signing in.");
     }).then(function(response) {
       if (!response.ok) { throw new Error("Google Sheets returned HTTP " + response.status); }
       return response.json().catch(function() {
@@ -1244,6 +1252,8 @@
       if (!result || result.ok !== true || result.count !== changes.length) {
         throw new Error(result && result.error || "The Sheet did not confirm every item");
       }
+    }).finally(function() {
+      clearTimeout(timeout);
     });
   }
 

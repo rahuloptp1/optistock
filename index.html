@@ -322,6 +322,11 @@
     <button class="settingsSaveBtn" id="btnSaveGroq">Save Groq Key</button>
     <div class="settingsStatusMsg" id="groqStatus"></div>
 
+    <label for="settingsGroqVisionModel">Groq vision model</label>
+    <input type="text" id="settingsGroqVisionModel" autocapitalize="none" spellcheck="false">
+    <button class="settingsSaveBtn" id="btnSaveGroqVisionModel">Save Groq Vision Model</button>
+    <div class="settingsStatusMsg" id="groqVisionModelStatus" role="status"></div>
+
     <label>Delete Password</label>
     <input type="password" id="settingsDeletePin" placeholder="Set delete password">
     <button class="settingsSaveBtn" id="btnSaveDeletePin">Save Delete Password</button>
@@ -1065,6 +1070,12 @@
     return cleaned.trim();
   }
 
+  var defaultGroqVisionModel = "qwen/qwen3.8-27b";
+
+  function getGroqVisionModel() {
+    return (localStorage.getItem("optistock_groq_vision_model") || "").trim() || defaultGroqVisionModel;
+  }
+
   function runTempleScan(dataUrl) {
     var groqKey = (localStorage.getItem("optistock_groq") || "").trim();
     if (!groqKey) { alert("Please set your Groq API key in Settings first"); return; }
@@ -1076,7 +1087,7 @@
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": "Bearer " + groqKey },
       body: JSON.stringify({
-        model: "meta-llama/llama-4-scout-17b-16e-instruct",
+        model: getGroqVisionModel(),
         messages: [{
           role: "user",
           content: [
@@ -1095,7 +1106,12 @@
         } else {
           scanError = "Groq could not process the scan (HTTP " + res.status + "). Try again or enter the model number manually.";
         }
-        throw new Error("Groq scan request failed");
+        return res.json().catch(function() { return null; }).then(function(data) {
+          if (data && data.error && typeof data.error.message === "string" && data.error.message.trim()) {
+            scanError = "Groq HTTP " + res.status + ": " + data.error.message.trim();
+          }
+          throw new Error("Groq scan request failed");
+        });
       })
       .then(function(data) {
         var rawText = "";
@@ -1129,6 +1145,7 @@
 
   btnSettings.addEventListener("click", function() {
     document.getElementById("settingsGroqKey").value = localStorage.getItem("optistock_groq") || "";
+    document.getElementById("settingsGroqVisionModel").value = getGroqVisionModel();
     document.getElementById("settingsDeletePin").value = "";
     document.getElementById("settingsSheetsUrl").value = localStorage.getItem("optistock_sheets_url") || "";
     var groqStatus = document.getElementById("groqStatus");
@@ -1153,6 +1170,14 @@
   }
   btnSaveGroq.addEventListener("click", doSaveGroq);
   btnSaveGroq.addEventListener("touchstart", doSaveGroq);
+
+  var btnSaveGroqVisionModel = document.getElementById("btnSaveGroqVisionModel");
+  function doSaveGroqVisionModel(e) {
+    e.preventDefault();
+    saveWithFeedback("optistock_groq_vision_model", "settingsGroqVisionModel", "groqVisionModelStatus", "a Groq vision model");
+  }
+  btnSaveGroqVisionModel.addEventListener("click", doSaveGroqVisionModel);
+  btnSaveGroqVisionModel.addEventListener("touchstart", doSaveGroqVisionModel);
 
   // Save Delete PIN
   var btnSaveDeletePin = document.getElementById("btnSaveDeletePin");

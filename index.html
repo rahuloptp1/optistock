@@ -337,7 +337,7 @@
     <textarea id="settingsSheetsUrl" rows="3" autocapitalize="none" spellcheck="false" placeholder="Paste Apps Script URL here"></textarea>
     <label for="settingsSheetsToken">Backup token</label>
     <input type="password" id="settingsSheetsToken" autocomplete="off" placeholder="Paste your backup token">
-    <button class="settingsSaveBtn" id="btnSaveSheetsUrl">Save Sheets URL and token</button>
+    <button type="button" class="settingsSaveBtn" id="btnSaveSheetsUrl">Save Sheets URL and token</button>
     <div class="settingsStatusMsg" id="sheetsUrlStatus" role="status"></div>
     <button class="settingsSaveBtn" id="btnTestSheets">Test Sheets connection</button>
     <div id="sheetsTestStatus" role="status" style="font-size:13px;white-space:pre-wrap;overflow-wrap:anywhere;"></div>
@@ -1201,8 +1201,7 @@
 
   // Save Sheets URL
   var btnSaveSheetsUrl = document.getElementById("btnSaveSheetsUrl");
-  function doSaveSheetsUrl(e) {
-    e.preventDefault();
+  btnSaveSheetsUrl.addEventListener("click", function() {
     var input = document.getElementById("settingsSheetsUrl");
     var tokenInput = document.getElementById("settingsSheetsToken");
     var status = document.getElementById("sheetsUrlStatus");
@@ -1214,15 +1213,19 @@
     }
     var endpoint = url.split("#")[0];
     var token = tokenInput.value.trim() || (url.indexOf("#") === -1 ? "" : url.slice(url.indexOf("#") + 1));
-    localStorage.setItem("optistock_sheets_url", endpoint);
-    localStorage.setItem("optistock_sheets_token", token);
+    try {
+      localStorage.setItem("optistock_sheets_url", endpoint);
+      localStorage.setItem("optistock_sheets_token", token);
+    } catch (err) {
+      status.textContent = "Could not save both Sheets settings. Check that Chrome allows this site to save data, then try again.";
+      return;
+    }
     input.value = endpoint;
     tokenInput.value = token;
-    status.textContent = sheetsUrlSummary(getSavedSheetsUrl());
+    status.textContent = "Saved ✓ — length " + endpoint.length + ", ends with /exec: " +
+      (/\/exec$/.test(endpoint) ? "Yes" : "No") + ". Last 10 characters: " + endpoint.slice(-10);
     scheduleSheetRetry(0);
-  }
-  btnSaveSheetsUrl.addEventListener("click", doSaveSheetsUrl);
-  btnSaveSheetsUrl.addEventListener("touchstart", doSaveSheetsUrl);
+  });
 
   // Google Sheets is a backup. Fetch current inventory from Firebase before sending it.
   var sheetsBatchSize = 100;
